@@ -1,0 +1,17 @@
+cmake_minimum_required(VERSION 3.14)
+
+project(TrialVTK C CXX)
+
+# c++14 for all targets
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Add path for custom modules
+set(CMAKE_MODULE_PATH
+  ${CMAKE_MODULE_PATH}
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+include(deploy_qt_windows)
+
+add_subdirectory(WidgetExample/WidgetExample)
