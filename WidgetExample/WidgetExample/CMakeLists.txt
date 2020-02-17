@@ -2,6 +2,10 @@ project(WidgetExample)
 
 find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
 
+if (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+  add_definitions(-DQT_NO_DEBUG_OUTPUT)
+endif()
+
 find_package(VTK COMPONENTS
   vtkCommonCore
   vtkFiltersSources
@@ -9,6 +13,7 @@ find_package(VTK COMPONENTS
   vtkIOImage
   vtkInteractionImage
 )
+
 include(${VTK_USE_FILE})
 
 if("${VTK_QT_VERSION}" STREQUAL "")
@@ -19,21 +24,17 @@ endif()
 set( Srcs
   main.cxx
   app.cxx
-  FileDialog.cxx
+  filedialog.cxx
 )
 
 set( Hdrs app.hpp
-  FileDialog.hpp
+  filedialog.hpp
   )
 
 set( MOC_Hdrs app.hpp )
 
 set( UIs app.ui )
 
-include_directories(
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-)
 
 # Instruct CMake to run moc automatically when needed.
 set(CMAKE_AUTOMOC ON)

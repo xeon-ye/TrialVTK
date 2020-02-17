@@ -1,7 +1,17 @@
-#include <FileDialog.hpp>
+/**
+ * @file   FileDialog.cxx
+ * @author Jens Munk Hansen <jmh@debian9laptop.parknet.dk>
+ * @date   Mon Feb 17 20:03:41 2020
+ *
+ * @brief
+ *
+ * Copyright 2020 Jens Munk Hansen
+ *
+ */
+
+#include <WidgetExample/filedialog.hpp>
 
 FileDialog::FileDialog(QWidget *parent) : QFileDialog(parent) {
-
   setOption(QFileDialog::DontUseNativeDialog);
   setFileMode(QFileDialog::Directory);
 
@@ -45,16 +55,15 @@ QStringList FileDialog::selectedFiles() const {
   return selectedFilePaths;
 }
 
-bool FileDialog::eventFilter( QObject* watched, QEvent* event ) {
+bool FileDialog::eventFilter(QObject* watched, QEvent* event) {
   QPushButton *btn = qobject_cast<QPushButton*>(watched);
   if (btn) {
-    if(event->type() == QEvent::EnabledChange) {
+    if (event->type() == QEvent::EnabledChange) {
       if (!btn->isEnabled()) {
-	btn->setEnabled(true);
+        btn->setEnabled(true);
       }
     }
   }
 
   return QWidget::eventFilter(watched, event);
 }
-

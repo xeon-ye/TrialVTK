@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.13.4)
 
 project(TrialVTK C CXX)
 
@@ -14,4 +14,4 @@ set(CMAKE_MODULE_PATH
 
 include(deploy_qt_windows)
 
-add_subdirectory(WidgetExample/WidgetExample)
+add_subdirectory(WidgetExample)
