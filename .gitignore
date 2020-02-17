@@ -33,3 +33,6 @@
 
 # Generates files
 *~
+
+# Potential build folder
+build
