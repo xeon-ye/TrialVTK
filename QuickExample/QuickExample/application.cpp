@@ -30,8 +30,7 @@ Application* Application::pInstance = nullptr;
 
 Application::Application() : m_pEngine(nullptr) {}
 
-void Application::Initialize()
-{
+void Application::Initialize() {
   QApplication::setOrganizationName("SexySoft");
   QApplication::setOrganizationDomain("XXX");
   QApplication::setApplicationName("VTKGuiTemplate");
@@ -66,12 +65,10 @@ void Application::Initialize()
 
 void Application::HandleMessage(QtMsgType type,
                                 const QMessageLogContext& context,
-                                const QString& msg)
-{
+                                const QString& msg) {
   qDebug() << "  > " << msg;
 }
-int Application::Execute(int argc, char* argv[])
-{
+int Application::Execute(int argc, char* argv[]) {
 
   // Some attributes must be set before creating a core application
   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
@@ -86,8 +83,7 @@ int Application::Execute(int argc, char* argv[])
 
   return -1;
 }
-Application::~Application()
-{
+Application::~Application() {
   if (m_pEngine) {
     delete m_pEngine;
     m_pEngine = nullptr;

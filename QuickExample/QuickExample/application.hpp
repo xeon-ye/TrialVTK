@@ -18,7 +18,7 @@ class QQmlApplicationEngine;
 namespace Quick {
 
 class Application {
-private:
+ private:
   static Application* pInstance;
   QQmlApplicationEngine* m_pEngine;
   void Initialize();
@@ -27,7 +27,7 @@ private:
                             const QString& msg);
   Application();
   ~Application();
-public:
+ public:
   static int Execute(int argc, char* argv[]);
 };
 }  // namespace Quick
