@@ -67,3 +67,9 @@ bool FileDialog::eventFilter(QObject* watched, QEvent* event) {
 
   return QWidget::eventFilter(watched, event);
 }
+
+/* Local variables: */
+/* indent-tabs-mode: nil */
+/* tab-width: 2 */
+/* c-basic-offset: 2 */
+/* End: */
