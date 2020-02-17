@@ -116,3 +116,9 @@ App::App(int argc, char* argv[]) : m_imgViewer(nullptr) {
 void App::slotExit() {
   qApp->exit();
 }
+
+/* Local variables: */
+/* indent-tabs-mode: nil */
+/* tab-width: 2 */
+/* c-basic-offset: 2 */
+/* End: */
