@@ -10,9 +10,20 @@
  */
 
 #include <viewcore/renderer.hpp>
-#include <viewcore/eventhandler.hpp>
+// #include <viewcore/eventhandler.hpp>
 
-QVTKFramebufferObjectRenderer::QVTKFramebufferObjectRenderer() : m_pFBO(nullptr) {
+#include <QSurfaceFormat>
+
+#include <vtkInteractorStyleTrackballCamera.h>
+
+#include <QVTKOpenGLNativeWidget.h>
+
+RenderHelper::RenderHelper() {
+
+}
+
+QVTKFramebufferObjectRenderer::QVTKFramebufferObjectRenderer() :
+    m_pFBO(nullptr), m_bFirstRender(true) {
   QSurfaceFormat::setDefaultFormat(QVTKOpenGLNativeWidget::defaultFormat());
 
   // Window and renderer
@@ -48,8 +59,8 @@ QVTKFramebufferObjectRenderer::QVTKFramebufferObjectRenderer() : m_pFBO(nullptr)
 void QVTKFramebufferObjectRenderer::openGLInitState() {
   m_vtkRenderWindow->OpenGLInitState();
   m_vtkRenderWindow->MakeCurrent();
-  QOpenGLFunctions::initializeOpenGLFunctions();
-  QOpenGLFunctions::glUseProgram(0);
+  //QOpenGLFunctions::initializeOpenGLFunctions();
+  //QOpenGLFunctions::glUseProgram(0);
 }
 
 void QVTKFramebufferObjectRenderer::synchronize(QQuickFramebufferObject *pFBO) {
@@ -81,7 +92,7 @@ void QVTKFramebufferObjectRenderer::render() {
   m_vtkRenderWindow->Start();
 
   if (m_firstRender) {
-    this->initScene();
+    // this->initScene();
     m_firstRender = false;
   }
   return;

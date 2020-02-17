@@ -2,6 +2,8 @@
 
 #include <QtQuick/QQuickFramebufferObject>
 
+class QVTKFramebufferObjectRenderer;
+
 class QVTKFramebufferObject : public QQuickFramebufferObject {
   Q_OBJECT
 
