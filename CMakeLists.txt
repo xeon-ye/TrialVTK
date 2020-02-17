@@ -15,3 +15,4 @@ set(CMAKE_MODULE_PATH
 include(deploy_qt_windows)
 
 add_subdirectory(WidgetExample)
+add_subdirectory(QuickExample)

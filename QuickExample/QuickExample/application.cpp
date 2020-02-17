@@ -1,0 +1,98 @@
+/**
+ * @file   application.cpp
+ * @author Jens Munk Hansen <jens.munk.hansen@gmail.com>
+ * @date   Thu Feb  6 10:25:32 2020
+ *
+ * @brief
+ *
+ * Copyright 2020
+ */
+
+#include <application.hpp>
+
+#include <QWindow>
+#include <QApplication>
+#include <QGuiApplication>
+#include <QQmlContext>
+#include <QQmlEngine>
+#include <QQmlApplicationEngine>
+#include <QSurfaceFormat>
+#include <QDebug>
+
+#include <memory>
+
+// FIX ME
+//#include <viewcore/src/view.hpp>
+
+namespace Quick {
+
+Application* Application::pInstance = nullptr;
+
+Application::Application() : m_pEngine(nullptr) {}
+
+void Application::Initialize()
+{
+  QApplication::setOrganizationName("SexySoft");
+  QApplication::setOrganizationDomain("XXX");
+  QApplication::setApplicationName("VTKGuiTemplate");
+
+  m_pEngine = new QQmlApplicationEngine();
+
+  auto context = m_pEngine->rootContext();
+
+  /*
+  context->setContextProperty("App", Controller::instance);
+  context->setContextProperty("SampleData", SampleData::Controller::GetInstance());
+  */
+  // Register simple VTK type
+  //int retval = qmlRegisterType<Quick::Vtk::View>("QtVTK", 1, 0, "VtkFboItem");
+
+
+  m_pEngine->load(QUrl(QStringLiteral("qrc:/res/qml/main.qml")));
+
+  auto rootObject = m_pEngine->rootObjects().at(0);
+  auto pWindow = static_cast<QWindow*>(rootObject);
+
+  QSurfaceFormat format;
+  format.setMajorVersion(3);
+  format.setMinorVersion(2);
+  format.setDepthBufferSize(1);
+  format.setStencilBufferSize(1);
+  format.setProfile(QSurfaceFormat::CoreProfile);
+
+  pWindow->setFormat(format);
+  pWindow->showMaximized();
+}
+
+void Application::HandleMessage(QtMsgType type,
+                                const QMessageLogContext& context,
+                                const QString& msg)
+{
+  qDebug() << "  > " << msg;
+}
+int Application::Execute(int argc, char* argv[])
+{
+
+  // Some attributes must be set before creating a core application
+  QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+
+  QApplication application(argc, argv);
+
+  if (!Application::pInstance) {
+    Application::pInstance = new Application();
+    pInstance->Initialize();
+    return application.exec();
+  }
+
+  return -1;
+}
+Application::~Application()
+{
+  if (m_pEngine) {
+    delete m_pEngine;
+    m_pEngine = nullptr;
+  }
+}
+}  // namespace Quick
+
+
