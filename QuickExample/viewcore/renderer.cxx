@@ -8,6 +8,8 @@
  *
  */
 
+// TODO: Use that both QWheelEvent and QMouseEvent inherits QInputEvent
+
 #include <queue>
 
 #include <QQuickWindow>
@@ -128,7 +130,7 @@ void QVTKFramebufferObjectRenderer::render() {
 
   // Process camera related commands
 
-  // Process mouse event
+  // Process old mouse events
   if (m_mouseEvent && !m_mouseEvent->isAccepted()) {
     m_vtkRenderWindowInteractor->SetEventInformationFlipY(m_mouseEvent->x(), m_mouseEvent->y(),
         (m_mouseEvent->modifiers() & Qt::ControlModifier) > 0 ? 1 : 0,

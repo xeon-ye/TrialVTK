@@ -1,7 +1,12 @@
 #include "CommandModel.h"
 #include "CommandModelAdd.h"
 #include "Model.h"
+
+
+// Involves VTK
 #include "ProcessingEngine.h"
+
+
 #include <viewcore/view.hpp>
 #include <viewcore/renderer.hpp>
 
