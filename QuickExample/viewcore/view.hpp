@@ -25,7 +25,14 @@ class Model;
 class ProcessingEngine;
 class QVTKFramebufferObjectRenderer;
 
-class View : public QQuickFramebufferObject {
+struct BufferMouseEvents {
+     std::shared_ptr<QMouseEvent> evMouseLeftButton;
+     std::shared_ptr<QMouseEvent> evMouseButton;
+     std::shared_ptr<QMouseEvent> evMouseMove;
+     std::shared_ptr<QWheelEvent> evMouseWheel;
+};
+
+class QVTKFramebufferObjectItem : public QQuickFramebufferObject {
   Q_OBJECT
 
  public:
@@ -35,7 +42,7 @@ class View : public QQuickFramebufferObject {
    *
    * @return
    */
-  View();
+  QVTKFramebufferObjectItem();
 
   /**
    *
@@ -307,6 +314,10 @@ class View : public QQuickFramebufferObject {
 
   void addModelFromFileError(QString error);
 
+ public:
+  // Last mouse events
+  BufferMouseEvents m_mouse;
+
  private:
   /**
    *
@@ -315,17 +326,12 @@ class View : public QQuickFramebufferObject {
    */
   void addCommand(CommandModel* command);
 
-  QVTKFramebufferObjectRenderer *m_vtkFboRenderer = nullptr;
+  QVTKFramebufferObjectRenderer *m_pRenderer = nullptr;
   std::shared_ptr<ProcessingEngine> m_processingEngine;
 
   std::queue<CommandModel*> m_commandsQueue;
 
   std::mutex m_commandsQueueMutex;
-
-  std::shared_ptr<QMouseEvent> m_lastMouseLeftButton;
-  std::shared_ptr<QMouseEvent> m_lastMouseButton;
-  std::shared_ptr<QMouseEvent> m_lastMouseMove;
-  std::shared_ptr<QWheelEvent> m_lastMouseWheel;
 
   int m_modelsRepresentationOption = 2;
   double m_modelsOpacity = 1.0;

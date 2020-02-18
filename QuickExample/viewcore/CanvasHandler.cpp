@@ -30,7 +30,7 @@ CanvasHandler::CanvasHandler(int argc, char **argv) {
   app.setOrganizationDomain("www.sexysoft.com");
 
   // Register QML types
-  int retval = qmlRegisterType<View>("QtVTK", 1, 0, "VtkFboItem");
+  int retval = qmlRegisterType<QVTKFramebufferObjectItem>("QtVTK", 1, 0, "VtkFboItem");
 
   // Create classes instances
   m_processingEngine = std::shared_ptr<ProcessingEngine>(new ProcessingEngine());
@@ -48,7 +48,7 @@ CanvasHandler::CanvasHandler(int argc, char **argv) {
   // Get reference to the QVTKFramebufferObjectItem created in QML
   // We cannot use smart pointers because this object must be deleted by QML
   QObject *rootObject = engine.rootObjects().first();
-  m_vtkFboItem = rootObject->findChild<View*>("vtkFboItem");
+  m_vtkFboItem = rootObject->findChild<QVTKFramebufferObjectItem*>("vtkFboItem");
 
   // Give the vtkFboItem reference to the CanvasHandler
   if (m_vtkFboItem) {
@@ -56,10 +56,10 @@ CanvasHandler::CanvasHandler(int argc, char **argv) {
 
     m_vtkFboItem->setProcessingEngine(m_processingEngine);
 
-    connect(m_vtkFboItem, &View::rendererInitialized, this, &CanvasHandler::startApplication);
-    connect(m_vtkFboItem, &View::isModelSelectedChanged, this, &CanvasHandler::isModelSelectedChanged);
-    connect(m_vtkFboItem, &View::selectedModelPositionXChanged, this, &CanvasHandler::selectedModelPositionXChanged);
-    connect(m_vtkFboItem, &View::selectedModelPositionYChanged, this, &CanvasHandler::selectedModelPositionYChanged);
+    connect(m_vtkFboItem, &QVTKFramebufferObjectItem::rendererInitialized, this, &CanvasHandler::startApplication);
+    connect(m_vtkFboItem, &QVTKFramebufferObjectItem::isModelSelectedChanged, this, &CanvasHandler::isModelSelectedChanged);
+    connect(m_vtkFboItem, &QVTKFramebufferObjectItem::selectedModelPositionXChanged, this, &CanvasHandler::selectedModelPositionXChanged);
+    connect(m_vtkFboItem, &QVTKFramebufferObjectItem::selectedModelPositionYChanged, this, &CanvasHandler::selectedModelPositionYChanged);
   } else {
     qCritical() << "CanvasHandler::CanvasHandler: Unable to get vtkFboItem instance";
     return;
@@ -84,7 +84,7 @@ CanvasHandler::CanvasHandler(int argc, char **argv) {
 void CanvasHandler::startApplication() const {
   qDebug() << "CanvasHandler::startApplication()";
 
-  disconnect(m_vtkFboItem, &View::rendererInitialized, this, &CanvasHandler::startApplication);
+  disconnect(m_vtkFboItem, &QVTKFramebufferObjectItem::rendererInitialized, this, &CanvasHandler::startApplication);
 }
 
 

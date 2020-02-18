@@ -71,48 +71,48 @@ void QVTKFramebufferObjectRenderer::setProcessingEngine(const std::shared_ptr<Pr
 
 void QVTKFramebufferObjectRenderer::synchronize(QQuickFramebufferObject *item) {
   // For the first synchronize
-  if (!m_vtkFboItem) {
-    m_vtkFboItem = static_cast<View *>(item);
+  if (!m_pFBO) {
+    m_pFBO = static_cast<QVTKFramebufferObjectItem *>(item);
   }
 
-  if (!m_vtkFboItem->isInitialized()) {
-    m_vtkFboItem->setVtkFboRenderer(this);
+  if (!m_pFBO->isInitialized()) {
+    m_pFBO->setVtkFboRenderer(this);
 
-    emit m_vtkFboItem->rendererInitialized();
+    emit m_pFBO->rendererInitialized();
   }
 
   int *rendererSize = m_vtkRenderWindow->GetSize();
 
-  if (m_vtkFboItem->width() != rendererSize[0] || m_vtkFboItem->height() != rendererSize[1]) {
-    m_vtkRenderWindow->SetSize(m_vtkFboItem->width(), m_vtkFboItem->height());
+  if (m_pFBO->width() != rendererSize[0] || m_pFBO->height() != rendererSize[1]) {
+    m_vtkRenderWindow->SetSize(m_pFBO->width(), m_pFBO->height());
   }
 
   // Copy mouse events
-  if (!m_vtkFboItem->m_lastMouseLeftButton.get()->isAccepted()) {
-    m_mouseLeftButton = std::make_shared<QMouseEvent>(*m_vtkFboItem->m_lastMouseLeftButton.get());
-    m_vtkFboItem->m_lastMouseLeftButton.get()->accept();
+  if (!m_pFBO->m_mouse.evMouseLeftButton.get()->isAccepted()) {
+    m_mouseLeftButton = std::make_shared<QMouseEvent>(*m_pFBO->m_mouse.evMouseLeftButton.get());
+    m_pFBO->m_mouse.evMouseLeftButton.get()->accept();
   }
 
-  if (!m_vtkFboItem->getLastMouseButton()->isAccepted()) {
-    m_mouseEvent = std::make_shared<QMouseEvent>(*m_vtkFboItem->getLastMouseButton());
-    m_vtkFboItem->getLastMouseButton()->accept();
+  if (!m_pFBO->getLastMouseButton()->isAccepted()) {
+    m_mouseEvent = std::make_shared<QMouseEvent>(*m_pFBO->getLastMouseButton());
+    m_pFBO->getLastMouseButton()->accept();
   }
 
-  if (!m_vtkFboItem->getLastMoveEvent()->isAccepted()) {
-    m_moveEvent = std::make_shared<QMouseEvent>(*m_vtkFboItem->getLastMoveEvent());
-    m_vtkFboItem->getLastMoveEvent()->accept();
+  if (!m_pFBO->getLastMoveEvent()->isAccepted()) {
+    m_moveEvent = std::make_shared<QMouseEvent>(*m_pFBO->getLastMoveEvent());
+    m_pFBO->getLastMoveEvent()->accept();
   }
 
-  if (!m_vtkFboItem->getLastWheelEvent()->isAccepted()) {
-    m_wheelEvent = std::make_shared<QWheelEvent>(*m_vtkFboItem->getLastWheelEvent());
-    m_vtkFboItem->getLastWheelEvent()->accept();
+  if (!m_pFBO->getLastWheelEvent()->isAccepted()) {
+    m_wheelEvent = std::make_shared<QWheelEvent>(*m_pFBO->getLastWheelEvent());
+    m_pFBO->getLastWheelEvent()->accept();
   }
 
   // Get extra data
-  m_modelsRepresentationOption = m_vtkFboItem->getModelsRepresentation();
-  m_modelsOpacity = m_vtkFboItem->getModelsOpacity();
-  m_modelsGouraudInterpolation = m_vtkFboItem->getGourauInterpolation();
-  Model::setSelectedModelColor(QColor(m_vtkFboItem->getModelColorR(), m_vtkFboItem->getModelColorG(), m_vtkFboItem->getModelColorB()));
+  m_modelsRepresentationOption = m_pFBO->getModelsRepresentation();
+  m_modelsOpacity = m_pFBO->getModelsOpacity();
+  m_modelsGouraudInterpolation = m_pFBO->getGourauInterpolation();
+  Model::setSelectedModelColor(QColor(m_pFBO->getModelColorR(), m_pFBO->getModelColorG(), m_pFBO->getModelColorB()));
 }
 
 void QVTKFramebufferObjectRenderer::render() {
@@ -181,17 +181,17 @@ void QVTKFramebufferObjectRenderer::render() {
   // Model transformations
 
   CommandModel *command;
-  while (!m_vtkFboItem->isCommandsQueueEmpty()) {
-    m_vtkFboItem->lockCommandsQueueMutex();
+  while (!m_pFBO->isCommandsQueueEmpty()) {
+    m_pFBO->lockCommandsQueueMutex();
 
-    command = m_vtkFboItem->getCommandsQueueFront();
+    command = m_pFBO->getCommandsQueueFront();
     if (!command->isReady()) {
-      m_vtkFboItem->unlockCommandsQueueMutex();
+      m_pFBO->unlockCommandsQueueMutex();
       break;
     }
-    m_vtkFboItem->commandsQueuePop();
+    m_pFBO->commandsQueuePop();
 
-    m_vtkFboItem->unlockCommandsQueueMutex();
+    m_pFBO->unlockCommandsQueueMutex();
 
     command->execute();
   }
@@ -209,7 +209,7 @@ void QVTKFramebufferObjectRenderer::render() {
   m_vtkRenderWindow->Render();
   m_vtkRenderWindow->PopState();
 
-  m_vtkFboItem->window()->resetOpenGLState();
+  m_pFBO->window()->resetOpenGLState();
 }
 
 void QVTKFramebufferObjectRenderer::openGLInitState() {
