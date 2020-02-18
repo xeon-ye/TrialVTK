@@ -32,6 +32,7 @@
 #include "ProcessingEngine.h"
 #include <viewcore/view.hpp>
 #include <viewcore/renderer.hpp>
+
 #include "QVTKOpenGLNativeWidget.h"
 
 QVTKFramebufferObjectRenderer::QVTKFramebufferObjectRenderer() {
@@ -87,9 +88,9 @@ void QVTKFramebufferObjectRenderer::synchronize(QQuickFramebufferObject *item) {
   }
 
   // Copy mouse events
-  if (!m_vtkFboItem->getLastMouseLeftButton()->isAccepted()) {
-    m_mouseLeftButton = std::make_shared<QMouseEvent>(*m_vtkFboItem->getLastMouseLeftButton());
-    m_vtkFboItem->getLastMouseLeftButton()->accept();
+  if (!m_vtkFboItem->m_lastMouseLeftButton.get()->isAccepted()) {
+    m_mouseLeftButton = std::make_shared<QMouseEvent>(*m_vtkFboItem->m_lastMouseLeftButton.get());
+    m_vtkFboItem->m_lastMouseLeftButton.get()->accept();
   }
 
   if (!m_vtkFboItem->getLastMouseButton()->isAccepted()) {
@@ -219,25 +220,28 @@ void QVTKFramebufferObjectRenderer::openGLInitState() {
 }
 
 QOpenGLFramebufferObject *QVTKFramebufferObjectRenderer::createFramebufferObject(const QSize &size) {
-  QSize macSize = QSize(size.width() / 2, size.height() / 2);
 
   QOpenGLFramebufferObjectFormat format;
   format.setAttachment(QOpenGLFramebufferObject::Depth);
 
 #ifdef Q_OS_MAC
-  std::unique_ptr<QOpenGLFramebufferObject> framebufferObject(new QOpenGLFramebufferObject(macSize, format));
+  QSize macSize = QSize(size.width() / 2, size.height() / 2);
+  QOpenGLFramebufferObject* framebufferObject =
+      new QOpenGLFramebufferObject(macSize, format);
 #else
-  std::unique_ptr<QOpenGLFramebufferObject> framebufferObject(new QOpenGLFramebufferObject(size, format));
+  QOpenGLFramebufferObject* framebufferObject =
+      new QOpenGLFramebufferObject(size, format);
 #endif
   m_vtkRenderWindow->SetBackLeftBuffer(GL_COLOR_ATTACHMENT0);
   m_vtkRenderWindow->SetFrontLeftBuffer(GL_COLOR_ATTACHMENT0);
   m_vtkRenderWindow->SetBackBuffer(GL_COLOR_ATTACHMENT0);
   m_vtkRenderWindow->SetFrontBuffer(GL_COLOR_ATTACHMENT0);
-  m_vtkRenderWindow->SetSize(framebufferObject->size().width(), framebufferObject->size().height());
+  m_vtkRenderWindow->SetSize(framebufferObject->size().width(),
+                             framebufferObject->size().height());
   m_vtkRenderWindow->SetOffScreenRendering(true);
   m_vtkRenderWindow->Modified();
 
-  return framebufferObject.release();
+  return framebufferObject;
 }
 
 void QVTKFramebufferObjectRenderer::initScene() {
