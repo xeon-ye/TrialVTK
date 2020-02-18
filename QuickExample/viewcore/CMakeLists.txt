@@ -13,7 +13,7 @@ find_package(VTK 8.2 REQUIRED NO_MODULE)
 include(${VTK_USE_FILE})
 
 set(SOURCE_FILES
-  view.cxx
+  fbo.cxx
   renderer.cxx
   CommandModelTranslate.cpp
   CommandModel.cpp
@@ -24,7 +24,7 @@ set(SOURCE_FILES
 )
 
 set(HEADER_FILES
-  view.hpp
+  fbo.hpp
   renderer.hpp
   CommandModelTranslate.h
   CommandModel.h
