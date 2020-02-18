@@ -40,3 +40,4 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY
 add_library(viewcore SHARED ${SOURCE_FILES} ${HEADER_FILES})
 
 target_link_libraries(viewcore Qt5::Quick Qt5::Widgets Qt5::Qml Qt5::QuickControls2 ${VTK_LIBRARIES} ${SYSTEM_LIBS})
+

@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.13.4)
 
 project(TrialVTK C CXX)
 
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
 # c++14 for all targets
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

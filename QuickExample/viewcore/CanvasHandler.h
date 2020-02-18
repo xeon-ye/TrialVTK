@@ -17,7 +17,7 @@
 
 
 class ProcessingEngine;
-class QVTKFramebufferObjectItem;
+class View;
 
 class CanvasHandler : public QObject {
   Q_OBJECT
@@ -99,7 +99,7 @@ class CanvasHandler : public QObject {
   bool isModelExtensionValid(const QUrl &modelPath) const;
 
   std::shared_ptr<ProcessingEngine> m_processingEngine;
-  QVTKFramebufferObjectItem *m_vtkFboItem = nullptr;
+  View *m_vtkFboItem = nullptr;
   QObject *m_fileDialog = nullptr;
 
   double m_previousWorldX = 0;
@@ -109,3 +109,4 @@ class CanvasHandler : public QObject {
 };
 
 #endif // CANVASHANDLER_H
+

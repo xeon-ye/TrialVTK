@@ -17,7 +17,6 @@
 #include <iostream>
 
 #include <WidgetExample/app.hpp>
-
 #include <WidgetExample/filedialog.hpp>
 
 #include <vtkSmartPointer.h>
@@ -122,3 +121,4 @@ void App::slotExit() {
 /* tab-width: 2 */
 /* c-basic-offset: 2 */
 /* End: */
+

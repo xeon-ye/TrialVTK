@@ -25,7 +25,7 @@ class Model;
 class ProcessingEngine;
 class QVTKFramebufferObjectRenderer;
 
-class QVTKFramebufferObjectItem : public QQuickFramebufferObject {
+class View : public QQuickFramebufferObject {
   Q_OBJECT
 
  public:
@@ -35,7 +35,7 @@ class QVTKFramebufferObjectItem : public QQuickFramebufferObject {
    *
    * @return
    */
-  QVTKFramebufferObjectItem();
+  View();
 
   /**
    *
@@ -333,6 +333,8 @@ class QVTKFramebufferObjectItem : public QQuickFramebufferObject {
   int m_modelColorR = 3;
   int m_modelColorG = 169;
   int m_modelColorB = 244;
+  friend class QVTKFramebufferObjectRenderer;
 };
 
 #endif // QVTKFRAMEBUFFEROBJECTITEM_H
+

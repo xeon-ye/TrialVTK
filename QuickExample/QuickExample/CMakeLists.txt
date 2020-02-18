@@ -74,17 +74,24 @@ set(QT_QML_DIR "${Qt5Core_DIR}/../../../qml")
 if (WIN32)
   # Add Qt release or debug DLLs to output directory
   get_target_property(QT5_QMAKE_EXECUTABLE Qt5::qmake IMPORTED_LOCATION)
-  get_filename_component(QT5_WINDEPLOYQT_EXECUTABLE ${QT5_QMAKE_EXECUTABLE} PATH)
-  set(QT5_WINDEPLOYQT_EXECUTABLE "${QT5_WINDEPLOYQT_EXECUTABLE}/windeployqt.exe")
-  set(QT5_QTENV2_EXECUTABLE "${QT5_WINDEPLOYQT_EXECUTABLE}/qtenv2.bat")
+  get_filename_component(QT5_WINDEPLOY_EXECUTABLE_DIR ${QT5_QMAKE_EXECUTABLE} PATH)
+  set(QT5_WINDEPLOYQT_EXECUTABLE "${QT5_WINDEPLOY_EXECUTABLE_DIR}/windeployqt.exe")
+  set(QT5_QTENV2_EXECUTABLE "${QT5_WINDEPLOY_EXECUTABLE_DIR}/qtenv2.bat")
+  message(${QT5_WINDEPLOYQT_EXECUTABLE})
+  message(${QT5_QTENV2_EXECUTABLE})
   add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
-    DEPENDS ${TOOL_WINDEPLOYQT} ${TOOL_QTENV2}
-    COMMAND ${TOOL_QTENV2}
-    COMMAND ${TOOL_WINDEPLOYQT} --qmldir ${QT_QML_DIR} $<TARGET_FILE:${MODULE_NAME}> $<$<CONFIG:Release>:--release>$<$<NOT:$<CONFIG:Release>>:--debug> --no-compiler-runtime
+    DEPENDS ${QT5_QTENV2_EXECUTABLE} ${QT5_WINDEPLOYQT_EXECUTABLE}
+    COMMAND ${QT5_QTENV2_EXECUTABLE}
+    COMMAND ${QT5_WINDEPLOYQT_EXECUTABLE} --qmldir=${QT_QML_DIR} $<$<CONFIG:Release>:--release>$<$<NOT:$<CONFIG:Release>>:--debug> --no-compiler-runtime $<TARGET_FILE:${MODULE_NAME}> $<TARGET_FILE:viewcore>
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-
   # Or alternatively
   # COMMAND ${CMAKE_COMMAND} -E copy_if_different
   #   $<TARGET_FILE:Qt5::Core>
   #   $<TARGET_FILE:Qt5::Widgets>
+
+  add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "$<TARGET_FILE:viewcore>"
+    "$<TARGET_FILE_DIR:QuickExample>")
+
 endif()

@@ -33,7 +33,7 @@
 #include <vtkSmartPointer.h>
 
 class Model;
-class QVTKFramebufferObjectItem;
+class View;
 class ProcessingEngine;
 
 
@@ -227,7 +227,7 @@ class QVTKFramebufferObjectRenderer : public QObject,
 
   std::shared_ptr<ProcessingEngine> m_processingEngine;
 
-  QVTKFramebufferObjectItem *m_vtkFboItem = nullptr;
+  View *m_vtkFboItem = nullptr;
 
   vtkSmartPointer<vtkGenericOpenGLRenderWindow> m_vtkRenderWindow;
   vtkSmartPointer<vtkRenderer> m_renderer;
@@ -276,3 +276,4 @@ class QVTKFramebufferObjectRenderer : public QObject,
 };
 
 #endif // QVTKFRAMEBUFFEROBJECTRENDERER_H
+
