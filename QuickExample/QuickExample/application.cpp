@@ -16,10 +16,15 @@
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QQmlApplicationEngine>
+#include <QSettings>
 #include <QSurfaceFormat>
 #include <QDebug>
 
 #include <memory>
+
+#include <viewcore/view.hpp>
+#include <viewcore/renderer.hpp>
+#include "QVTKOpenGLWidget.h"
 
 // FIX ME
 //#include <viewcore/src/view.hpp>
@@ -31,6 +36,8 @@ Application* Application::pInstance = nullptr;
 Application::Application() : m_pEngine(nullptr) {}
 
 void Application::Initialize() {
+  QSurfaceFormat::setDefaultFormat(QVTKOpenGLWidget::defaultFormat());
+
   QApplication::setOrganizationName("SexySoft");
   QApplication::setOrganizationDomain("XXX");
   QApplication::setApplicationName("VTKGuiTemplate");
@@ -46,12 +53,35 @@ void Application::Initialize() {
   // Register simple VTK type
   //int retval = qmlRegisterType<Quick::Vtk::View>("QtVTK", 1, 0, "VtkFboItem");
 
+  // Register QML types
+  int typeId = qmlRegisterType<QVTKFramebufferObjectItem>("ViewCore", 1, 0, "VtkFboItem");
+
+  qDebug() << "typeId: " << typeId;
 
   m_pEngine->load(QUrl(QStringLiteral("qrc:/res/qml/main.qml")));
 
   auto rootObject = m_pEngine->rootObjects().at(0);
-  auto pWindow = static_cast<QWindow*>(rootObject);
 
+  m_vtkFboItem = rootObject->findChild<QVTKFramebufferObjectItem*>("vtkFboItem");
+
+  // Give the vtkFboItem reference to the Application
+  if (m_vtkFboItem) {
+    qDebug() << "Application::Application: setting vtkFboItem to Application";
+
+    m_vtkFboItem->setProcessingEngine(m_processingEngine);
+
+    connect(m_vtkFboItem, &QVTKFramebufferObjectItem::rendererInitialized, this, &Application::startApplication);
+    connect(m_vtkFboItem, &QVTKFramebufferObjectItem::isModelSelectedChanged, this, &Application::isModelSelectedChanged);
+    connect(m_vtkFboItem, &QVTKFramebufferObjectItem::selectedModelPositionXChanged, this, &Application::selectedModelPositionXChanged);
+    connect(m_vtkFboItem, &QVTKFramebufferObjectItem::selectedModelPositionYChanged, this, &Application::selectedModelPositionYChanged);
+  } else {
+    qCritical() << "Application::Application: Unable to get vtkFboItem instance";
+    return;
+  }
+
+
+  auto pWindow = static_cast<QWindow*>(rootObject);
+#if 0
   QSurfaceFormat format;
   format.setMajorVersion(3);
   format.setMinorVersion(2);
@@ -60,14 +90,17 @@ void Application::Initialize() {
   format.setProfile(QSurfaceFormat::CoreProfile);
 
   pWindow->setFormat(format);
+#endif
   pWindow->showMaximized();
 }
+
 
 void Application::HandleMessage(QtMsgType type,
                                 const QMessageLogContext& context,
                                 const QString& msg) {
   qDebug() << "  > " << msg;
 }
+
 int Application::Execute(int argc, char* argv[]) {
 
   // Some attributes must be set before creating a core application

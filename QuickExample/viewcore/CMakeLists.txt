@@ -13,14 +13,29 @@ find_package(VTK 8.2 REQUIRED NO_MODULE)
 include(${VTK_USE_FILE})
 
 set(SOURCE_FILES
-  fbo.cxx
+  view.cxx
   renderer.cxx
+  CommandModelTranslate.cpp
+  CommandModel.cpp
+  CommandModelAdd.cpp
+  Model.cpp
+  ProcessingEngine.cpp
+  CanvasHandler.cpp
 )
 
 set(HEADER_FILES
-  fbo.hpp
+  view.hpp
   renderer.hpp
+  CommandModelTranslate.h
+  CommandModel.h
+  CommandModelAdd.h
+  Model.h
+  ProcessingEngine.h
+  CanvasHandler.h
 )
+
+set(QTVTK_QML_DIR "${Qt5Core_DIR}/../../../qml")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
 
 add_library(viewcore SHARED ${SOURCE_FILES} ${HEADER_FILES})
 

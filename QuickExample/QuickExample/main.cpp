@@ -16,8 +16,25 @@
 // Example of a private header
 #include <QuickExample/application.hpp>
 
+#include <viewcore/CanvasHandler.h>
+
+#if defined(__GNUC__)
+# if !defined(__CYGWIN__)
+#  include <strace.hpp>
+# endif
+#endif
+
 int main(int argc, char* argv[]) {
+
+
 #ifdef __linux
+
+# if defined(__GNUC__) && !defined(__CYGWIN__)
+#  if defined(SPS_STRACE)
+  sps::STrace::Instance().Enable();
+#  endif
+# endif
+
   // Fixes decimal point issue in vtkSTLReader
   putenv(const_cast<char*>("LC_NUMERIC=C"));
 
@@ -33,6 +50,6 @@ int main(int argc, char* argv[]) {
   _putenv(const_cast<char*>("QML_USE_GLYPHCACHE_WORKAROUND=1"));
 #endif
 
-  return Quick::Application::Execute(argc, argv);
+  //  return Quick::Application::Execute(argc, argv);
+  CanvasHandler(argc, argv);
 }
-

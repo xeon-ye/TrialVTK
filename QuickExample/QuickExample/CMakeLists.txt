@@ -30,8 +30,16 @@ set(HEADERS
 
 set(SOURCE_FILES
   main.cpp
-  application.cpp
+  #application.cpp
 )
+
+add_definitions(-DSPS_TRACE)
+if (UNIX AND NOT WIN32 AND NOT CYGWIN)
+  include_directories("${CMAKE_CURRENT_SOURCE_DIR}/../../strace")
+  set(HEADERS "${HEADERS}" "../../strace/strace.hpp")
+  set(SOURCE_FILES "${SOURCE_FILES}" "../../strace/strace.cpp")
+endif()
+
 
 # Configuration file is often included in public headers - hence public
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
@@ -55,6 +63,8 @@ target_include_directories(${MODULE_NAME}
 
 #target_link_libraries(${MODULE_NAME} viewcore)
 target_link_libraries(${MODULE_NAME} Qt5::Quick Qt5::Widgets Qt5::Qml Qt5::QuickControls2 ${VTK_LIBRARIES})
+
+target_link_libraries(${MODULE_NAME} viewcore)
 
 #target_link_libraries(${MODULE_NAME} ${VTK_LIBRARIES} Qt5::Core Qt5::Widgets Qt5::Gui Qt5::Quick Qt5::Qml Qt5::Concurrent)
 

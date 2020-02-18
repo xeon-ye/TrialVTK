@@ -2,6 +2,7 @@ import QtQuick 2.11
 import QtQuick.Window 2.11
 import QtQuick.Controls 1.4
 import QtQuick.Layouts 1.0
+import QtVTK 1.0
 
 Window {
     id: root
@@ -30,12 +31,24 @@ Window {
                 anchors.centerIn: parent
             }
         }
-        Rectangle {
-            width: 200
-            color: "lightgreen"
-            Text {
-                text: "View 3"
-                anchors.centerIn: parent
+        VtkFboItem {
+            id: vtkFboItem
+            objectName: "vtkFboItem"
+            anchors.fill: parent
+
+            MouseArea {
+                acceptedButtons: Qt.LeftButton
+                anchors.fill: parent
+
+                onPositionChanged: {
+                    canvasHandler.mouseMoveEvent(pressedButtons, mouseX, mouseY);
+                }
+                onPressed: {
+                    canvasHandler.mousePressEvent(pressedButtons, mouseX, mouseY);
+                }
+                onReleased: {
+                    canvasHandler.mouseReleaseEvent(pressedButtons, mouseX, mouseY);
+                }
             }
         }
     }
