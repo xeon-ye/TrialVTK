@@ -32,7 +32,7 @@
 #include "CommandModel.h"
 #include "Model.h"
 #include "ProcessingEngine.h"
-#include <viewcore/view.hpp>
+#include <viewcore/fbo.hpp>
 #include <viewcore/renderer.hpp>
 
 #include "QVTKOpenGLNativeWidget.h"

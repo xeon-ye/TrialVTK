@@ -7,7 +7,7 @@
 #include "ProcessingEngine.h"
 
 
-#include <viewcore/view.hpp>
+#include <viewcore/fbo.hpp>
 #include <viewcore/renderer.hpp>
 
 
