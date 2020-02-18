@@ -38,9 +38,8 @@ class ProcessingEngine;
 
 
 class QVTKFramebufferObjectRenderer : public QObject,
-				      public QQuickFramebufferObject::Renderer,
-				      protected QOpenGLFunctions // OpenGL ES 2.0 API
-{
+  public QQuickFramebufferObject::Renderer,
+  protected QOpenGLFunctions { // OpenGL ES 2.0 API
   Q_OBJECT
 
  public:
