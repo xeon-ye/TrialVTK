@@ -18,3 +18,4 @@ include(deploy_qt_windows)
 
 add_subdirectory(WidgetExample)
 add_subdirectory(QuickExample)
+add_subdirectory(SlicerWidget)
