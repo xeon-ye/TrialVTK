@@ -1,3 +1,14 @@
+/**
+ * @file   datamanager.cpp
+ * @author Jens Munk Hansen <jens.munk.hansen@gmail.com>
+ * @date   Thu Feb 20 00:33:37 2020
+ *
+ * @brief
+ *
+ * Copyright 2020
+ *
+ */
+
 #include "datamanager.h"
 #include <SlicerWidget/ui_datamanager.h>
 

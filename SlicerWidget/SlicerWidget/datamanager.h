@@ -1,5 +1,14 @@
-#ifndef DATAMANAGER_H
-#define DATAMANAGER_H
+/**
+ * @file   datamanager.h
+ * @author Jens Munk Hansen <jens.munk.hansen@gmail.com>
+ * @date   Thu Feb 20 00:34:22 2020
+ *
+ * @brief
+ *
+ * Copyright 2020
+ *
+ */
+#pragma once
 
 #include <QWidget>
 
@@ -25,5 +34,3 @@ class DataManager : public QWidget {
   vtkSmartPointer<vtkResliceImageViewer> m_riw[3];
   vtkSmartPointer< vtkImagePlaneWidget > m_planeWidget[3];
 };
-
-#endif // DATAMANAGER_H
