@@ -7,6 +7,11 @@ namespace Ui {
 class DataManager;
 }
 
+#include <vtkSmartPointer.h>
+#include <vtkResliceImageViewer.h>
+#include <vtkImagePlaneWidget.h>
+#include <vtkImageViewer2.h>
+
 class DataManager : public QWidget {
   Q_OBJECT
 
@@ -16,6 +21,9 @@ class DataManager : public QWidget {
 
  private:
   Ui::DataManager *ui;
+
+  vtkSmartPointer<vtkResliceImageViewer> m_riw[3];
+  vtkSmartPointer< vtkImagePlaneWidget > m_planeWidget[3];
 };
 
 #endif // DATAMANAGER_H
