@@ -7,16 +7,15 @@ namespace Ui {
 class DataManager;
 }
 
-class DataManager : public QWidget
-{
-    Q_OBJECT
+class DataManager : public QWidget {
+  Q_OBJECT
 
-public:
-    explicit DataManager(QWidget *parent = 0);
-    ~DataManager();
+ public:
+  explicit DataManager(QWidget *parent = 0);
+  ~DataManager();
 
-private:
-    Ui::DataManager *ui;
+ private:
+  Ui::DataManager *ui;
 };
 
 #endif // DATAMANAGER_H
