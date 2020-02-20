@@ -4,6 +4,8 @@
 #include <QVTKOpenGLWidget.h>
 
 #include "app.hpp"
+//#include <SlicerWidget/ui_app.h>
+//#include <SlicerWidget/datamanager.h>
 
 int main( int argc, char** argv ) {
   // needed to ensure appropriate OpenGL context is created for VTK rendering.
@@ -13,7 +15,12 @@ int main( int argc, char** argv ) {
   QApplication app( argc, argv );
 
   App myApp(argc, argv);
+
+
   myApp.show();
+
+
+
 
   return app.exec();
 }

@@ -20,9 +20,10 @@ class App : public QMainWindow {
   void SetupUI();
   void PopulateMenus();
 
+ public:
   // Designer form
   Ui_App *ui;
 
-  DataManager* datamanager;
   QHBoxLayout* horizontalLayout;
+  DataManager* datamanager;
 };

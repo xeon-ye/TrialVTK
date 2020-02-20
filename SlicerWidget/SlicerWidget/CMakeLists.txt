@@ -25,6 +25,7 @@ set( Srcs
   main.cxx
   app.cxx
   datamanager.cpp
+  filedialog.cxx
 )
 
 set( Hdrs app.hpp

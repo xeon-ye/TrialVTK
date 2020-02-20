@@ -1,11 +1,13 @@
 #include <SlicerWidget/ui_app.h>
 
 #include <QSettings>
+#include <QDebug>
 
 #include <cstdlib>
 #include <iostream>
 
 #include <SlicerWidget/app.hpp>
+#include <SlicerWidget/filedialog.hpp>
 
 App::~App() {}
 
@@ -27,11 +29,18 @@ void App::PopulateMenus() {
 }
 
 void App::onLoadClicked() {
-  // TODO: Make 3D viewer work
   const QString DEFAULT_DIR_KEY("default_dir");
   QSettings MySettings;
 
-  QString selectedFileOrDirectory;
+  QString selectedDirectory;
+
+  FileDialog w;
+  w.setDirectory(MySettings.value(DEFAULT_DIR_KEY).toString());
+
+  int nMode = w.exec();
+  QStringList fnames = w.selectedFiles();
+
+  qDebug() << fnames;
 }
 
 

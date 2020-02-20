@@ -28,6 +28,12 @@ class DataManager : public QWidget {
   explicit DataManager(QWidget *parent = 0);
   ~DataManager();
 
+ public Q_SLOTS:
+  void Render();
+  void OnLoadClicked();
+
+ private Q_SLOTS:
+
  private:
   Ui::DataManager *ui;
 
