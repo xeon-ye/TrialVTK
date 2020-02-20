@@ -15,21 +15,29 @@
 #include <SlicerWidget/reslicecallback.h>
 
 #include <QSettings>
+#include <QDir>
 #include "QVTKOpenGLWidget.h"
 
 #include <vtkCellPicker.h>
+#include <vtkDICOMImageReader.h>
 #include <vtkGenericOpenGLRenderWindow.h>
+#include <vtkImageReader2.h>
+#include <vtkNrrdReader.h>
+#include <vtkMetaImageReader.h>
 #include <vtkInteractorStyleRubberBandZoom.h>
 
+#include <vtkPlane.h>
 #include <vtkProperty.h>
 #include <vtkRenderer.h>
 #include <vtkRenderWindowInteractor.h>
 
-#include <vtkResliceImageViewer.h>
+#include <vtkResliceCursor.h>
 #include <vtkResliceCursorLineRepresentation.h>
 #include <vtkResliceCursorWidget.h>
 #include <vtkResliceCursorActor.h>
 #include <vtkResliceCursorPolyDataAlgorithm.h>
+
+#include <vtkResliceImageViewer.h>
 
 DataManager::DataManager(QWidget *parent) :
   QWidget(parent), ui(new Ui::DataManager),
@@ -84,18 +92,18 @@ m_planeWidget({nullptr, nullptr, nullptr}) {
 
   // Create 3D viewer
   vtkSmartPointer<vtkCellPicker> picker =
-      vtkSmartPointer<vtkCellPicker>::New();
+    vtkSmartPointer<vtkCellPicker>::New();
   picker->SetTolerance(0.005);
 
   vtkSmartPointer<vtkProperty> ipwProp =
-      vtkSmartPointer<vtkProperty>::New();
+    vtkSmartPointer<vtkProperty>::New();
 
   vtkNew<vtkGenericOpenGLRenderWindow> renderWindow;
 
   this->ui->view3->SetRenderWindow(renderWindow);
 
   vtkSmartPointer< vtkRenderer > ren =
-      vtkSmartPointer< vtkRenderer >::New();
+    vtkSmartPointer< vtkRenderer >::New();
   // Why both a GL and conventional
   this->ui->view3->GetRenderWindow()->AddRenderer(ren);
 
@@ -141,28 +149,50 @@ m_planeWidget({nullptr, nullptr, nullptr}) {
     cbk->IPW[i] = m_planeWidget[i];
     cbk->RCW[i] = m_riw[i]->GetResliceCursorWidget();
     m_riw[i]->GetResliceCursorWidget()->AddObserver(
-        vtkResliceCursorWidget::ResliceAxesChangedEvent, cbk);
+      vtkResliceCursorWidget::ResliceAxesChangedEvent, cbk);
     m_riw[i]->GetResliceCursorWidget()->AddObserver(
-        vtkResliceCursorWidget::WindowLevelEvent, cbk);
+      vtkResliceCursorWidget::WindowLevelEvent, cbk);
     m_riw[i]->GetResliceCursorWidget()->AddObserver(
-        vtkResliceCursorWidget::ResliceThicknessChangedEvent, cbk);
+      vtkResliceCursorWidget::ResliceThicknessChangedEvent, cbk);
     m_riw[i]->GetResliceCursorWidget()->AddObserver(
-        vtkResliceCursorWidget::ResetCursorEvent, cbk);
+      vtkResliceCursorWidget::ResetCursorEvent, cbk);
     m_riw[i]->GetInteractorStyle()->AddObserver(
-        vtkCommand::WindowLevelEvent, cbk);
+      vtkCommand::WindowLevelEvent, cbk);
 
     // Make them all share the same color map.
     m_riw[i]->SetLookupTable(m_riw[0]->GetLookupTable());
     m_planeWidget[i]->GetColorMap()->SetLookupTable(m_riw[0]->GetLookupTable());
     m_planeWidget[i]->SetColorMap(
-        m_riw[i]->GetResliceCursorWidget()->
-        GetResliceCursorRepresentation()->GetColorMap());
+      m_riw[i]->GetResliceCursorWidget()->
+      GetResliceCursorRepresentation()->GetColorMap());
   }
 
   this->ui->view0->show();
   this->ui->view1->show();
   this->ui->view2->show();
 
+  this->Render();
+}
+
+void DataManager::ResetViews() {
+  // Reset the reslice image views
+  for (int i = 0; i < 3; i++) {
+    m_riw[i]->Reset();
+  }
+
+  // Also sync the Image plane widget on the 3D top right view with any
+  // changes to the reslice cursor.
+  for (int i = 0; i < 3; i++) {
+    vtkPlaneSource *ps = static_cast< vtkPlaneSource * >(
+                           m_planeWidget[i]->GetPolyDataAlgorithm());
+    ps->SetNormal(m_riw[0]->GetResliceCursor()->GetPlane(i)->GetNormal());
+    ps->SetCenter(m_riw[0]->GetResliceCursor()->GetPlane(i)->GetOrigin());
+
+    // If the reslice plane has modified, update it on the 3D widget
+    this->m_planeWidget[i]->UpdatePlacement();
+  }
+
+  // Render in response to changes.
   this->Render();
 }
 
@@ -174,8 +204,87 @@ void DataManager::Render() {
 }
 
 // Change to public slot with string argument
-void DataManager::OnLoadClicked() {
+
+void DataManager::FileLoad(const QString& files) {
+  QDir directory = QDir(files);
+
+  vtkSmartPointer<vtkImageReader2> reader;
+
+  if (directory.exists()) {
+    // Anticipate, it is a directory of DICOM files
+    vtkSmartPointer<vtkDICOMImageReader>
+    reader0 =
+      vtkSmartPointer< vtkDICOMImageReader >::New();
+    reader0->SetDirectoryName(files.toUtf8().constData());
+    reader0->Update();
+    reader = reader0;
+  } else {
+    QFileInfo info(files);
+    if (info.completeSuffix() == QLatin1String("mhd")) {
+      vtkNew<vtkMetaImageReader> reader2;
+      reader2->SetFileName(files.toUtf8().constData());
+      reader2->Update();
+      reader = reader2;
+    } else {
+      vtkSmartPointer<vtkNrrdReader> reader1 =
+        vtkSmartPointer<vtkNrrdReader>::New();
+      reader1->SetFileName(files.toUtf8().constData());
+      reader1->Update();
+      reader = reader1;
+    }
+  }
+
+
+
+
+  QVTKOpenGLWidget* ppVTKOGLWidgets[4] = {
+    this->ui->view0,
+    this->ui->view1,
+    this->ui->view2,
+    this->ui->view3
+  };
+
+  // Set input and enable interactors
+  for (size_t i = 0 ; i < 3 ; i++) {
+    m_riw[i]->SetInputData(reader->GetOutput());
+    ppVTKOGLWidgets[i]->GetInteractor()->Enable();
+    m_planeWidget[i]->RestrictPlaneToVolumeOn();
+    m_planeWidget[i]->GetInteractor()->Enable();
+    m_planeWidget[i]->On();
+    m_planeWidget[i]->InteractionOn();
+  }
+
+  ppVTKOGLWidgets[3]->GetInteractor()->Enable();
+
+
+  vtkRenderWindowInteractor *iren = this->ui->view3->GetInteractor();
+  iren->ReInitialize();
+
+
+  this->Render();
+
+  this->ui->view0->show();
+  this->ui->view1->show();
+  this->ui->view2->show();
+
+  this->ui->view3->show();
+
+  this->ResetViews();
+
+
+
+  this->resliceMode(1);
 }
+
+
 DataManager::~DataManager() {
   delete ui;
+}
+
+void DataManager::resliceMode(int mode) {
+  for (int i = 0; i < 3; i++) {
+    m_riw[i]->SetResliceMode(mode ? 1 : 0);
+    m_riw[i]->GetRenderer()->ResetCamera();
+    m_riw[i]->Render();
+  }
 }

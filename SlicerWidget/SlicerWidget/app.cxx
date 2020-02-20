@@ -41,6 +41,25 @@ void App::onLoadClicked() {
   QStringList fnames = w.selectedFiles();
 
   qDebug() << fnames;
+
+  datamanager->FileLoad(fnames[0]);
+
+  QString selectedFileOrDirectory = fnames[0];
+
+  QFileInfo fi = QFileInfo(selectedFileOrDirectory);
+
+  if (fi.isDir()) {
+    QDir currentDir(selectedFileOrDirectory);
+    currentDir.cdUp(); // Maybe necessary
+    MySettings.setValue(DEFAULT_DIR_KEY,
+                        currentDir.absolutePath());
+    qDebug() << currentDir.absolutePath();
+  } else {
+    QDir currentDir = QFileInfo(selectedFileOrDirectory).absoluteDir();
+    qDebug() << currentDir.absolutePath();
+    MySettings.setValue(DEFAULT_DIR_KEY,
+                        currentDir.absolutePath());
+  }
 }
 
 

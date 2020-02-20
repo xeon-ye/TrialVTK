@@ -30,11 +30,13 @@ class DataManager : public QWidget {
 
  public Q_SLOTS:
   void Render();
-  void OnLoadClicked();
+  void FileLoad(const QString& files);
 
  private Q_SLOTS:
 
  private:
+  void resliceMode(int mode);
+  void ResetViews();
   Ui::DataManager *ui;
 
   vtkSmartPointer<vtkResliceImageViewer> m_riw[3];
