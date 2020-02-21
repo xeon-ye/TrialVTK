@@ -40,7 +40,6 @@
 #include <vtkResliceImageViewer.h>
 
 DataManager::DataManager(QWidget *parent) : QWidget(parent), ui(new Ui::DataManager) {
-
     m_riw[0] = nullptr;
     m_riw[1] = nullptr;
     m_riw[2] = nullptr;
