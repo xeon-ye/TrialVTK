@@ -21,6 +21,7 @@
 #include <vtkCellPicker.h>
 #include <vtkDICOMImageReader.h>
 #include <vtkGenericOpenGLRenderWindow.h>
+#include <vtkImageData.h>
 #include <vtkImageReader2.h>
 #include <vtkInteractorStyleRubberBandZoom.h>
 #include <vtkMetaImageReader.h>
@@ -28,8 +29,9 @@
 
 #include <vtkPlane.h>
 #include <vtkProperty.h>
-#include <vtkRenderWindowInteractor.h>
 #include <vtkRenderer.h>
+#include <vtkRendererCollection.h>
+#include <vtkRenderWindowInteractor.h>
 
 #include <vtkResliceCursor.h>
 #include <vtkResliceCursorActor.h>
@@ -61,16 +63,12 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent), ui(new Ui::DataMana
     m_riw[i] = vtkSmartPointer<vtkResliceImageViewer>::New();
     vtkNew<vtkGenericOpenGLRenderWindow> renderWindow;
     m_riw[i]->SetRenderWindow(renderWindow);
+  }
+  for (size_t i = 0; i < 3; i++) {
     ppVTKOGLWidgets[i]->SetRenderWindow(m_riw[i]->GetRenderWindow());
 
     m_riw[i]->SetupInteractor(
       ppVTKOGLWidgets[i]->GetRenderWindow()->GetInteractor());
-
-    vtkSmartPointer<vtkInteractorStyleRubberBandZoom> style =
-      vtkSmartPointer<vtkInteractorStyleRubberBandZoom>::New();
-    if (i == 0) {
-      m_riw[i]->GetInteractor()->SetInteractorStyle(style);
-    }
 
     // Disable interactor until data are present
     ppVTKOGLWidgets[i]->GetInteractor()->Disable();
@@ -88,7 +86,10 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent), ui(new Ui::DataMana
     // Make all reslice image viewers share the same reslice cursor object.
     m_riw[i]->SetResliceCursor(m_riw[0]->GetResliceCursor());
 
-    rep->GetResliceCursorActor()->GetCursorAlgorithm()->SetReslicePlaneNormal(i);
+    rep->GetResliceCursorActor()->
+    GetCursorAlgorithm()->SetReslicePlaneNormal(i);
+
+    // No data can be set here
     m_riw[i]->SetSliceOrientation(i);
     m_riw[i]->SetResliceModeToAxisAligned();
   }
@@ -101,19 +102,21 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent), ui(new Ui::DataMana
   vtkSmartPointer<vtkProperty> ipwProp =
     vtkSmartPointer<vtkProperty>::New();
 
+
+  vtkSmartPointer<vtkRenderer> ren =
+    vtkSmartPointer<vtkRenderer>::New();
+
   vtkNew<vtkGenericOpenGLRenderWindow> renderWindow;
 
   this->ui->view3->SetRenderWindow(renderWindow);
 
-  vtkSmartPointer<vtkRenderer> ren =
-    vtkSmartPointer<vtkRenderer>::New();
   // Why both a GL and conventional
   this->ui->view3->GetRenderWindow()->AddRenderer(ren);
 
   vtkRenderWindowInteractor *iren = this->ui->view3->GetInteractor();
 
   // Should be disabled!!!
-  iren->ReInitialize();
+  // iren->ReInitialize();
 
   for (int i = 0; i < 3; i++) {
     m_planeWidget[i] = vtkSmartPointer<vtkImagePlaneWidget>::New();
@@ -134,6 +137,10 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent), ui(new Ui::DataMana
     m_planeWidget[i]->SetTexturePlaneProperty(ipwProp); // PROPERTY
     m_planeWidget[i]->TextureInterpolateOff();
     m_planeWidget[i]->SetResliceInterpolateToLinear();
+    // m_planeWidget[i]->SetInputConnection(reader->GetOutputPort());
+
+    // m_planeWidget[i]->SetPlaneOrientation(i);
+    // m_planeWidget[i]->SetSliceIndex(imageDims[i]/2);
 
     m_planeWidget[i]->DisplayTextOn();
     m_planeWidget[i]->SetDefaultRenderer(ren); // RENDERER
@@ -141,9 +148,11 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent), ui(new Ui::DataMana
     m_planeWidget[i]->On();
     m_planeWidget[i]->InteractionOn();
 
+
     // Disable interactors
     m_planeWidget[i]->GetInteractor()->Disable();
   }
+
   // Establish callbacks
   vtkSmartPointer<vtkResliceCursorCallback> cbk =
     vtkSmartPointer<vtkResliceCursorCallback>::New();
@@ -236,8 +245,8 @@ void DataManager::FileLoad(const QString &files) {
     }
   }
 
-
-
+  int imageDims[3];
+  reader->GetOutput()->GetDimensions(imageDims);
 
   QVTKOpenGLWidget *ppVTKOGLWidgets[4] = {
     this->ui->view0,
@@ -246,25 +255,62 @@ void DataManager::FileLoad(const QString &files) {
     this->ui->view3
   };
 
+  vtkRenderWindowInteractor *iren = this->ui->view3->GetInteractor();
+
+#if 0
+  // TESTME - callbacks screw up SEGV
+  vtkSmartPointer<vtkRenderer> ren =
+    vtkSmartPointer<vtkRenderer>::New();
+  vtkNew<vtkGenericOpenGLRenderWindow> renderWindow;
+  this->ui->view3->SetRenderWindow(renderWindow);
+  // Why both a GL and conventional
+  this->ui->view3->GetRenderWindow()->AddRenderer(ren);
+#endif
+
   // Set input and enable interactors
   for (size_t i = 0; i < 3; i++) {
     m_riw[i]->SetInputData(reader->GetOutput());
     ppVTKOGLWidgets[i]->GetInteractor()->Enable();
-    m_planeWidget[i]->SetInputConnection(reader->GetOutputPort());
-    m_planeWidget[i]->RestrictPlaneToVolumeOn();
+
+    // Ugly test
+    //m_planeWidget[i]->SetInteractor( iren );
+    //m_planeWidget[i]->SetPicker(picker);
+
+
 
     m_planeWidget[i]->RestrictPlaneToVolumeOn();
-    m_planeWidget[i]->GetInteractor()->Enable();
-    m_planeWidget[i]->On();
-    m_planeWidget[i]->InteractionOn();
+
+    // TEST AGAIN
+    double color[3] = {0, 0, 0};
+    color[i] = 1;
+    m_planeWidget[i]->GetPlaneProperty()->SetColor(color);
+
+    color[0] /= 4.0;
+    color[1] /= 4.0;
+    color[2] /= 4.0;
+    m_riw[i]->GetRenderer()->SetBackground( color );
+
+    //m_planeWidget[i]->SetTexturePlaneProperty(ipwProp);
+    m_planeWidget[i]->TextureInterpolateOff();
+    m_planeWidget[i]->SetResliceInterpolateToLinear();
+    m_planeWidget[i]->SetInputConnection(reader->GetOutputPort()); // Important
+    m_planeWidget[i]->SetPlaneOrientation(i);
+    m_planeWidget[i]->SetSliceIndex(imageDims[i]/2);
+    m_planeWidget[i]->DisplayTextOn();
+
+    // TEST
+    //auto renlist = this->ui->view3->GetRenderWindow()->GetRenderers();
+    //vtkRenderer* pRenderer = renlist->GetFirstRenderer();
+    //m_planeWidget[i]->SetDefaultRenderer(pRenderer);
+
+    m_planeWidget[i]->SetWindowLevel(1358, -27);
+
+    m_planeWidget[i]->GetInteractor()->Enable();  // Important
+    m_planeWidget[i]->On();                       // Important
+    m_planeWidget[i]->InteractionOn();            // Important
   }
 
   ppVTKOGLWidgets[3]->GetInteractor()->Enable();
-
-
-  vtkRenderWindowInteractor *iren = this->ui->view3->GetInteractor();
-  iren->ReInitialize();
-
 
   this->Render();
 
@@ -272,13 +318,9 @@ void DataManager::FileLoad(const QString &files) {
   this->ui->view1->show();
   this->ui->view2->show();
 
-  this->ui->view3->show();
-
   this->ResetViews();
 
-
-
-  this->resliceMode(1);
+  this->resliceMode(1);  // 0 is scroll, 1 is oblique
 }
 
 
