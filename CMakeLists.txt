@@ -15,6 +15,7 @@ set(CMAKE_MODULE_PATH
   "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 include(deploy_qt_windows)
+include(deploy_vtk_windows)
 
 add_subdirectory(WidgetExample)
 add_subdirectory(QuickExample)

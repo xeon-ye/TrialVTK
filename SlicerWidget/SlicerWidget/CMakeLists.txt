@@ -3,7 +3,7 @@ project(SlicerWidget)
 find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
 
 if (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-  add_definitions(-DQT_NO_DEBUG_OUTPUT)
+#  add_definitions(-DQT_NO_DEBUG_OUTPUT)
 endif()
 
 find_package(VTK COMPONENTS
@@ -47,4 +47,6 @@ add_executable(SlicerWidget ${Srcs} ${Hdrs} ${UI_Srcs} ${MOC_Hdrs})
 target_link_libraries(SlicerWidget Qt5::Core Qt5::Gui Qt5::Widgets)
 target_link_libraries(SlicerWidget ${VTK_LIBRARIES})
 
+include(deploy_vtk_windows)
 # windeployqt(SlicerWidget ${CMAKE_CURRENT_BINARY_DIR})
+windeployvtk(SlicerWidget ${CMAKE_CURRENT_BINARY_DIR})

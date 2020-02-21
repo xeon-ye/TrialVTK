@@ -29,36 +29,40 @@ void App::PopulateMenus() {
 }
 
 void App::onLoadClicked() {
-  const QString DEFAULT_DIR_KEY("default_dir");
+  const QString DEFAULT_DIR_KEY("SlicerWidgetDefaultDir");
   QSettings MySettings;
 
   QString selectedDirectory;
 
   FileDialog w;
+  qDebug() << "default_dir:" << MySettings.value(DEFAULT_DIR_KEY).toString();
   w.setDirectory(MySettings.value(DEFAULT_DIR_KEY).toString());
 
   int nMode = w.exec();
   QStringList fnames = w.selectedFiles();
 
-  qDebug() << fnames;
+  if (nMode != 0 && fnames.size() != 0) {
+    qDebug() << fnames;
 
-  datamanager->FileLoad(fnames[0]);
+    datamanager->FileLoad(fnames[0]);
 
-  QString selectedFileOrDirectory = fnames[0];
+    int i = fnames.size();
+    QString selectedFileOrDirectory = fnames.at(i-1);
 
-  QFileInfo fi = QFileInfo(selectedFileOrDirectory);
+    QFileInfo fi = QFileInfo(selectedFileOrDirectory);
 
-  if (fi.isDir()) {
-    QDir currentDir(selectedFileOrDirectory);
-    currentDir.cdUp(); // Maybe necessary
-    MySettings.setValue(DEFAULT_DIR_KEY,
-                        currentDir.absolutePath());
-    qDebug() << currentDir.absolutePath();
-  } else {
-    QDir currentDir = QFileInfo(selectedFileOrDirectory).absoluteDir();
-    qDebug() << currentDir.absolutePath();
-    MySettings.setValue(DEFAULT_DIR_KEY,
-                        currentDir.absolutePath());
+    if (fi.isDir()) {
+      QDir currentDir(selectedFileOrDirectory);
+      currentDir.cdUp(); // Maybe necessary
+      MySettings.setValue(DEFAULT_DIR_KEY,
+                          currentDir.absolutePath());
+      qDebug() << currentDir.absolutePath();
+    } else {
+      QDir currentDir = QFileInfo(selectedFileOrDirectory).absoluteDir();
+      qDebug() << currentDir.absolutePath();
+      MySettings.setValue(DEFAULT_DIR_KEY,
+                          currentDir.absolutePath());
+    }
   }
 }
 
@@ -77,3 +81,4 @@ void App::slotExit() {
 /* tab-width: 2 */
 /* c-basic-offset: 2 */
 /* End: */
+

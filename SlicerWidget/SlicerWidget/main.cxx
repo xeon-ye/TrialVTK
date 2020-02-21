@@ -9,7 +9,16 @@
 
 int main( int argc, char** argv ) {
   // needed to ensure appropriate OpenGL context is created for VTK rendering.
-  QSurfaceFormat::setDefaultFormat(QVTKOpenGLWidget::defaultFormat());
+  // QSurfaceFormat::setDefaultFormat(QVTKOpenGLWidget::defaultFormat());
+
+  QSurfaceFormat format;
+  format.setMajorVersion(3);
+  format.setMinorVersion(2);
+  format.setDepthBufferSize(1);
+  format.setStencilBufferSize(1);
+  format.setProfile(QSurfaceFormat::CoreProfile);
+  QSurfaceFormat::setDefaultFormat(format);
+
 
   // QT Stuff
   QApplication app( argc, argv );

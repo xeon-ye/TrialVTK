@@ -1,3 +1,5 @@
+find_package(VTK 8.2 REQUIRED NO_MODULE)
+
 function(windeployvtk target directory)
   set(VTK_RUNTIME_DEPENDENCIES
     vtkCommonColor-8.2.dll
@@ -85,7 +87,7 @@ function(windeployvtk target directory)
   endforeach(DLL)
 
   foreach(DLL ${VTK_RUNTIME_LIBRARIES})
-    add_custom_command(TARGET ${target} POST_BUILD
+    add_custom_command(TARGET "${target}" POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E
       $<$<NOT:$<CONFIG:Release>>:echo>
       $<$<NOT:$<CONFIG:Release>>:"omitted">
@@ -97,12 +99,10 @@ function(windeployvtk target directory)
 
 
   foreach(DLL ${VTK_RUNTIME_LIBRARIES_DEBUG})
-    add_custom_command(TARGET ${target} POST_BUILD
+    add_custom_command(TARGET "${target}" POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E
       $<$<CONFIG:Release>:echo>
       $<$<CONFIG:Release>:"omitted">
       copy_if_different "${DLL}" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION:${target}>")
   endforeach(DLL)
-
 endfunction()
-
