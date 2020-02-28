@@ -20,6 +20,7 @@ class DataManager;
 #include <vtkResliceImageViewer.h>
 #include <vtkImagePlaneWidget.h>
 #include <vtkImageViewer2.h>
+#include <vtkImageReader2.h>
 
 class DataManager : public QWidget {
   Q_OBJECT
@@ -35,6 +36,7 @@ class DataManager : public QWidget {
  private Q_SLOTS:
 
  private:
+  void FileLoad0(const vtkSmartPointer<vtkImageReader2>& files);
   void resliceMode(int mode);
   void ResetViews();
   Ui::DataManager *ui;

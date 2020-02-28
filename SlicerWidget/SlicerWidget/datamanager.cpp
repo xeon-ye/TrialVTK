@@ -244,7 +244,10 @@ void DataManager::FileLoad(const QString &files) {
       reader = reader1;
     }
   }
+  return FileLoad0(reader);
+}
 
+void DataManager::FileLoad0(const vtkSmartPointer<vtkImageReader2>& reader) {
   int imageDims[3];
   reader->GetOutput()->GetDimensions(imageDims);
 
@@ -255,53 +258,19 @@ void DataManager::FileLoad(const QString &files) {
     this->ui->view3
   };
 
-  vtkRenderWindowInteractor *iren = this->ui->view3->GetInteractor();
-
-#if 0
-  // TESTME - callbacks screw up SEGV
-  vtkSmartPointer<vtkRenderer> ren =
-    vtkSmartPointer<vtkRenderer>::New();
-  vtkNew<vtkGenericOpenGLRenderWindow> renderWindow;
-  this->ui->view3->SetRenderWindow(renderWindow);
-  // Why both a GL and conventional
-  this->ui->view3->GetRenderWindow()->AddRenderer(ren);
-#endif
-
   // Set input and enable interactors
   for (size_t i = 0; i < 3; i++) {
     m_riw[i]->SetInputData(reader->GetOutput());
     ppVTKOGLWidgets[i]->GetInteractor()->Enable();
 
-    // Ugly test
-    //m_planeWidget[i]->SetInteractor( iren );
-    //m_planeWidget[i]->SetPicker(picker);
-
-
-
     m_planeWidget[i]->RestrictPlaneToVolumeOn();
 
-    // TEST AGAIN
-    double color[3] = {0, 0, 0};
-    color[i] = 1;
-    m_planeWidget[i]->GetPlaneProperty()->SetColor(color);
-
-    color[0] /= 4.0;
-    color[1] /= 4.0;
-    color[2] /= 4.0;
-    m_riw[i]->GetRenderer()->SetBackground( color );
-
-    //m_planeWidget[i]->SetTexturePlaneProperty(ipwProp);
     m_planeWidget[i]->TextureInterpolateOff();
     m_planeWidget[i]->SetResliceInterpolateToLinear();
     m_planeWidget[i]->SetInputConnection(reader->GetOutputPort()); // Important
     m_planeWidget[i]->SetPlaneOrientation(i);
     m_planeWidget[i]->SetSliceIndex(imageDims[i]/2);
     m_planeWidget[i]->DisplayTextOn();
-
-    // TEST
-    //auto renlist = this->ui->view3->GetRenderWindow()->GetRenderers();
-    //vtkRenderer* pRenderer = renlist->GetFirstRenderer();
-    //m_planeWidget[i]->SetDefaultRenderer(pRenderer);
 
     m_planeWidget[i]->SetWindowLevel(1358, -27);
 
