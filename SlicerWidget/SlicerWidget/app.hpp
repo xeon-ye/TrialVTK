@@ -13,6 +13,8 @@ class App : public QMainWindow {
   ~App() override;
  public slots:
   virtual void slotExit();
+  void resizeEvent(QResizeEvent* event);
+
  private Q_SLOTS:
   void onLoadClicked();
 

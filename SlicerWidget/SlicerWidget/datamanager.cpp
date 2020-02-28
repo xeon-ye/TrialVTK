@@ -66,7 +66,6 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent), ui(new Ui::DataMana
   }
   for (size_t i = 0; i < 3; i++) {
     ppVTKOGLWidgets[i]->SetRenderWindow(m_riw[i]->GetRenderWindow());
-
     m_riw[i]->SetupInteractor(
       ppVTKOGLWidgets[i]->GetRenderWindow()->GetInteractor());
 
@@ -92,6 +91,8 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent), ui(new Ui::DataMana
     // No data can be set here
     m_riw[i]->SetSliceOrientation(i);
     m_riw[i]->SetResliceModeToAxisAligned();
+
+    // TODO: Figure out how to make riw's passive
   }
 
   // Create 3D viewer
@@ -110,13 +111,10 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent), ui(new Ui::DataMana
 
   this->ui->view3->SetRenderWindow(renderWindow);
 
-  // Why both a GL and conventional
+  // Why both a GL and conventional - edges are CPU rendered
   this->ui->view3->GetRenderWindow()->AddRenderer(ren);
 
   vtkRenderWindowInteractor *iren = this->ui->view3->GetInteractor();
-
-  // Should be disabled!!!
-  // iren->ReInitialize();
 
   for (int i = 0; i < 3; i++) {
     m_planeWidget[i] = vtkSmartPointer<vtkImagePlaneWidget>::New();
@@ -137,20 +135,9 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent), ui(new Ui::DataMana
     m_planeWidget[i]->SetTexturePlaneProperty(ipwProp); // PROPERTY
     m_planeWidget[i]->TextureInterpolateOff();
     m_planeWidget[i]->SetResliceInterpolateToLinear();
-    // m_planeWidget[i]->SetInputConnection(reader->GetOutputPort());
-
-    // m_planeWidget[i]->SetPlaneOrientation(i);
-    // m_planeWidget[i]->SetSliceIndex(imageDims[i]/2);
 
     m_planeWidget[i]->DisplayTextOn();
     m_planeWidget[i]->SetDefaultRenderer(ren); // RENDERER
-    m_planeWidget[i]->SetWindowLevel(1358, -27);
-    m_planeWidget[i]->On();
-    m_planeWidget[i]->InteractionOn();
-
-
-    // Disable interactors
-    m_planeWidget[i]->GetInteractor()->Disable();
   }
 
   // Establish callbacks
@@ -175,7 +162,13 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent), ui(new Ui::DataMana
     m_riw[i]->SetLookupTable(m_riw[0]->GetLookupTable());
     m_planeWidget[i]->GetColorMap()->SetLookupTable(m_riw[0]->GetLookupTable());
     m_planeWidget[i]->SetColorMap(
-      m_riw[i]->GetResliceCursorWidget()->GetResliceCursorRepresentation()->GetColorMap());
+      m_riw[i]->GetResliceCursorWidget()->
+      GetResliceCursorRepresentation()->GetColorMap());
+
+    m_riw[i]->GetInteractor()->Disable();
+
+    // Scales nicely, but complains about missing data
+    //m_riw[i]->GetInteractor()->Enable();
   }
 
   this->ui->view0->show();
@@ -244,10 +237,11 @@ void DataManager::FileLoad(const QString &files) {
       reader = reader1;
     }
   }
-  return FileLoad0(reader);
+  return FileLoad1(reader);
 }
 
-void DataManager::FileLoad0(const vtkSmartPointer<vtkImageReader2>& reader) {
+// Works
+void DataManager::FileLoad1(const vtkSmartPointer<vtkImageReader2>& reader) {
   int imageDims[3];
   reader->GetOutput()->GetDimensions(imageDims);
 
@@ -258,40 +252,76 @@ void DataManager::FileLoad0(const vtkSmartPointer<vtkImageReader2>& reader) {
     this->ui->view3
   };
 
-  // Set input and enable interactors
-  for (size_t i = 0; i < 3; i++) {
+  // Disable renderers
+  for (int i = 0; i < 3; i++) {
+    m_riw[i]->GetInteractor()->EnableRenderOff();
+  }
+  this->ui->view3->GetInteractor()->EnableRenderOff();
+
+  for (int i = 0; i < 3; i++) {
+    m_planeWidget[i]->Off();
+  }
+
+  for (int i = 0; i < 3; i++) {
+    vtkResliceCursorLineRepresentation *rep =
+      vtkResliceCursorLineRepresentation::SafeDownCast(
+        m_riw[i]->GetResliceCursorWidget()->GetRepresentation());
+
+    // Make all reslice image viewers share the same reslice cursor object.
+    m_riw[i]->SetResliceCursor(m_riw[0]->GetResliceCursor());
+
+    // Set normal for reslice planes
+    rep->GetResliceCursorActor()->
+    GetCursorAlgorithm()->SetReslicePlaneNormal(i);
+
+    // Assign data and orientation
     m_riw[i]->SetInputData(reader->GetOutput());
-    ppVTKOGLWidgets[i]->GetInteractor()->Enable();
+    m_riw[i]->SetSliceOrientation(i);
+    m_riw[i]->SetResliceModeToAxisAligned();
 
-    m_planeWidget[i]->RestrictPlaneToVolumeOn();
+  }
 
-    m_planeWidget[i]->TextureInterpolateOff();
+  vtkRenderWindowInteractor *iren = this->ui->view3->GetInteractor();
+
+  for (int i = 0; i < 3; i++) {
+    m_planeWidget[i]->SetInteractor( iren );
+    m_planeWidget[i]->RestrictPlaneToVolumeOn();  // Default
+
+    //  m_planeWidget[i]->TextureInterpolateOff();
+    m_planeWidget[i]->TextureInterpolateOn();
     m_planeWidget[i]->SetResliceInterpolateToLinear();
-    m_planeWidget[i]->SetInputConnection(reader->GetOutputPort()); // Important
+    m_planeWidget[i]->SetInputConnection(reader->GetOutputPort());
     m_planeWidget[i]->SetPlaneOrientation(i);
     m_planeWidget[i]->SetSliceIndex(imageDims[i]/2);
     m_planeWidget[i]->DisplayTextOn();
-
-    m_planeWidget[i]->SetWindowLevel(1358, -27);
-
+    // TODO: Call SetWindowLevel() using statistics from data
+    m_planeWidget[i]->UpdatePlacement();
     m_planeWidget[i]->GetInteractor()->Enable();  // Important
-    m_planeWidget[i]->On();                       // Important
-    m_planeWidget[i]->InteractionOn();            // Important
+    m_planeWidget[i]->On();
+    m_planeWidget[i]->InteractionOn();
   }
 
+  for (int i = 0; i < 3; i++) {
+    m_riw[i]->GetRenderer()->ResetCamera();
+    m_riw[i]->GetInteractor()->EnableRenderOn(); // calls this->RenderWindow->Render()
+    // Not enough to just say Enable
+    // m_riw[i]->GetInteractor()->Enable();
+  }
+
+  for (size_t i = 0; i < 3; i++) {
+    ppVTKOGLWidgets[i]->GetInteractor()->Enable();
+  }
   ppVTKOGLWidgets[3]->GetInteractor()->Enable();
 
-  this->Render();
+  // Interactor for other views are enabled through reslice image widgets
+  this->ui->view3->GetInteractor()->EnableRenderOn();
 
-  this->ui->view0->show();
-  this->ui->view1->show();
-  this->ui->view2->show();
+  // view0 - view3 are already visible
 
-  this->ResetViews();
+  this->ResetViews();  // renders everything
 
-  this->resliceMode(1);  // 0 is scroll, 1 is oblique
+  this->resliceMode(1);  // Only renders again the 3 reslice image planes
 }
-
 
 DataManager::~DataManager() {
   delete ui;

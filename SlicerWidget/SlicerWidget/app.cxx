@@ -76,9 +76,14 @@ void App::slotExit() {
   qApp->exit();
 }
 
+void App::resizeEvent(QResizeEvent* event) {
+  qDebug() << "resizeEvent";
+  QMainWindow::resizeEvent(event);
+  datamanager->Render();// Your code here.
+}
+
 /* Local variables: */
 /* indent-tabs-mode: nil */
 /* tab-width: 2 */
 /* c-basic-offset: 2 */
 /* End: */
-
