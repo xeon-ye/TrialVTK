@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>App</class>
+ <class>Registration</class>
  <widget class="QMainWindow" name="Registration">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>801</width>
-    <height>600</height>
+    <width>1125</width>
+    <height>840</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,7 +18,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -115,7 +115,7 @@
             <item>
              <widget class="QGroupBox" name="groupBox0">
               <property name="title">
-               <string>GroupBox</string>
+               <string>Registration Parameters</string>
               </property>
              </widget>
             </item>
@@ -124,6 +124,45 @@
               <property name="title">
                <string>GroupBox</string>
               </property>
+              <widget class="QPushButton" name="btnCancel">
+               <property name="geometry">
+                <rect>
+                 <x>60</x>
+                 <y>200</y>
+                 <width>171</width>
+                 <height>44</height>
+                </rect>
+               </property>
+               <property name="text">
+                <string>Cancel</string>
+               </property>
+              </widget>
+              <widget class="QWidget" name="">
+               <property name="geometry">
+                <rect>
+                 <x>50</x>
+                 <y>70</y>
+                 <width>671</width>
+                 <height>46</height>
+                </rect>
+               </property>
+               <layout class="QHBoxLayout" name="horizontalLayout_3">
+                <item>
+                 <widget class="QPushButton" name="btnReg">
+                  <property name="text">
+                   <string>Register</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QProgressBar" name="progressBar">
+                  <property name="value">
+                   <number>24</number>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
              </widget>
             </item>
            </layout>
@@ -141,7 +180,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>801</width>
+     <width>1125</width>
      <height>44</height>
     </rect>
    </property>

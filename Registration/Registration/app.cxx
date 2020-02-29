@@ -4,6 +4,8 @@
 #include <Registration/ui_app.h>
 #include <Registration/reslicecallback.h>
 
+// #include <Registration/runnable.hpp>
+
 #include <QSettings>
 #include <QDebug>
 
@@ -38,8 +40,49 @@
 
 App::~App() {}
 
+void App::onRegClick() {
+  ui->btnReg->setEnabled(false);
+  ui->progressBar->setValue(0);
+  stopped = false;
+  QMap<QString, QVariant> dataMap;
+  regrunner =
+      new RegRunner(this, dataMap, nullptr, nullptr,
+                    &retval, &stopped);
+
+  regrunner->setAutoDelete(false);
+  QThreadPool::globalInstance()->start(regrunner);
+
+  //calcDelegate = &MainWindow::on_cancel_click;
+  ui->btnReg->setText("Cancel");
+  ui->btnReg->setEnabled(true);
+
+  checkIfDone();
+}
+
+void App::updateProgressBar(int progressPercent) {
+  ui->progressBar->setValue(progressPercent);
+}
+
+void App::checkIfDone() {
+  // What if cancel happens before
+  if (QThreadPool::globalInstance()->activeThreadCount()) {
+    QTimer::singleShot(100, this, SLOT(checkIfDone()));
+  } else {
+    if (!stopped) {
+      stopped = true;
+      //updateChildWidgets();
+      //updateFieldWidget();
+      //calcDelegate = &MainWindow::on_calc_click;
+    }
+    if (regrunner) {
+      delete regrunner;
+      regrunner = nullptr;
+    }
+  }
+}
+
 void App::SetupUI() {
-  this->ui = new Ui_App;
+  this->ui = new Ui_Registration;
   this->ui->setupUi(this);
 }
 
@@ -138,7 +181,7 @@ void App::setupMR() {
   }
 
   // Establish callbacks
-  vtkSmartPointer<vtkResliceCursorCallback> cbk =
+  cbk =
     vtkSmartPointer<vtkResliceCursorCallback>::New();
 
   for (int i = 0; i < 3; i++) {
@@ -172,7 +215,6 @@ void App::setupMR() {
   this->ui->mrView2->show();
 
   this->Render();
-
 }
 
 void App::setupUS() {
@@ -211,6 +253,8 @@ void App::setupUS() {
     // Make all reslice image viewers share the same reslice cursor object.
     m_riw_us[i]->SetResliceCursor(m_riw_us[0]->GetResliceCursor());
 
+    // TODO: Make them follow but share different cursor object!!!!
+
     rep->GetResliceCursorActor()->
     GetCursorAlgorithm()->SetReslicePlaneNormal(i);
 
@@ -232,13 +276,15 @@ void App::setupUS() {
 
 
   // Establish callbacks - needs to impact MR as well
-  vtkSmartPointer<vtkResliceCursorCallback> cbk =
-    vtkSmartPointer<vtkResliceCursorCallback>::New();
+  if (!cbk) {
+    cbk = vtkSmartPointer<vtkResliceCursorCallback>::New();
+    qDebug() << "should never happen";
+  }
 
   for (int i = 0; i < 3; i++) {
     // Can we have multiple callbacks????
-    cbk->IPW[i] = nullptr;//m_planeWidget[i];
-    cbk->RCW[i] = m_riw_us[i]->GetResliceCursorWidget();
+    //cbk->IPW[i] = nullptr;//m_planeWidget[i];
+    cbk->USRCW[i] = m_riw_us[i]->GetResliceCursorWidget();
     m_riw_us[i]->GetResliceCursorWidget()->AddObserver(
       vtkResliceCursorWidget::ResliceAxesChangedEvent, cbk);
     m_riw_us[i]->GetResliceCursorWidget()->AddObserver(
@@ -354,6 +400,7 @@ void App::onLoadUSClicked() {
 
 
 App::App(int argc, char* argv[]) {
+  regrunner = nullptr;
   m_riw[0] = m_riw[1] = m_riw[2] = nullptr;
   m_planeWidget[0] = m_planeWidget[1] = m_planeWidget[2] = nullptr;
 
@@ -387,7 +434,6 @@ void App::Render() {
   }
 
   this->ui->mrView3D->GetRenderWindow()->Render();
-
 }
 
 void App::FileLoad(const QString &files, int type) {

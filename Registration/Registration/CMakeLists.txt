@@ -25,6 +25,7 @@ set( Srcs
   main.cxx
   app.cxx
   filedialog.cxx
+  runnable.cpp
 )
 
 set( Hdrs app.hpp

@@ -1,9 +1,17 @@
 #pragma once
 
 #include <QMainWindow>
-#include <QtWidgets/QHBoxLayout>
+#include <QtCore>
+#include <QtGui>
+#include <QDebug>
+#include <QMap>
+#include <QVector>
 
-class Ui_App;
+class Ui_Registration;
+
+#include <Registration/reslicecallback.h>
+
+#include <Registration/runnable.hpp>
 
 #include <vtkSmartPointer.h>
 #include <vtkResliceImageViewer.h>
@@ -23,26 +31,41 @@ class App : public QMainWindow {
   void resizeEvent(QResizeEvent* event);
   void FileLoad(const QString &files, int type=0);
 
+
  private Q_SLOTS:
   void Render();
   void onLoadMRClicked();
   void onLoadUSClicked();
 
+  void checkIfDone();
+  void onRegClick();
+  void updateProgressBar(int progressPercent);
+
  private:
   void setupMR();
   void setupUS();
+
   void SetupUI();
   void PopulateMenus();
+
   void FileLoadMR(const vtkSmartPointer<vtkImageReader2>& files);
   void FileLoadUS(const vtkSmartPointer<vtkImageReader2>& files);
+
   void resliceMode(int mode);
   void ResetViews();
 
  public:
   // Designer form
-  Ui_App *ui;
+  Ui_Registration *ui;
 
  private:
+  volatile bool stopped;
+
+  vtkSmartPointer<vtkResliceCursorCallback> cbk;
+
+  int retval;
+  RegRunner* regrunner;
+
   // MR view stuff
   vtkSmartPointer<vtkImageData> m_dummy;
   vtkSmartPointer<vtkResliceImageViewer> m_riw[3];

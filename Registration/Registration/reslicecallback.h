@@ -1,3 +1,6 @@
+// TODO: Synchronize cursor widget
+// TODO: Synchronize zoom
+
 #pragma once
 
 #include <vtkCommand.h>
@@ -21,15 +24,19 @@ class vtkResliceCursorCallback : public vtkCommand {
     return new vtkResliceCursorCallback;
   }
 
-  void Execute( vtkObject *caller, unsigned long ev,
-                void *callData ) override {
-    qDebug() << "callback";
+  void Execute(vtkObject *caller, unsigned long ev,
+               void *callData ) override {
     if (ev == vtkResliceCursorWidget::WindowLevelEvent ||
         ev == vtkCommand::WindowLevelEvent ||
         ev == vtkResliceCursorWidget::ResliceThicknessChangedEvent) {
       // Render reslice cursor widgets
       for (int i = 0; i < 3; i++) {
-        this->RCW[i]->Render();
+        if (this->RCW[i]) {
+          this->RCW[i]->Render();
+        }
+        if (this->USRCW[i]){
+          this->USRCW[i]->Render();
+        }
       }
       // Render image-plane widget
       if (this->IPW[0]) {
@@ -94,14 +101,25 @@ class vtkResliceCursorCallback : public vtkCommand {
 
           // If the reslice plane has modified, update it on the 3D widget
           this->IPW[i]->UpdatePlacement();
+
+          // Updata other modality
+
+
         }
       }
     }
 
     // Render everything
     for (int i = 0; i < 3; i++) {
-      this->RCW[i]->Render();
+      if (this->RCW[i]) {
+        this->RCW[i]->Render();
+      }
+      if (this->USRCW[i]) {
+        this->USRCW[i]->Render();
+      }
     }
+
+
 
     // Any of the in-plane widgets will do
     if (this->IPW[0]) {
@@ -111,7 +129,9 @@ class vtkResliceCursorCallback : public vtkCommand {
 
   vtkResliceCursorCallback() {
     IPW[0] = IPW[1] = IPW[2] = nullptr;
+    RCW[0] = RCW[1] = RCW[2] = nullptr;
   }
   vtkImagePlaneWidget* IPW[3];
   vtkResliceCursorWidget *RCW[3];
+  vtkResliceCursorWidget *USRCW[3];
 };
