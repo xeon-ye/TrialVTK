@@ -41,7 +41,8 @@
 
 #include <vtkResliceImageViewer.h>
 
-DataManager::DataManager(QWidget *parent) : QWidget(parent), ui(new Ui::DataManager) {
+DataManager::DataManager(QWidget *parent) : QWidget(parent),
+  ui(new Ui::DataManager) {
   m_riw[0] = nullptr;
   m_riw[1] = nullptr;
   m_riw[2] = nullptr;
@@ -76,6 +77,10 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent), ui(new Ui::DataMana
   // Disable interactor
   ppVTKOGLWidgets[3]->GetInteractor()->Disable();
 
+  // Initialize dummy data for reslice image widgets
+  this->m_dummy = vtkSmartPointer<vtkImageData>::New();
+
+
   // Setup cursors and orientation of reslice image widgets
   for (int i = 0; i < 3; i++) {
     vtkResliceCursorLineRepresentation *rep =
@@ -88,11 +93,10 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent), ui(new Ui::DataMana
     rep->GetResliceCursorActor()->
     GetCursorAlgorithm()->SetReslicePlaneNormal(i);
 
-    // No data can be set here
     m_riw[i]->SetSliceOrientation(i);
     m_riw[i]->SetResliceModeToAxisAligned();
-
-    // TODO: Figure out how to make riw's passive
+    // Set empty data - otherwise we cannot enable widgets
+    m_riw[i]->SetInputData(this->m_dummy);
   }
 
   // Create 3D viewer
@@ -111,7 +115,7 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent), ui(new Ui::DataMana
 
   this->ui->view3->SetRenderWindow(renderWindow);
 
-  // Why both a GL and conventional - edges are CPU rendered
+  // Why both a GL and conventional -> edges are CPU rendered
   this->ui->view3->GetRenderWindow()->AddRenderer(ren);
 
   vtkRenderWindowInteractor *iren = this->ui->view3->GetInteractor();
@@ -165,14 +169,8 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent), ui(new Ui::DataMana
       m_riw[i]->GetResliceCursorWidget()->
       GetResliceCursorRepresentation()->GetColorMap());
 
-    // Disable callbacks
-    m_riw[i]->GetInteractor()->Disable();
-
-    // Use dummy data to please widgets
-    this->m_dummy = vtkSmartPointer<vtkImageData>::New();
-    m_riw[i]->SetInputData(this->m_dummy);
-
-    // Backgrounds are updated
+    // Buffers are updated when resizing.
+    // Otherwise uninitialized memory is shown.
     m_riw[i]->GetInteractor()->Enable();
   }
 
@@ -283,7 +281,6 @@ void DataManager::FileLoad1(const vtkSmartPointer<vtkImageReader2>& reader) {
     m_riw[i]->SetInputData(reader->GetOutput());
     m_riw[i]->SetSliceOrientation(i);
     m_riw[i]->SetResliceModeToAxisAligned();
-
   }
 
   vtkRenderWindowInteractor *iren = this->ui->view3->GetInteractor();
@@ -292,13 +289,13 @@ void DataManager::FileLoad1(const vtkSmartPointer<vtkImageReader2>& reader) {
     m_planeWidget[i]->SetInteractor( iren );
     m_planeWidget[i]->RestrictPlaneToVolumeOn();  // Default
 
-    //  m_planeWidget[i]->TextureInterpolateOff();
     m_planeWidget[i]->TextureInterpolateOn();
     m_planeWidget[i]->SetResliceInterpolateToLinear();
     m_planeWidget[i]->SetInputConnection(reader->GetOutputPort());
     m_planeWidget[i]->SetPlaneOrientation(i);
     m_planeWidget[i]->SetSliceIndex(imageDims[i]/2);
     m_planeWidget[i]->DisplayTextOn();
+
     // TODO: Call SetWindowLevel() using statistics from data
     m_planeWidget[i]->UpdatePlacement();
     m_planeWidget[i]->GetInteractor()->Enable();  // Important
@@ -309,13 +306,12 @@ void DataManager::FileLoad1(const vtkSmartPointer<vtkImageReader2>& reader) {
   for (int i = 0; i < 3; i++) {
     m_riw[i]->GetRenderer()->ResetCamera();
     m_riw[i]->GetInteractor()->EnableRenderOn(); // calls this->RenderWindow->Render()
-    // Not enough to just say Enable
-    // m_riw[i]->GetInteractor()->Enable();
   }
 
   for (size_t i = 0; i < 3; i++) {
     ppVTKOGLWidgets[i]->GetInteractor()->Enable();
   }
+
   ppVTKOGLWidgets[3]->GetInteractor()->EnableRenderOn();
 
   // Reset camera for the renderer - otherwise it is set using dummy data
