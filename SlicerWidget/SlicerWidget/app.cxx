@@ -77,7 +77,7 @@ void App::slotExit() {
 }
 
 void App::resizeEvent(QResizeEvent* event) {
-  qDebug() << "resizeEvent";
+  //qDebug() << "resizeEvent";
   QMainWindow::resizeEvent(event);
   datamanager->Render();// Your code here.
 }

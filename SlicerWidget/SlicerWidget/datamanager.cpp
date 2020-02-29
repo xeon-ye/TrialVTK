@@ -165,10 +165,15 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent), ui(new Ui::DataMana
       m_riw[i]->GetResliceCursorWidget()->
       GetResliceCursorRepresentation()->GetColorMap());
 
+    // Disable callbacks
     m_riw[i]->GetInteractor()->Disable();
 
-    // Scales nicely, but complains about missing data
-    //m_riw[i]->GetInteractor()->Enable();
+    // Use dummy data to please widgets
+    this->m_dummy = vtkSmartPointer<vtkImageData>::New();
+    m_riw[i]->SetInputData(this->m_dummy);
+
+    // Backgrounds are updated
+    m_riw[i]->GetInteractor()->Enable();
   }
 
   this->ui->view0->show();
@@ -311,7 +316,10 @@ void DataManager::FileLoad1(const vtkSmartPointer<vtkImageReader2>& reader) {
   for (size_t i = 0; i < 3; i++) {
     ppVTKOGLWidgets[i]->GetInteractor()->Enable();
   }
-  ppVTKOGLWidgets[3]->GetInteractor()->Enable();
+  ppVTKOGLWidgets[3]->GetInteractor()->EnableRenderOn();
+
+  // Reset camera for the renderer - otherwise it is set using dummy data
+  m_planeWidget[0]->GetDefaultRenderer()->ResetCamera();
 
   // Interactor for other views are enabled through reslice image widgets
   this->ui->view3->GetInteractor()->EnableRenderOn();
