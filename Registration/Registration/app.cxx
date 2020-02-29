@@ -40,7 +40,7 @@
 
 App::~App() {}
 
-void App::onRegClick() {
+void App::onRegStartClick() {
   ui->btnReg->setEnabled(false);
   ui->progressBar->setValue(0);
   stopped = false;
@@ -52,11 +52,21 @@ void App::onRegClick() {
   regrunner->setAutoDelete(false);
   QThreadPool::globalInstance()->start(regrunner);
 
-  //calcDelegate = &MainWindow::on_cancel_click;
+  regDelegate = &App::onCancelClick;
   ui->btnReg->setText("Cancel");
   ui->btnReg->setEnabled(true);
 
   checkIfDone();
+}
+
+void App::onRegClick() {
+  (this->*regDelegate)();
+}
+
+void App::onCancelClick() {
+  printf("Canceling\n");
+  // Do something that interrupts registration
+  regDelegate = &App::onRegClick;
 }
 
 void App::updateProgressBar(int progressPercent) {
@@ -70,9 +80,9 @@ void App::checkIfDone() {
   } else {
     if (!stopped) {
       stopped = true;
-      //updateChildWidgets();
-      //updateFieldWidget();
-      //calcDelegate = &MainWindow::on_calc_click;
+      updateChildWidgets();
+      // Update widget with results
+      regDelegate = &App::onRegStartClick;
     }
     if (regrunner) {
       delete regrunner;
@@ -80,6 +90,20 @@ void App::checkIfDone() {
     }
   }
 }
+
+void App::updateChildWidgets() {
+  if (stopped) {
+    ui->btnReg->setEnabled(false);
+    ui->btnReg->setText("R&egister");
+    ui->btnReg->setEnabled(true);
+    ui->progressBar->reset();
+  } else {
+    ui->btnReg->setEnabled(false);
+    ui->progressBar->reset();
+  }
+}
+
+
 
 void App::SetupUI() {
   this->ui = new Ui_Registration;
@@ -320,6 +344,8 @@ void App::PopulateMenus() {
           this, SLOT(onLoadMRClicked()));
   connect(this->ui->actionOpenUS, SIGNAL(triggered()),
           this, SLOT(onLoadUSClicked()));
+  connect(ui->btnReg, &QPushButton::clicked,
+          this, &App::onRegClick);
 }
 
 void App::onLoadMRClicked() {
@@ -411,6 +437,9 @@ App::App(int argc, char* argv[]) {
   this->setupUS();
 
   this->PopulateMenus();
+
+  regDelegate = &App::onRegStartClick;
+
 }
 
 void App::slotExit() {

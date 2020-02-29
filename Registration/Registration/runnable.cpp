@@ -13,6 +13,7 @@ RegRunner::RegRunner(QWidget *receiver,
 }
 
 void RegRunner::run() {
+  //*stopped = true;
   // Signal complete (just in case)
   QMetaObject::invokeMethod(receiver, "updateProgressBar",
                             Qt::QueuedConnection,

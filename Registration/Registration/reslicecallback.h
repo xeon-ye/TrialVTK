@@ -34,7 +34,7 @@ class vtkResliceCursorCallback : public vtkCommand {
         if (this->RCW[i]) {
           this->RCW[i]->Render();
         }
-        if (this->USRCW[i]){
+        if (this->USRCW[i]) {
           this->USRCW[i]->Render();
         }
       }

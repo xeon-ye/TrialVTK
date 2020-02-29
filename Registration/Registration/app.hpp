@@ -33,12 +33,17 @@ class App : public QMainWindow {
 
 
  private Q_SLOTS:
+  void updateChildWidgets();
   void Render();
   void onLoadMRClicked();
   void onLoadUSClicked();
 
   void checkIfDone();
+
   void onRegClick();
+  void onRegStartClick();
+  void onCancelClick();
+
   void updateProgressBar(int progressPercent);
 
  private:
@@ -60,6 +65,8 @@ class App : public QMainWindow {
 
  private:
   volatile bool stopped;
+
+  void (App::*regDelegate) ();
 
   vtkSmartPointer<vtkResliceCursorCallback> cbk;
 
