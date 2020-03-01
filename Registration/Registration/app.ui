@@ -196,7 +196,7 @@
                           <item>
                            <widget class="QPushButton" name="btnReg">
                             <property name="text">
-                             <string>PushButton</string>
+                             <string>Register</string>
                             </property>
                            </widget>
                           </item>
@@ -248,6 +248,26 @@
                             <property name="text">
                              <string>Three</string>
                             </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QComboBox"
+                                   name="cboxPlane">
+                            <item>
+                             <property name="text">
+                              <string extracomment="Sagittal">0</string>
+                             </property>
+                            </item>
+                            <item>
+                             <property name="text">
+                              <string extracomment="Coronal">1</string>
+                             </property>
+                            </item>
+                            <item>
+                             <property name="text">
+                              <string extracomment="Axial">2</string>
+                             </property>
+                            </item>
                            </widget>
                           </item>
                          </layout>

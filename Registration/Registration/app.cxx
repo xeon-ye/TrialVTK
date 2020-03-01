@@ -11,6 +11,7 @@
 
 #include <Registration/ui_app.h>
 #include <Registration/reslicecallback.h>
+#include <Registration/utils.hpp>
 
 // #include <Registration/runnable.hpp>
 
@@ -61,9 +62,8 @@ void App::onRegStartClick() {
   ui->btnReg->setEnabled(false);
   ui->progressBar->setValue(0);
   stopped = false;
-  QMap<QString, QVariant> dataMap;
   regrunner =
-      new RegRunner(this, dataMap, nullptr, nullptr,
+      new RegRunner(this, data, nullptr, nullptr,
                     &retval, &stopped);
 
   regrunner->setAutoDelete(false);
@@ -127,43 +127,78 @@ void App::SetupUI() {
   this->ui->setupUi(this);
 
   this->ui->sliderZoom->setMinimum(50);
-  this->ui->sliderZoom->setRange(0, 600);
+  this->ui->sliderZoom->setRange(0, 800);
   this->ui->sliderZoom->setSingleStep(10);
   this->ui->sliderZoom->setValue(100);
+  this->ui->cboxPlane->setCurrentIndex(2);
 }
 
-void App::dumpImageBackBuffer() {
+void App::dumpImages() {
+  int index = this->ui->cboxPlane->currentIndex();
+  this->dumpImageBackBuffers(index);
+}
+void App::dumpImageBackBuffers(int index) {
+  assert(m_riw[index]);
+  assert(m_riw_us[index]);
 
-  vtkRenderWindow* renderWindow = m_riw[2]->GetRenderWindow();
+  vtkRenderWindow* renderWindow0 = m_riw[index]->GetRenderWindow();
+  vtkRenderWindow* renderWindow1 = m_riw_us[index]->GetRenderWindow();
 
-  renderWindow->Render();
+  renderWindow0->Render();
+  renderWindow1->Render();
 
   // Screenshot
-  vtkSmartPointer<vtkWindowToImageFilter> windowToImageFilter =
+  vtkSmartPointer<vtkWindowToImageFilter> windowToImageFilter0 =
       vtkSmartPointer<vtkWindowToImageFilter>::New();
-  windowToImageFilter->SetInput(renderWindow);
+  vtkSmartPointer<vtkWindowToImageFilter> windowToImageFilter1 =
+      vtkSmartPointer<vtkWindowToImageFilter>::New();
+  windowToImageFilter0->SetInput(renderWindow0);
+  windowToImageFilter1->SetInput(renderWindow1);
+
 #if VTK_MAJOR_VERSION >= 8 || VTK_MAJOR_VERSION == 8 && VTK_MINOR_VERSION >= 90
-  windowToImageFilter->SetScale(1); // image quality
+  windowToImageFilter0->SetScale(1); // image quality
+  windowToImageFilter1->SetScale(1); // image quality
 #else
-  windowToImageFilter->SetMagnification(1); //image quality
+  windowToImageFilter0->SetMagnification(1); //image quality
+  windowToImageFilter1->SetMagnification(1); //image quality
 #endif
-  windowToImageFilter->SetInputBufferTypeToRGBA();
+  windowToImageFilter0->SetInputBufferTypeToRGBA();
+  windowToImageFilter1->SetInputBufferTypeToRGBA();
 
-  int oldSB = renderWindow->GetSwapBuffers();
-  renderWindow->SwapBuffersOff();
+  int oldSB0 = renderWindow0->GetSwapBuffers();
+  int oldSB1 = renderWindow1->GetSwapBuffers();
 
-  windowToImageFilter->ReadFrontBufferOff(); // read from the back buffer
-  windowToImageFilter->Update();
+  renderWindow0->SwapBuffersOff();
+  renderWindow1->SwapBuffersOff();
 
-  renderWindow->SetSwapBuffers(oldSB);
+  windowToImageFilter0->ReadFrontBufferOff(); // read from the back buffer
+  windowToImageFilter1->ReadFrontBufferOff(); // read from the back buffer
+  windowToImageFilter0->Update();
+  windowToImageFilter1->Update();
+
+  renderWindow0->SetSwapBuffers(oldSB0);
+  renderWindow1->SetSwapBuffers(oldSB1);
 
   vtkSmartPointer<vtkPNGWriter> writer =
       vtkSmartPointer<vtkPNGWriter>::New();
-  writer->SetFileName("screenshot_backbuffer.png");
-  writer->SetInputConnection(windowToImageFilter->GetOutputPort());
+  std::string filename = string_format("screenshotMR%02d.png", index);
+  writer->SetFileName(filename.c_str());
+  writer->SetInputConnection(windowToImageFilter0->GetOutputPort());
   writer->Write();
 
-  renderWindow->Render();
+  data.insert("mr", filename.c_str());
+
+
+  filename = string_format("screenshotUS%02d.png", index);
+
+  writer->SetFileName(filename.c_str());
+  writer->SetInputConnection(windowToImageFilter1->GetOutputPort());
+  writer->Write();
+
+  data.insert("us", filename.c_str());
+
+  renderWindow0->Render();
+  renderWindow1->Render();
 }
 
 void App::dumpImageOffscreen() {
@@ -188,18 +223,6 @@ void App::dumpImageOffscreen() {
 
 
   renderWindow->Render();
-
-  // Create an (empty) image at the window size
-  int *size = renderWindow->GetSize();
-  std::cout << "size: " << size[0] << "x" << size[1] << std::endl;
-
-  // Copy data image
-  vtkNew<vtkImageData> image;
-  image->SetDimensions(size[0], size[1], 1);
-  image->AllocateScalars(VTK_UNSIGNED_CHAR, 3);
-  renderWindow->GetPixelData(0, 0, size[0] - 1, size[1] - 1, 0,
-                             vtkArrayDownCast<vtkUnsignedCharArray>(image->GetPointData()->GetScalars()));
-
 
   vtkSmartPointer<vtkWindowToImageFilter> windowToImageFilter =
       vtkSmartPointer<vtkWindowToImageFilter>::New();
@@ -464,7 +487,7 @@ void App::PopulateMenus() {
   connect(ui->sliderZoom, &QSlider::valueChanged,
           this, &App::setZoom);
   connect(ui->btnOne, &QPushButton::clicked,
-          this, &App::dumpImageBackBuffer);
+          this, &App::dumpImages);
   connect(ui->btnTwo, &QPushButton::clicked,
           this, &App::dumpImageOffscreen);
 }

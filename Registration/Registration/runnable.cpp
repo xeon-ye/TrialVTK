@@ -1,4 +1,5 @@
 #include <Registration/runnable.hpp>
+#include <QDebug>
 
 RegRunner::RegRunner(QWidget *receiver,
                      QMap<QString, QVariant> data,
@@ -15,6 +16,13 @@ RegRunner::RegRunner(QWidget *receiver,
 void RegRunner::run() {
   //*stopped = true;
   // Signal complete (just in case)
+  qDebug() << "convert";
+  system("convert ./screenshotUS02.png -colorspace Gray moving.png");
+  qDebug() << "convert";
+  system("convert ./screenshotMR02.png -colorspace Gray fixed.png");
+  qDebug() << "register";
+  system("./MIRegistration ./moving.png ./fixed.png output.png");
+
   QMetaObject::invokeMethod(receiver, "updateProgressBar",
                             Qt::QueuedConnection,
                             Q_ARG(int, 100));

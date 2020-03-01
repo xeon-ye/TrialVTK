@@ -32,7 +32,8 @@ class App : public QMainWindow {
   void FileLoad(const QString &files, int type=0);
   void setZoom(int zoom);
 
-  void dumpImageBackBuffer();
+  void dumpImages();
+  void dumpImageBackBuffers(int index);
   void dumpImageOffscreen();
 
  private Q_SLOTS:
@@ -67,6 +68,7 @@ class App : public QMainWindow {
   Ui_Registration *ui;
 
  private:
+  QVariantMap data;
   volatile bool stopped;
 
   void (App::*regDelegate) ();
