@@ -143,9 +143,9 @@ void App::dumpImageBackBuffer() {
       vtkSmartPointer<vtkWindowToImageFilter>::New();
   windowToImageFilter->SetInput(renderWindow);
 #if VTK_MAJOR_VERSION >= 8 || VTK_MAJOR_VERSION == 8 && VTK_MINOR_VERSION >= 90
-  windowToImageFilter->SetScale(2); // image quality
+  windowToImageFilter->SetScale(1); // image quality
 #else
-  windowToImageFilter->SetMagnification(2); //image quality
+  windowToImageFilter->SetMagnification(1); //image quality
 #endif
   windowToImageFilter->SetInputBufferTypeToRGBA();
 
@@ -470,8 +470,6 @@ void App::PopulateMenus() {
 }
 
 void App::setZoom(int zoom) {
-  qDebug() << zoom;
-
   double dZoom = double(zoom)/100.0;
   for (int i = 0; i < 3; i++) {
     m_riw[i]->GetRenderer()->ResetCamera();
