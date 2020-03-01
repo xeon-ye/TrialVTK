@@ -10,6 +10,7 @@
 #include <vtkPlaneSource.h>
 #include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
+#include <vtkResliceCursor.h>
 #include <vtkResliceCursorActor.h>
 #include <vtkResliceCursorLineRepresentation.h>
 #include <vtkResliceCursorPolyDataAlgorithm.h>
@@ -26,6 +27,7 @@ class vtkResliceCursorCallback : public vtkCommand {
 
   void Execute(vtkObject *caller, unsigned long ev,
                void *callData ) override {
+
     if (ev == vtkResliceCursorWidget::WindowLevelEvent ||
         ev == vtkCommand::WindowLevelEvent ||
         ev == vtkResliceCursorWidget::ResliceThicknessChangedEvent) {
@@ -81,7 +83,7 @@ class vtkResliceCursorCallback : public vtkCommand {
 
       // Although the return value is not used, we keep the get calls
       // in case they had side-effects
-      rep->GetResliceCursorActor()->GetCursorAlgorithm()->GetResliceCursor();
+      auto cursor = rep->GetResliceCursorActor()->GetCursorAlgorithm()->GetResliceCursor();
 
       // Update 3D widget
       for (int i = 0; i < 3; i++) {
@@ -102,9 +104,22 @@ class vtkResliceCursorCallback : public vtkCommand {
           // If the reslice plane has modified, update it on the 3D widget
           this->IPW[i]->UpdatePlacement();
 
-          // Updata other modality
+          // Check if this causes Invalid extent
+          if (true) {
 
+            // Updata other modality - only cursor is updated
+            if (rep == this->RCW[i]->GetResliceCursorRepresentation()) {
+              // MR is resliced, update US
 
+              // Works
+              vtkResliceCursor* target =
+                this->USRCW[i]->GetResliceCursorRepresentation()->
+                GetResliceCursor();
+              target->SetCenter(cursor->GetCenter());
+
+              // TODO: Figure out to copy plane also
+            }
+          }
         }
       }
     }
@@ -118,8 +133,6 @@ class vtkResliceCursorCallback : public vtkCommand {
         this->USRCW[i]->Render();
       }
     }
-
-
 
     // Any of the in-plane widgets will do
     if (this->IPW[0]) {

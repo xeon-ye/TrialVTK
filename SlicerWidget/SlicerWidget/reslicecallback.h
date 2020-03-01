@@ -22,7 +22,6 @@ class vtkResliceCursorCallback : public vtkCommand {
 
   void Execute( vtkObject *caller, unsigned long ev,
                 void *callData ) override {
-    qDebug() << "callback";
     if (ev == vtkResliceCursorWidget::WindowLevelEvent ||
         ev == vtkCommand::WindowLevelEvent ||
         ev == vtkResliceCursorWidget::ResliceThicknessChangedEvent) {

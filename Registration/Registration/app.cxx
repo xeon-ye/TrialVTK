@@ -1,6 +1,14 @@
 // TODO: Fix callback such that US doesn't rescale 3D
 //       Possibility to follow MR
 
+// Overload vtkInteractorStyleImage::OnMouseWheelForward and post events to
+// other modality
+// or imageStyle->AddObserver(vtkCommand::MouseMoveEvent, callback);
+
+
+// renderer->ResetCamera();
+// renderer->GetActiveCamera()->Zoom(1.5);
+
 #include <Registration/ui_app.h>
 #include <Registration/reslicecallback.h>
 
@@ -15,17 +23,24 @@
 #include <Registration/app.hpp>
 #include <Registration/filedialog.hpp>
 
+#include <vtkAssemblyPath.h>
+
+#include <vtkCamera.h>
 #include <vtkCellPicker.h>
 #include <vtkDICOMImageReader.h>
 #include <vtkGenericOpenGLRenderWindow.h>
+#include <vtkImageActor.h>
 #include <vtkImageData.h>
 #include <vtkImageReader2.h>
-#include <vtkInteractorStyleRubberBandZoom.h>
 #include <vtkMetaImageReader.h>
 #include <vtkNrrdReader.h>
 
 #include <vtkPlane.h>
+#include <vtkPNGWriter.h>
+#include <vtkPointData.h>
+
 #include <vtkProperty.h>
+#include <vtkPropAssembly.h>
 #include <vtkRenderer.h>
 #include <vtkRendererCollection.h>
 #include <vtkRenderWindowInteractor.h>
@@ -37,6 +52,8 @@
 #include <vtkResliceCursorWidget.h>
 
 #include <vtkResliceImageViewer.h>
+
+#include <vtkWindowToImageFilter.h>
 
 App::~App() {}
 
@@ -108,8 +125,97 @@ void App::updateChildWidgets() {
 void App::SetupUI() {
   this->ui = new Ui_Registration;
   this->ui->setupUi(this);
+
+  this->ui->sliderZoom->setMinimum(50);
+  this->ui->sliderZoom->setRange(0, 600);
+  this->ui->sliderZoom->setSingleStep(10);
+  this->ui->sliderZoom->setValue(100);
 }
 
+void App::dumpImageBackBuffer() {
+
+  vtkRenderWindow* renderWindow = m_riw[2]->GetRenderWindow();
+
+  renderWindow->Render();
+
+  // Screenshot
+  vtkSmartPointer<vtkWindowToImageFilter> windowToImageFilter =
+      vtkSmartPointer<vtkWindowToImageFilter>::New();
+  windowToImageFilter->SetInput(renderWindow);
+#if VTK_MAJOR_VERSION >= 8 || VTK_MAJOR_VERSION == 8 && VTK_MINOR_VERSION >= 90
+  windowToImageFilter->SetScale(2); // image quality
+#else
+  windowToImageFilter->SetMagnification(2); //image quality
+#endif
+  windowToImageFilter->SetInputBufferTypeToRGBA();
+
+  int oldSB = renderWindow->GetSwapBuffers();
+  renderWindow->SwapBuffersOff();
+
+  windowToImageFilter->ReadFrontBufferOff(); // read from the back buffer
+  windowToImageFilter->Update();
+
+  renderWindow->SetSwapBuffers(oldSB);
+
+  vtkSmartPointer<vtkPNGWriter> writer =
+      vtkSmartPointer<vtkPNGWriter>::New();
+  writer->SetFileName("screenshot_backbuffer.png");
+  writer->SetInputConnection(windowToImageFilter->GetOutputPort());
+  writer->Write();
+
+  renderWindow->Render();
+}
+
+void App::dumpImageOffscreen() {
+
+  // Offscreen
+
+  // Acquire data from framebuffer (or use mrView2)
+  vtkRenderWindow* renderWindow = m_riw[2]->GetRenderWindow();
+  vtkOpenGLRenderWindow* glRenderWindow =
+      vtkOpenGLRenderWindow::SafeDownCast(renderWindow);
+
+  // Offscreen rendering
+  if (!glRenderWindow->SetUseOffScreenBuffers(true)) {
+    glRenderWindow->DebugOn();
+    glRenderWindow->SetUseOffScreenBuffers(true);
+    glRenderWindow->DebugOff();
+    std::cerr << "Unable to create a hardware frame buffer, the graphic board "
+        "or driver can be too old:\n"
+              << glRenderWindow->ReportCapabilities() << std::endl;
+    exit(-1);
+  }
+
+
+  renderWindow->Render();
+
+  // Create an (empty) image at the window size
+  int *size = renderWindow->GetSize();
+  std::cout << "size: " << size[0] << "x" << size[1] << std::endl;
+
+  // Copy data image
+  vtkNew<vtkImageData> image;
+  image->SetDimensions(size[0], size[1], 1);
+  image->AllocateScalars(VTK_UNSIGNED_CHAR, 3);
+  renderWindow->GetPixelData(0, 0, size[0] - 1, size[1] - 1, 0,
+                             vtkArrayDownCast<vtkUnsignedCharArray>(image->GetPointData()->GetScalars()));
+
+
+  vtkSmartPointer<vtkWindowToImageFilter> windowToImageFilter =
+      vtkSmartPointer<vtkWindowToImageFilter>::New();
+  windowToImageFilter->SetInput(renderWindow);
+  windowToImageFilter->Update();
+  
+  vtkSmartPointer<vtkPNGWriter> writer = 
+    vtkSmartPointer<vtkPNGWriter>::New();
+  writer->SetFileName("screenshotOffscreen.png");
+  writer->SetInputConnection(windowToImageFilter->GetOutputPort());
+  writer->Write();
+
+  glRenderWindow->SetUseOffScreenBuffers(false);
+
+  renderWindow->Render();
+}
 
 void App::setupMR() {
   // Create reslice image widgets
@@ -147,6 +253,14 @@ void App::setupMR() {
       vtkResliceCursorLineRepresentation::SafeDownCast(
         m_riw[i]->GetResliceCursorWidget()->GetRepresentation());
 
+    if (i==2) {
+      // Must set vtkResliceCursorActor on vtkResliceCursorLineRepresentation
+      rep->Highlight(1);//GetImageActor()->SetVisibility(0);
+      // rep->VisibilityOff(); // Works as off
+      // Consider calling InitPathTraversal + and traverse props
+      // rep->GetResliceCursorActor()->SetVisibility(0);
+    }
+
     // Make all reslice image viewers share the same reslice cursor object.
     m_riw[i]->SetResliceCursor(m_riw[0]->GetResliceCursor());
 
@@ -155,6 +269,7 @@ void App::setupMR() {
 
     m_riw[i]->SetSliceOrientation(i);
     m_riw[i]->SetResliceModeToAxisAligned();
+    //m_riw[i]->SetResliceModeToOblique();
     // Set empty data - otherwise we cannot enable widgets
     m_riw[i]->SetInputData(this->m_dummy);
   }
@@ -277,13 +392,13 @@ void App::setupUS() {
     // Make all reslice image viewers share the same reslice cursor object.
     m_riw_us[i]->SetResliceCursor(m_riw_us[0]->GetResliceCursor());
 
-    // TODO: Make them follow but share different cursor object!!!!
-
     rep->GetResliceCursorActor()->
     GetCursorAlgorithm()->SetReslicePlaneNormal(i);
 
     m_riw_us[i]->SetSliceOrientation(i);
     m_riw_us[i]->SetResliceModeToAxisAligned();
+    //m_riw_us[i]->SetResliceModeToOblique();
+
     // Set empty data - otherwise we cannot enable widgets
     m_riw_us[i]->SetInputData(this->m_dummy1);
   }
@@ -295,9 +410,8 @@ void App::setupUS() {
     color[0] /= 4.0;
     color[1] /= 4.0;
     color[2] /= 4.0;
-    m_riw[i]->GetRenderer()->SetBackground(color);
+    m_riw_us[i]->GetRenderer()->SetBackground(color);
   }
-
 
   // Establish callbacks - needs to impact MR as well
   if (!cbk) {
@@ -320,6 +434,8 @@ void App::setupUS() {
     m_riw_us[i]->GetInteractorStyle()->AddObserver(
       vtkCommand::WindowLevelEvent, cbk);
 
+    // Add obserser for zoom
+
     // Make them all share the same color map.
     m_riw_us[i]->SetLookupTable(m_riw_us[0]->GetLookupTable());
 
@@ -334,7 +450,6 @@ void App::setupUS() {
   this->ui->usView2->show();
 
   this->Render();
-
 }
 
 void App::PopulateMenus() {
@@ -346,6 +461,28 @@ void App::PopulateMenus() {
           this, SLOT(onLoadUSClicked()));
   connect(ui->btnReg, &QPushButton::clicked,
           this, &App::onRegClick);
+  connect(ui->sliderZoom, &QSlider::valueChanged,
+          this, &App::setZoom);
+  connect(ui->btnOne, &QPushButton::clicked,
+          this, &App::dumpImageBackBuffer);
+  connect(ui->btnTwo, &QPushButton::clicked,
+          this, &App::dumpImageOffscreen);
+}
+
+void App::setZoom(int zoom) {
+  qDebug() << zoom;
+
+  double dZoom = double(zoom)/100.0;
+  for (int i = 0; i < 3; i++) {
+    m_riw[i]->GetRenderer()->ResetCamera();
+    m_riw[i]->GetRenderer()->GetActiveCamera()->Zoom(dZoom);
+    m_riw[i]->Render();
+  }
+  for (int i = 0; i < 3; i++) {
+    m_riw_us[i]->GetRenderer()->ResetCamera();
+    m_riw_us[i]->GetRenderer()->GetActiveCamera()->Zoom(dZoom);
+    m_riw_us[i]->Render();
+  }
 }
 
 void App::onLoadMRClicked() {
@@ -434,7 +571,8 @@ App::App(int argc, char* argv[]) {
 
   this->SetupUI();
   this->setupMR();
-  this->setupUS();
+
+  this->setupUS(); // This cause invalid extent
 
   this->PopulateMenus();
 
@@ -538,6 +676,8 @@ void App::FileLoadMR(const vtkSmartPointer<vtkImageReader2>& reader) {
     m_riw[i]->SetInputData(reader->GetOutput());
     m_riw[i]->SetSliceOrientation(i);
     m_riw[i]->SetResliceModeToAxisAligned();
+    //m_riw[i]->SetResliceModeToOblique();
+
   }
 
   vtkRenderWindowInteractor *iren = this->ui->mrView3D->GetInteractor();
@@ -616,6 +756,8 @@ void App::FileLoadUS(const vtkSmartPointer<vtkImageReader2>& reader) {
     m_riw_us[i]->SetInputData(reader->GetOutput());
     m_riw_us[i]->SetSliceOrientation(i);
     m_riw_us[i]->SetResliceModeToAxisAligned();
+    //m_riw_us[i]->SetResliceModeToOblique();
+
   }
 
   for (int i = 0; i < 3; i++) {

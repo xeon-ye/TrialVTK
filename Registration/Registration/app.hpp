@@ -30,7 +30,10 @@ class App : public QMainWindow {
   virtual void slotExit();
   void resizeEvent(QResizeEvent* event);
   void FileLoad(const QString &files, int type=0);
+  void setZoom(int zoom);
 
+  void dumpImageBackBuffer();
+  void dumpImageOffscreen();
 
  private Q_SLOTS:
   void updateChildWidgets();

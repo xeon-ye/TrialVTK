@@ -23,7 +23,7 @@
 #include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkImageData.h>
 #include <vtkImageReader2.h>
-#include <vtkInteractorStyleRubberBandZoom.h>
+//#include <vtkInteractorStyleRubberBandZoom.h>
 #include <vtkMetaImageReader.h>
 #include <vtkNrrdReader.h>
 
