@@ -12,6 +12,8 @@
 
 #include <vtkResliceCursorWidget.h>
 
+#include <QDebug>
+
 class vtkResliceCursorCallback : public vtkCommand {
  public:
   static vtkResliceCursorCallback *New() {
