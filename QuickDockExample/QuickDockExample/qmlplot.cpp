@@ -1,9 +1,10 @@
 #include "qmlplot.h"
-#include "qcustomplot.h"
+#include <QuickDockExample/datamanager.h>
+
 #include <QDebug>
 
 CustomPlotItem::CustomPlotItem( QQuickItem* parent ) : QQuickPaintedItem( parent )
-  , m_CustomPlot( nullptr ), m_timerId( 0 ) {
+  , m_CustomPlot( nullptr ) {
   setFlag( QQuickItem::ItemHasContents, true );
   setAcceptedMouseButtons( Qt::AllButtons );
 
@@ -14,16 +15,13 @@ CustomPlotItem::CustomPlotItem( QQuickItem* parent ) : QQuickPaintedItem( parent
 CustomPlotItem::~CustomPlotItem() {
   delete m_CustomPlot;
   m_CustomPlot = nullptr;
-
-  if(m_timerId != 0) {
-    killTimer(m_timerId);
-  }
 }
 
 void CustomPlotItem::initCustomPlot() {
-  m_CustomPlot = new QCustomPlot();
+  m_CustomPlot = new DataManager();
 
   updateCustomPlotSize();
+  /*
   m_CustomPlot->addGraph();
   m_CustomPlot->graph( 0 )->setPen( QPen( Qt::red ) );
   m_CustomPlot->xAxis->setLabel( "t" );
@@ -31,21 +29,20 @@ void CustomPlotItem::initCustomPlot() {
   m_CustomPlot->xAxis->setRange( 0, 10 );
   m_CustomPlot->yAxis->setRange( 0, 5 );
   m_CustomPlot ->setInteractions( QCP::iRangeDrag | QCP::iRangeZoom );
+  */
 
-  startTimer(500);
+  //connect( m_CustomPlot, &QCustomPlot::afterReplot, this, &CustomPlotItem::onCustomReplot );
 
-  connect( m_CustomPlot, &QCustomPlot::afterReplot, this, &CustomPlotItem::onCustomReplot );
-
-  m_CustomPlot->replot();
+  //m_CustomPlot->replot();
 }
 
 
 void CustomPlotItem::paint( QPainter* painter ) {
   if (m_CustomPlot) {
     QPixmap    picture( boundingRect().size().toSize() );
-    QCPPainter qcpPainter( &picture );
+    QPainter qcpPainter( &picture );
 
-    m_CustomPlot->toPainter( &qcpPainter );
+   // m_CustomPlot->toPainter( &qcpPainter );
 
     painter->drawPixmap( QPoint(), picture );
   }
@@ -74,19 +71,6 @@ void CustomPlotItem::wheelEvent( QWheelEvent *event ) {
   routeWheelEvents( event );
 }
 
-void CustomPlotItem::timerEvent(QTimerEvent *event) {
-  static double t, U;
-  U = ((double)rand() / RAND_MAX) * 5;
-  m_CustomPlot->graph(0)->addData(t, U);
-  qDebug() << Q_FUNC_INFO << QString("Adding dot t = %1, S = %2").arg(t).arg(U);
-  t++;
-  m_CustomPlot->replot();
-}
-
-void CustomPlotItem::graphClicked( QCPAbstractPlottable* plottable ) {
-  qDebug() << Q_FUNC_INFO << QString( "Clicked on graph '%1 " ).arg( plottable->name() );
-}
-
 void CustomPlotItem::routeMouseEvents( QMouseEvent* event ) {
   if (m_CustomPlot) {
     QMouseEvent* newEvent = new QMouseEvent( event->type(), event->localPos(), event->button(), event->buttons(), event->modifiers() );
@@ -104,7 +88,7 @@ void CustomPlotItem::routeWheelEvents( QWheelEvent* event ) {
 void CustomPlotItem::updateCustomPlotSize() {
   if (m_CustomPlot) {
     m_CustomPlot->setGeometry(0, 0, (int)width(), (int)height());
-    m_CustomPlot->setViewport(QRect(0, 0, (int)width(), (int)height()));
+    // m_CustomPlot->setViewport(QRect(0, 0, (int)width(), (int)height()));
   }
 }
 
@@ -112,3 +96,4 @@ void CustomPlotItem::onCustomReplot() {
   qDebug() << Q_FUNC_INFO;
   update();
 }
+

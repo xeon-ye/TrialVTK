@@ -64,11 +64,13 @@ function(windeployvtk target directory)
   set(VTK_RUNTIME_LIBRARIES)
   set(VTK_RUNTIME_LIBRARIES_DEBUG)
 
+  # TODO: Check if installed, then VTK_DIR/../../../bin
+
   foreach(DLL ${VTK_RUNTIME_DEPENDENCIES})
     set(FOUND_DLL "FOUND_DLL-NOTFOUND")
     find_file(FOUND_DLL
       ${DLL}
-      PATHS "${VTK_DIR}/bin/Release"
+      PATHS "${VTK_DIR}/../../../bin"
       NO_DEFAULT_PATH)
     if (FOUND_DLL)
       list(APPEND VTK_RUNTIME_LIBRARIES ${FOUND_DLL})

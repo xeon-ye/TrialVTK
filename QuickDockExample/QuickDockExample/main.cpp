@@ -8,21 +8,12 @@
  * Copyright 2020 Jens Munk Hansen
  *
  */
-#include <cstdlib>
+#include <QtPrintSupport/QPrinter>
+//#include <QGuiApplication>
+#include<QApplication>
+#include <QQmlApplicationEngine>
 
-// Example of a public header
-#include <QuickExample/main.hpp>
-
-// Example of a private header
-#include <QuickExample/application.hpp>
-
-#include <viewcore/CanvasHandler.h>
-
-#if defined(__GNUC__)
-# if !defined(__CYGWIN__)
-#  include <strace.hpp>
-# endif
-#endif
+#include <QuickDockExample/datamanager.h>
 
 int main(int argc, char* argv[]) {
 
@@ -50,6 +41,15 @@ int main(int argc, char* argv[]) {
   _putenv(const_cast<char*>("QML_USE_GLYPHCACHE_WORKAROUND=1"));
 #endif
 
-  //  return Quick::Application::Execute(argc, argv);
-  CanvasHandler(argc, argv);
+  QApplication a(argc, argv);
+  //    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+  //    QGuiApplication app(argc, argv);
+
+  qmlRegisterType<DataManager>("CustomPlot", 1, 0, "CustomPlotItem");
+
+  QQmlApplicationEngine engine;
+  engine.load(QUrl(QStringLiteral("qrc:/res/qml/main.qml")));
+
+  return a.exec();
 }
+
