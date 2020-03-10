@@ -19,7 +19,13 @@ include(deploy_vtk_windows)
 
 #add_subdirectory(WidgetExample)
 #add_subdirectory(QuickExample)
+<<<<<<< HEAD
 add_subdirectory(SlicerWidget)
 #add_subdirectory(QuickDockExample)
 #add_subdirectory(Registration)
+=======
+#add_subdirectory(SlicerWidget)
+add_subdirectory(Registration)
+add_subdirectory(Picking)
+>>>>>>> c3c9e6f884af0ea9d51a208a279f8f4e22b3397a
 #add_subdirectory(Cone)
