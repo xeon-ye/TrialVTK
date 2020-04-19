@@ -43,6 +43,8 @@
 #include <vtkPointData.h>
 
 #include <vtkProperty.h>
+#include <vtkProperty2D.h>
+
 #include <vtkPropAssembly.h>
 #include <vtkRenderer.h>
 #include <vtkRendererCollection.h>
@@ -55,8 +57,72 @@
 #include <vtkResliceCursorWidget.h>
 
 #include <vtkResliceImageViewer.h>
+#include <vtkResliceImageViewerMeasurements.h>
+
+//#include <vtkPointHandleRepresentation2D.h>
+#include <vtkPointHandleRepresentation3D.h>
+#include <vtkSeedRepresentation.h>
 
 #include <vtkWindowToImageFilter.h>
+
+class vtkSeedImageCallback : public vtkCommand
+{
+public:
+  static vtkSeedImageCallback* New()
+  {
+    return new vtkSeedImageCallback;
+  }
+
+  vtkSeedImageCallback() = default;
+
+  virtual void Execute(vtkObject*, unsigned long event, void* calldata)
+  {
+    if (event == vtkCommand::PlacePointEvent)
+    {
+      std::cout << "Placing point..." << std::endl;
+      std::cout << "There are now "
+                << this->SeedRepresentation->GetNumberOfSeeds() << " seeds."
+                << std::endl;
+      for (unsigned int seedId = 0; static_cast<int>(seedId) <
+           this->SeedRepresentation->GetNumberOfSeeds();
+           seedId++)
+      {
+        double pos[3];
+        //        this->SeedRepresentation->GetSeedDisplayPosition(seedId, pos);
+        this->SeedRepresentation->GetSeedWorldPosition(seedId, pos);
+        std::cout << "Seed " << seedId << " : (" << pos[0] << " " << pos[1]
+                  << " " << pos[2] << ")" << std::endl;
+      }
+      return;
+    }
+    if (event == vtkCommand::InteractionEvent)
+    {
+      std::cout << "Interaction..." << std::endl;
+      if (calldata)
+      {
+        double pos[3];
+        this->SeedRepresentation->GetSeedDisplayPosition(0, pos);
+        std::cout << "Moved to (" << pos[0] << " " << pos[1] << " " << pos[2]
+                  << ")" << std::endl;
+      }
+      return;
+    }
+  }
+
+  void SetRepresentation(vtkSmartPointer<vtkSeedRepresentation> rep)
+  {
+    this->SeedRepresentation = rep;
+  }
+  void SetWidget(vtkSmartPointer<vtkSeedWidget> widget)
+  {
+    this->SeedWidget = widget;
+  }
+
+private:
+  vtkSeedRepresentation* SeedRepresentation = nullptr;
+  vtkSeedWidget* SeedWidget = nullptr;
+};
+
 
 App::~App() {}
 
@@ -151,7 +217,8 @@ void App::SetupUI() {
   this->ui->cboxPlane->setCurrentIndex(2);
   this->ui->cboxPreset->setCurrentIndex(0);
 
-  this->thresholdsSlider = new QRangeSlider(this);
+  this->thresholdsSlider =
+    new RangeSlider(Qt::Horizontal, RangeSlider::Option::DoubleHandles, this);
   this->ui->segmVertLayout->insertWidget(0, this->thresholdsSlider);
 
 }
@@ -528,6 +595,12 @@ void App::PopulateMenus() {
 
   connect(ui->horizontalSlider, &QSlider::valueChanged, this, &App::segmSliderChanged);
 
+  connect(ui->pbAddSeeds, SIGNAL(pressed()), this, SLOT(AddSeedsToView1()));
+
+}
+
+void App::AddSeedsToView1() {
+  return this->AddSeedsToView(1);
 }
 
 void App::setZoom(int zoom) {
@@ -677,6 +750,8 @@ App::App(int argc, char* argv[]) {
   m_planeWidget[0] = m_planeWidget[1] = m_planeWidget[2] = nullptr;
 
   m_riw_us[0] = m_riw_us[1] = m_riw_us[2] = nullptr;
+
+  m_seeds[0] = m_seeds[1] = m_seeds[2] = nullptr;
 
   this->SetupUI();
   this->setupMR();
@@ -931,6 +1006,89 @@ void App::ResetViews() {
   // Render in response to changes.
   this->Render();
 }
+
+
+void App::AddSeedsToView(int i) {
+  // remove existing widgets.
+  if (this->m_seeds[i]) {
+    this->m_seeds[i]->SetEnabled(0);
+    this->m_seeds[i] = nullptr;
+  }
+
+  // Add a seed widget
+  this->m_seeds[i] = vtkSmartPointer<vtkSeedWidget>::New();
+  this->m_seeds[i]->SetInteractor(
+                                  this->m_riw[i]->GetResliceCursorWidget()->GetInteractor());
+
+  // Set priority higher than reslice cursor widget
+  this->m_seeds[i]->SetPriority(
+                                this->m_riw[i]->GetResliceCursorWidget()->GetPriority() + 0.01);
+
+  // Create the representation
+  auto handle =
+    vtkSmartPointer<vtkPointHandleRepresentation3D>::New();
+  handle->GetProperty()->SetColor(1, 0, 0);
+  auto rep =
+    vtkSmartPointer<vtkSeedRepresentation>::New();
+  rep->SetHandleRepresentation(handle);
+
+  m_seeds[i]->SetRepresentation(rep);
+
+
+  // Seed callback (TODO)
+  auto seedCallback =
+    vtkSmartPointer<vtkSeedImageCallback>::New();
+  seedCallback->SetRepresentation(rep);
+  seedCallback->SetWidget(this->m_seeds[i]);
+  this->m_seeds[i]->AddObserver(vtkCommand::PlacePointEvent, seedCallback);
+  this->m_seeds[i]->AddObserver(vtkCommand::InteractionEvent, seedCallback);
+
+  this->m_riw[i]->GetMeasurements()->AddItem(this->m_seeds[i]);
+
+  this->m_seeds[i]->CreateDefaultRepresentation();
+  this->m_seeds[i]->EnabledOn();
+
+
+
+}
+
+#if 0
+// Use vtkPointWidget or vtkSeedWidget
+void QtVTKRenderWindows::AddDistanceMeasurementToView(int i) {
+  // remove existing widgets.
+  if (this->DistanceWidget[i]) {
+    this->DistanceWidget[i]->SetEnabled(0);
+    this->DistanceWidget[i] = nullptr;
+  }
+
+  // add new widget
+  this->DistanceWidget[i] = vtkSmartPointer< vtkDistanceWidget >::New();
+  this->DistanceWidget[i]->SetInteractor(
+    this->riw[i]->GetResliceCursorWidget()->GetInteractor());
+
+  // Set a priority higher than our reslice cursor widget
+  this->DistanceWidget[i]->SetPriority(
+    this->riw[i]->GetResliceCursorWidget()->GetPriority() + 0.01);
+
+  vtkSmartPointer< vtkPointHandleRepresentation2D > handleRep =
+    vtkSmartPointer< vtkPointHandleRepresentation2D >::New();
+  vtkSmartPointer< vtkDistanceRepresentation2D > distanceRep =
+    vtkSmartPointer< vtkDistanceRepresentation2D >::New();
+  distanceRep->SetHandleRepresentation(handleRep);
+  this->DistanceWidget[i]->SetRepresentation(distanceRep);
+  distanceRep->InstantiateHandleRepresentation();
+  distanceRep->GetPoint1Representation()->SetPointPlacer(riw[i]->GetPointPlacer());
+  distanceRep->GetPoint2Representation()->SetPointPlacer(riw[i]->GetPointPlacer());
+
+  // Add the distance to the list of widgets whose visibility is managed based
+  // on the reslice plane by the ResliceImageViewerMeasurements class
+  this->riw[i]->GetMeasurements()->AddItem(this->DistanceWidget[i]);
+
+  this->DistanceWidget[i]->CreateDefaultRepresentation();
+  this->DistanceWidget[i]->EnabledOn();
+}
+
+#endif
 
 
 /* Local variables: */

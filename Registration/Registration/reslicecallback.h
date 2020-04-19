@@ -19,6 +19,9 @@
 
 #include <QDebug>
 
+//vtkSeedRepresentation* SeedRepresentation = nullptr;
+//vtkSeedWidget* SeedWidget = nullptr;
+
 class vtkResliceCursorCallback : public vtkCommand {
  public:
   static vtkResliceCursorCallback *New() {

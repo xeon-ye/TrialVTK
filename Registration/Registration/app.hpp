@@ -13,7 +13,9 @@ class Ui_Registration;
 
 #include <Registration/runnable.hpp>
 
-#include <Registration/QRangeSlider.hpp>
+//#include <Registration/QRangeSlider.hpp>
+//#include <Registration/superslider.h>
+#include <Registration/RangeSlider.h>
 
 #include <vtkSmartPointer.h>
 #include <vtkResliceImageViewer.h>
@@ -22,6 +24,7 @@ class Ui_Registration;
 #include <vtkImageViewer2.h>
 #include <vtkImageReader2.h>
 
+#include <vtkSeedWidget.h>
 
 class App : public QMainWindow {
   Q_OBJECT
@@ -40,6 +43,9 @@ class App : public QMainWindow {
   void dumpImageOffscreen();
 
   void segmSliderChanged(int index);
+
+  virtual void AddSeedsToView1();
+  virtual void AddSeedsToView( int );
 
  private Q_SLOTS:
   void updateChildWidgets();
@@ -84,7 +90,7 @@ class App : public QMainWindow {
 
   int retval;
   RegRunner* regrunner;
-  QRangeSlider* thresholdsSlider;
+  RangeSlider* thresholdsSlider;
 
   // MR view stuff
   vtkSmartPointer<vtkImageData> m_dummy;
@@ -94,5 +100,7 @@ class App : public QMainWindow {
   // US view stuff
   vtkSmartPointer<vtkImageData> m_dummy1;
   vtkSmartPointer<vtkResliceImageViewer> m_riw_us[3];
-};
 
+  // Segmentation stuff
+  vtkSmartPointer<vtkSeedWidget> m_seeds[3];
+};

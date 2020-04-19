@@ -102,7 +102,7 @@
                <item>
                 <layout class="QHBoxLayout" name="horizontalLayout_13">
                  <item>
-                  <widget class="QPushButton" name="pushButton_3">
+                  <widget class="QPushButton" name="pbAddSeeds">
                    <property name="text">
                     <string>Add seeds</string>
                    </property>
