@@ -41,10 +41,12 @@ class App : public QMainWindow {
   void Render();
   void onLoadMRClicked();
   void onLoadUSClicked();
+  void onLoadVesselsClicked();
 
   void checkIfDone();
 
   void onRegClick();
+  void onApplyPresetClick();
   void onRegStartClick();
   void onCancelClick();
 

@@ -338,3 +338,43 @@ void DataManager::resliceMode(int mode) {
     m_riw[i]->Render();
   }
 }
+
+#if 0
+// Use vtkPointWidget or vtkSeedWidget
+void QtVTKRenderWindows::AddDistanceMeasurementToView(int i)
+{
+  // remove existing widgets.
+  if (this->DistanceWidget[i])
+  {
+    this->DistanceWidget[i]->SetEnabled(0);
+    this->DistanceWidget[i] = nullptr;
+  }
+
+  // add new widget
+  this->DistanceWidget[i] = vtkSmartPointer< vtkDistanceWidget >::New();
+  this->DistanceWidget[i]->SetInteractor(
+    this->riw[i]->GetResliceCursorWidget()->GetInteractor());
+
+  // Set a priority higher than our reslice cursor widget
+  this->DistanceWidget[i]->SetPriority(
+    this->riw[i]->GetResliceCursorWidget()->GetPriority() + 0.01);
+
+  vtkSmartPointer< vtkPointHandleRepresentation2D > handleRep =
+    vtkSmartPointer< vtkPointHandleRepresentation2D >::New();
+  vtkSmartPointer< vtkDistanceRepresentation2D > distanceRep =
+    vtkSmartPointer< vtkDistanceRepresentation2D >::New();
+  distanceRep->SetHandleRepresentation(handleRep);
+  this->DistanceWidget[i]->SetRepresentation(distanceRep);
+  distanceRep->InstantiateHandleRepresentation();
+  distanceRep->GetPoint1Representation()->SetPointPlacer(riw[i]->GetPointPlacer());
+  distanceRep->GetPoint2Representation()->SetPointPlacer(riw[i]->GetPointPlacer());
+
+  // Add the distance to the list of widgets whose visibility is managed based
+  // on the reslice plane by the ResliceImageViewerMeasurements class
+  this->riw[i]->GetMeasurements()->AddItem(this->DistanceWidget[i]);
+
+  this->DistanceWidget[i]->CreateDefaultRepresentation();
+  this->DistanceWidget[i]->EnabledOn();
+}
+
+#endif

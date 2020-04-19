@@ -97,6 +97,7 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent),
     m_riw[i]->SetResliceModeToAxisAligned();
     // Set empty data - otherwise we cannot enable widgets
     m_riw[i]->SetInputData(this->m_dummy);
+    //m_riw[i]->SetInputConnection(this->m_dummy.GetOutputPort());
   }
 
   // Create 3D viewer
@@ -279,6 +280,7 @@ void DataManager::FileLoad1(const vtkSmartPointer<vtkImageReader2>& reader) {
 
     // Assign data and orientation
     m_riw[i]->SetInputData(reader->GetOutput());
+    //m_riw[i]->SetInputConnection(reader->GetOutputPort());
     m_riw[i]->SetSliceOrientation(i);
     m_riw[i]->SetResliceModeToAxisAligned();
   }

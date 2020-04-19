@@ -39,34 +39,30 @@
 //  that will monitor the evolution of the registration process.
 //
 #include "itkCommand.h"
-class CommandIterationUpdate : public itk::Command
-{
-public:
+class CommandIterationUpdate : public itk::Command {
+ public:
   using Self = CommandIterationUpdate;
   using Superclass = itk::Command;
   using Pointer = itk::SmartPointer<Self>;
   itkNewMacro(Self);
 
-protected:
+ protected:
   CommandIterationUpdate() = default;
   ;
 
-public:
+ public:
   using OptimizerType = itk::GradientDescentOptimizer;
   using OptimizerPointer = const OptimizerType *;
 
   void
-  Execute(itk::Object * caller, const itk::EventObject & event) override
-  {
+  Execute(itk::Object * caller, const itk::EventObject & event) override {
     Execute((const itk::Object *)caller, event);
   }
 
   void
-  Execute(const itk::Object * object, const itk::EventObject & event) override
-  {
+  Execute(const itk::Object * object, const itk::EventObject & event) override {
     auto optimizer = dynamic_cast<OptimizerPointer>(object);
-    if (!itk::IterationEvent().CheckEvent(&event))
-    {
+    if (!itk::IterationEvent().CheckEvent(&event)) {
       return;
     }
     std::cout << optimizer->GetCurrentIteration() << "   ";
@@ -77,10 +73,8 @@ public:
 
 
 int
-main(int argc, char * argv[])
-{
-  if (argc < 4)
-  {
+main(int argc, char * argv[]) {
+  if (argc < 4) {
     std::cerr << "Missing Parameters " << std::endl;
     std::cerr << "Usage: " << argv[0];
     std::cerr << " fixedImageFile";
@@ -132,7 +126,7 @@ main(int argc, char * argv[])
   //  registration->SetNumberOfLevels(numberOfLevels);
 
 
-  
+
   //  The metric requires a number of parameters to be selected, including
   //  the standard deviation of the Gaussian kernel for the fixed image
   //  density estimate, the standard deviation of the kernel for the moving
@@ -233,7 +227,7 @@ main(int argc, char * argv[])
   //  default behavior by invoking the MaximizeOn() method.
   //  Additionally, we need to define the optimizer's step size using the
   //  SetLearningRate() method.
-  optimizer->SetNumberOfIterations(200);
+  optimizer->SetNumberOfIterations(100);
   optimizer->MaximizeOn();
 
   // Note that large values of the learning rate will make the optimizer
@@ -256,14 +250,11 @@ main(int argc, char * argv[])
   CommandIterationUpdate::Pointer observer = CommandIterationUpdate::New();
   optimizer->AddObserver(itk::IterationEvent(), observer);
 
-  try
-  {
+  try {
     registration->Update();
     std::cout << "Optimizer stop condition: " << registration->GetOptimizer()->GetStopConditionDescription()
               << std::endl;
-  }
-  catch (itk::ExceptionObject & err)
-  {
+  } catch (itk::ExceptionObject & err) {
     std::cout << "ExceptionObject caught !" << std::endl;
     std::cout << err << std::endl;
     return EXIT_FAILURE;
@@ -342,24 +333,19 @@ main(int argc, char * argv[])
   identityTransform->SetIdentity();
   resample->SetTransform(identityTransform);
 
-  if (argc > 4)
-  {
+  if (argc > 4) {
     writer->SetFileName(checkerBoardBefore);
   }
 
   // After registration
   resample->SetTransform(finalTransform);
-  if (argc > 5)
-  {
+  if (argc > 5) {
     writer->SetFileName(checkerBoardAfter);
   }
 
-  try
-  {
+  try {
     writer->Update();
-  }
-  catch (itk::ExceptionObject & error)
-  {
+  } catch (itk::ExceptionObject & error) {
     std::cerr << "Error: " << error << std::endl;
     return EXIT_FAILURE;
   }

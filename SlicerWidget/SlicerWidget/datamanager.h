@@ -18,6 +18,7 @@ class DataManager;
 
 #include <vtkSmartPointer.h>
 #include <vtkResliceImageViewer.h>
+// #include <vtkImageViewer2.h>
 #include <vtkImagePlaneWidget.h>
 #include <vtkImageData.h>
 #include <vtkImageViewer2.h>
@@ -44,5 +45,6 @@ class DataManager : public QWidget {
 
   vtkSmartPointer<vtkImageData> m_dummy;
   vtkSmartPointer<vtkResliceImageViewer> m_riw[3];
+  // vtkSmartPointer<vtkImageViewer2> m_riw[3];
   vtkSmartPointer< vtkImagePlaneWidget > m_planeWidget[3];
 };

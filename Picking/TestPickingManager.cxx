@@ -156,7 +156,9 @@ vtkPicker* PickingManagerClient::GetPicker()
 }
 
 //------------------------------------------------------------------------------
-int TestPickingManager(int, char*[])
+
+// TestPickingManager
+int main(int, char*[])
 {
   PickingManagerTest pickingManagerTest;
 

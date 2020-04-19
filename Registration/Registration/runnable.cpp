@@ -21,7 +21,7 @@ void RegRunner::run() {
   qDebug() << "convert";
   system("convert ./screenshotMR02.png -colorspace Gray fixed.png");
   qDebug() << "register";
-  system("./MIRegistration ./moving.png ./fixed.png output.png");
+  system("./MIRegistration4 ./moving.png ./fixed.png output.png");
 
   QMetaObject::invokeMethod(receiver, "updateProgressBar",
                             Qt::QueuedConnection,

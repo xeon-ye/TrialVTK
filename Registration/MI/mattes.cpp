@@ -60,33 +60,29 @@
 //  used to monitor the evolution of the registration process.
 //
 #include "itkCommand.h"
-class CommandIterationUpdate : public itk::Command
-{
-public:
+class CommandIterationUpdate : public itk::Command {
+ public:
   using Self = CommandIterationUpdate;
   using Superclass = itk::Command;
   using Pointer = itk::SmartPointer<Self>;
   itkNewMacro(Self);
 
-protected:
+ protected:
   CommandIterationUpdate() = default;
 
-public:
+ public:
   using OptimizerType = itk::RegularStepGradientDescentOptimizerv4<double>;
   using OptimizerPointer = const OptimizerType *;
 
   void
-  Execute(itk::Object * caller, const itk::EventObject & event) override
-  {
+  Execute(itk::Object * caller, const itk::EventObject & event) override {
     Execute((const itk::Object *)caller, event);
   }
 
   void
-  Execute(const itk::Object * object, const itk::EventObject & event) override
-  {
+  Execute(const itk::Object * object, const itk::EventObject & event) override {
     auto optimizer = static_cast<OptimizerPointer>(object);
-    if (!itk::IterationEvent().CheckEvent(&event))
-    {
+    if (!itk::IterationEvent().CheckEvent(&event)) {
       return;
     }
     std::cout << optimizer->GetCurrentIteration() << "   ";
@@ -96,10 +92,8 @@ public:
 };
 
 int
-main(int argc, char * argv[])
-{
-  if (argc < 4)
-  {
+main(int argc, char * argv[]) {
+  if (argc < 4) {
     std::cerr << "Missing Parameters " << std::endl;
     std::cerr << "Usage: " << argv[0];
     std::cerr << " fixedImageFile  movingImageFile ";
@@ -169,8 +163,7 @@ main(int argc, char * argv[])
   unsigned int numberOfBins = 24;
   // Software Guide : EndCodeSnippet
 
-  if (argc > 7)
-  {
+  if (argc > 7) {
     numberOfBins = std::stoi(argv[7]);
   }
 
@@ -367,15 +360,12 @@ main(int argc, char * argv[])
   registration->MetricSamplingReinitializeSeed(121213);
   // Software Guide : EndCodeSnippet
 
-  try
-  {
+  try {
     registration->Update();
     std::cout << "Optimizer stop condition: "
               << registration->GetOptimizer()->GetStopConditionDescription()
               << std::endl;
-  }
-  catch (itk::ExceptionObject & err)
-  {
+  } catch (itk::ExceptionObject & err) {
     std::cerr << "ExceptionObject caught !" << std::endl;
     std::cerr << err << std::endl;
     return EXIT_FAILURE;
@@ -450,8 +440,7 @@ main(int argc, char * argv[])
 
   PixelType defaultPixelValue = 100;
 
-  if (argc > 4)
-  {
+  if (argc > 4) {
     defaultPixelValue = std::stoi(argv[4]);
   }
 
@@ -521,8 +510,7 @@ main(int argc, char * argv[])
   identityTransform->SetIdentity();
   resample->SetTransform(identityTransform);
 
-  if (argc > 5)
-  {
+  if (argc > 5) {
     writer->SetFileName(argv[5]);
     writer->Update();
   }
@@ -530,8 +518,7 @@ main(int argc, char * argv[])
 
   // After registration
   resample->SetTransform(registration->GetTransform());
-  if (argc > 6)
-  {
+  if (argc > 6) {
     writer->SetFileName(argv[6]);
     writer->Update();
   }

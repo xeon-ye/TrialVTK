@@ -13,8 +13,6 @@
 #include <Registration/reslicecallback.h>
 #include <Registration/utils.hpp>
 
-// #include <Registration/runnable.hpp>
-
 #include <QSettings>
 #include <QDebug>
 
@@ -33,7 +31,11 @@
 #include <vtkImageActor.h>
 #include <vtkImageData.h>
 #include <vtkImageReader2.h>
+#include <vtkImageMapToWindowLevelColors.h>
+#include <vtkNamedColors.h>
 #include <vtkMetaImageReader.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkXMLPolyDataReader.h>
 #include <vtkNrrdReader.h>
 
 #include <vtkPlane.h>
@@ -74,6 +76,19 @@ void App::onRegStartClick() {
   ui->btnReg->setEnabled(true);
 
   checkIfDone();
+}
+
+void App::onApplyPresetClick() {
+  qDebug() << "preset";
+  for (size_t i = 0; i < 3 ; i++) {
+    if (m_riw[i]) {
+      //m_riw[i]->GetWindowLevel()->SetWindow(50.0);
+      //m_riw[i]->GetWindowLevel()->SetLevel(145.0);
+      m_riw[i]->SetColorWindow(50.0);
+      m_riw[i]->SetColorLevel(145.0);
+      m_riw[i]->Render();
+    }
+  }
 }
 
 void App::onRegClick() {
@@ -131,6 +146,8 @@ void App::SetupUI() {
   this->ui->sliderZoom->setSingleStep(10);
   this->ui->sliderZoom->setValue(100);
   this->ui->cboxPlane->setCurrentIndex(2);
+  this->ui->cboxPreset->setCurrentIndex(0);
+
 }
 
 void App::dumpImages() {
@@ -178,6 +195,9 @@ void App::dumpImageBackBuffers(int index) {
 
   renderWindow0->SetSwapBuffers(oldSB0);
   renderWindow1->SetSwapBuffers(oldSB1);
+
+  int *size = renderWindow0->GetSize();
+  std::cout << "size: " << size[0] << "x" << size[1] << std::endl;
 
   vtkSmartPointer<vtkPNGWriter> writer =
       vtkSmartPointer<vtkPNGWriter>::New();
@@ -253,6 +273,8 @@ void App::setupMR() {
     m_riw[i] = vtkSmartPointer<vtkResliceImageViewer>::New();
     vtkNew<vtkGenericOpenGLRenderWindow> renderWindow;
     m_riw[i]->SetRenderWindow(renderWindow);
+    // TODO: Figure out how to replace RIW's InputConnection with
+    // a vtkImageBlend of this and an overlay
   }
   for (size_t i = 0; i < 3; i++) {
     ppVTKOGLWidgets[i]->SetRenderWindow(m_riw[i]->GetRenderWindow());
@@ -294,6 +316,8 @@ void App::setupMR() {
     m_riw[i]->SetResliceModeToAxisAligned();
     //m_riw[i]->SetResliceModeToOblique();
     // Set empty data - otherwise we cannot enable widgets
+
+    // Could this be an input connection????
     m_riw[i]->SetInputData(this->m_dummy);
   }
 
@@ -482,6 +506,8 @@ void App::PopulateMenus() {
           this, SLOT(onLoadMRClicked()));
   connect(this->ui->actionOpenUS, SIGNAL(triggered()),
           this, SLOT(onLoadUSClicked()));
+  connect(this->ui->actionOpenVessels, SIGNAL(triggered()),
+          this, SLOT(onLoadVesselsClicked()));
   connect(ui->btnReg, &QPushButton::clicked,
           this, &App::onRegClick);
   connect(ui->sliderZoom, &QSlider::valueChanged,
@@ -490,6 +516,9 @@ void App::PopulateMenus() {
           this, &App::dumpImages);
   connect(ui->btnTwo, &QPushButton::clicked,
           this, &App::dumpImageOffscreen);
+
+  connect(ui->btnPreset, &QPushButton::clicked,
+          this, &App::onApplyPresetClick);
 }
 
 void App::setZoom(int zoom) {
@@ -542,6 +571,56 @@ void App::onLoadMRClicked() {
                           currentDir.absolutePath());
     }
   }
+}
+
+void App::onLoadVesselsClicked() {
+
+  const QString DEFAULT_DIR_KEY("RegistrationDefaultDir");
+  QSettings MySettings;
+
+  QString selectedDirectory;
+
+  FileDialog w;
+  w.setDirectory(MySettings.value(DEFAULT_DIR_KEY).toString());
+
+  int nMode = w.exec();
+  QStringList fnames = w.selectedFiles();
+
+  if (nMode != 0 && fnames.size() != 0) {
+    QString files = fnames[0];
+    QDir directory = QDir(files);
+
+    vtkSmartPointer<vtkXMLPolyDataReader> reader =
+        vtkSmartPointer<vtkXMLPolyDataReader>::New();
+
+    if (directory.exists()) {
+      return;
+    } else {
+      QFileInfo info(files);
+      if (info.completeSuffix() == QLatin1String("vtp")) {
+        reader->SetFileName(files.toUtf8().constData());
+        reader->Update();
+
+        vtkSmartPointer<vtkPolyDataMapper> mapper =
+            vtkSmartPointer<vtkPolyDataMapper>::New();
+        mapper->SetInputConnection(reader->GetOutputPort());
+        vtkSmartPointer<vtkActor> actor =
+            vtkSmartPointer<vtkActor>::New();
+        actor->SetMapper(mapper);
+        auto prop = actor->GetProperty();
+        vtkSmartPointer<vtkNamedColors> namedColors =
+            vtkSmartPointer<vtkNamedColors>::New();
+
+        prop->SetColor(namedColors->GetColor3d("Red").GetData());
+
+        m_planeWidget[0]->GetDefaultRenderer()->AddActor(actor);
+        this->ui->mrView3D->GetRenderWindow()->Render();
+      } else {
+        return;
+      }
+    }
+  }
+
 }
 
 void App::onLoadUSClicked() {
@@ -695,6 +774,9 @@ void App::FileLoadMR(const vtkSmartPointer<vtkImageReader2>& reader) {
 
     // Assign data and orientation
     m_riw[i]->SetInputData(reader->GetOutput());
+    //m_riw[i]->SetInputConnection(reader->GetOutputPort());
+    //m_riw[i]->Update();
+
     m_riw[i]->SetSliceOrientation(i);
     m_riw[i]->SetResliceModeToAxisAligned();
     //m_riw[i]->SetResliceModeToOblique();
