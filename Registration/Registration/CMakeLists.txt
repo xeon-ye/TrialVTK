@@ -30,6 +30,8 @@ set( Srcs
   app.cxx
   filedialog.cxx
   runnable.cpp
+  QRangeSlider.cpp
+  #superslider.cpp
 )
 
 set( Hdrs app.hpp

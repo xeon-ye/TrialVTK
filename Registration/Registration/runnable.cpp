@@ -29,7 +29,7 @@ void RegRunner::run() {
 }
 
 /* Local variables: */
-/* indent-tab-mode: nil */
+/* indent-tabs-mode: nil */
 /* tab-width: 2 */
 /* c-basic-offset: 2 */
 /* End: */

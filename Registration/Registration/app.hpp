@@ -13,6 +13,8 @@ class Ui_Registration;
 
 #include <Registration/runnable.hpp>
 
+#include <Registration/QRangeSlider.hpp>
+
 #include <vtkSmartPointer.h>
 #include <vtkResliceImageViewer.h>
 #include <vtkImagePlaneWidget.h>
@@ -26,6 +28,7 @@ class App : public QMainWindow {
  public:
   App(int argc, char *argv[]);
   ~App() override;
+ 
  public slots:
   virtual void slotExit();
   void resizeEvent(QResizeEvent* event);
@@ -35,6 +38,8 @@ class App : public QMainWindow {
   void dumpImages();
   void dumpImageBackBuffers(int index);
   void dumpImageOffscreen();
+
+  void segmSliderChanged(int index);
 
  private Q_SLOTS:
   void updateChildWidgets();
@@ -79,6 +84,7 @@ class App : public QMainWindow {
 
   int retval;
   RegRunner* regrunner;
+  QRangeSlider* thresholdsSlider;
 
   // MR view stuff
   vtkSmartPointer<vtkImageData> m_dummy;
@@ -89,3 +95,4 @@ class App : public QMainWindow {
   vtkSmartPointer<vtkImageData> m_dummy1;
   vtkSmartPointer<vtkResliceImageViewer> m_riw_us[3];
 };
+

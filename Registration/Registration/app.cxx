@@ -78,6 +78,9 @@ void App::onRegStartClick() {
   checkIfDone();
 }
 
+void App::segmSliderChanged(int value) {
+  qDebug() << value;
+}
 void App::onApplyPresetClick() {
   qDebug() << "preset";
   for (size_t i = 0; i < 3 ; i++) {
@@ -147,6 +150,9 @@ void App::SetupUI() {
   this->ui->sliderZoom->setValue(100);
   this->ui->cboxPlane->setCurrentIndex(2);
   this->ui->cboxPreset->setCurrentIndex(0);
+
+  this->thresholdsSlider = new QRangeSlider(this);
+  this->ui->segmVertLayout->insertWidget(0, this->thresholdsSlider);
 
 }
 
@@ -519,6 +525,9 @@ void App::PopulateMenus() {
 
   connect(ui->btnPreset, &QPushButton::clicked,
           this, &App::onApplyPresetClick);
+
+  connect(ui->horizontalSlider, &QSlider::valueChanged, this, &App::segmSliderChanged);
+
 }
 
 void App::setZoom(int zoom) {
@@ -929,3 +938,4 @@ void App::ResetViews() {
 /* tab-width: 2 */
 /* c-basic-offset: 2 */
 /* End: */
+
