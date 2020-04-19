@@ -20,4 +20,10 @@ cd %~dp0\build
 REM Build solution
 msbuild TrialVTK.sln /p:Configuration=Release
 
+set CURRENTDRIVE=%CD:~0,2%
+%QTDIR%\bin\qtenv2.bat
+cd /D %CURRENTDRIVE%%~dp0\build\Registration\Registration\Release
+%QTDIR%\bin\windeployqt.exe Registration.exe
+
+
 cd %~dp0
