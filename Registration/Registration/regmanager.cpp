@@ -341,11 +341,9 @@ void DataManager::resliceMode(int mode) {
 
 #if 0
 // Use vtkPointWidget or vtkSeedWidget
-void QtVTKRenderWindows::AddDistanceMeasurementToView(int i)
-{
+void QtVTKRenderWindows::AddDistanceMeasurementToView(int i) {
   // remove existing widgets.
-  if (this->DistanceWidget[i])
-  {
+  if (this->DistanceWidget[i]) {
     this->DistanceWidget[i]->SetEnabled(0);
     this->DistanceWidget[i] = nullptr;
   }
