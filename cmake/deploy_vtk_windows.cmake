@@ -13,6 +13,7 @@ function(windeployvtk target directory)
     vtkCommonSystem-8.2.dll
     vtkCommonTransforms-8.2.dll
     vtkDICOMParser-8.2.dll
+    vtkexpat-8.2.dll
     vtkFiltersCore-8.2.dll
     vtkFiltersExtraction-8.2.dll
     vtkFiltersGeneral-8.2.dll
@@ -40,6 +41,8 @@ function(windeployvtk target directory)
     vtkIOImage-8.2.dll
     vtkIOLegacy-8.2.dll
     vtkIOGeometry-8.2.dll
+    vtkIOXML-8.2.dll
+    vtkIOXMLParser-8.2.dll
     vtkjpeg-8.2.dll
     vtkmetaio-8.2.dll
     vtkpng-8.2.dll
