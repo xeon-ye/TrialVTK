@@ -35,7 +35,10 @@ set( Srcs
   # superslider.cpp
 )
 
-set( Hdrs app.hpp
+set( Hdrs
+  app.hpp
+  reslicecallback.h
+  seedcallback.h
   )
 
 set( MOC_Hdrs app.hpp )

@@ -25,14 +25,12 @@ public:
                 << std::endl;
             for (unsigned int seedId = 0; static_cast<int>(seedId) <
                 this->SeedRepresentation->GetNumberOfSeeds();
-                seedId++)
-            {
+                seedId++) {
                 double pos[3];
                 //        this->SeedRepresentation->GetSeedDisplayPosition(seedId, pos);
                 this->SeedRepresentation->GetSeedWorldPosition(seedId, pos);
                 std::cout << "Seed " << seedId << " : (" << pos[0] << " " << pos[1]
                     << " " << pos[2] << ")" << std::endl;
-                
             }
             return;
         }

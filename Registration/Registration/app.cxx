@@ -98,6 +98,39 @@ void App::onApplyPresetClick() {
     }
   }
 }
+void App::onSegClick() {
+  const int i = 1;
+
+  double spacing[3];
+  double origin[3];
+  m_riw[1]->GetInput()->GetSpacing(spacing);
+  m_riw[1]->GetInput()->GetOrigin(origin);
+
+  // Or use Get
+  //        double *spacing = signedDistInfo->Get(vtkDataObject::SPACING());
+  // Get image from ResliceCursor, same center as input data
+
+  if (m_seeds[i]) {
+    auto rep = m_seeds[i]->GetSeedRepresentation();
+
+    for (unsigned int seedId = 0; static_cast<int>(seedId) <
+           rep->GetNumberOfSeeds();
+         seedId++) {
+      double pos[3];
+      rep->GetSeedWorldPosition(seedId, pos);
+      std::cout << "Seed " << seedId << " : (" << pos[0] << " " << pos[1]
+                << " " << pos[2] << ")" << std::endl;
+
+      int voxel[3];
+      voxel[0] = (pos[0] - origin[0]) / spacing[0];
+      voxel[1] = (pos[1] - origin[1]) / spacing[1];
+      voxel[2] = (pos[2] - origin[2]) / spacing[2];
+
+      std::cout << "Voxel " << seedId << " : (" << voxel[0] << " " << voxel[1]
+          << " " << voxel[2] << ")" << std::endl;
+    }
+  }
+}
 
 void App::onRegClick() {
   (this->*regDelegate)();
@@ -529,13 +562,16 @@ void App::PopulateMenus() {
   connect(ui->btnTwo, &QPushButton::clicked,
           this, &App::dumpImageOffscreen);
 
+  connect(ui->btnSeg, &QPushButton::clicked,
+          this, &App::onSegClick);
+
   connect(ui->btnPreset, &QPushButton::clicked,
           this, &App::onApplyPresetClick);
 
   connect(ui->horizontalSlider, &QSlider::valueChanged, this, &App::segmSliderChanged);
 
-  connect(ui->pbAddSeeds, SIGNAL(pressed()), this, SLOT(AddSeedsToView1()));
-
+  connect(ui->btnAddSeeds, SIGNAL(pressed()), this, SLOT(AddSeedsToView1()));
+  connect(ui->btnClearSeeds, SIGNAL(pressed()), this, SLOT(ClearSeedsInView1()));
 }
 
 void App::AddSeedsToView1() {
@@ -558,7 +594,7 @@ void App::setZoom(int zoom) {
 
 void App::onLoadMRClicked() {
   const QString DEFAULT_DIR_KEY("RegistrationDefaultDir");
-  QSettings MySettings;
+  QSettings MySettings;// = QSettings(;
 
   QString selectedDirectory;
 
@@ -766,6 +802,23 @@ void App::FileLoadMR(const vtkSmartPointer<vtkImageReader2>& reader) {
   int imageDims[3];
   reader->GetOutput()->GetDimensions(imageDims);
 
+  // Display dimensions
+  std::cout << "Dimensions: " << imageDims[0] << " "
+      << imageDims[1] << " "
+      << imageDims[2] << std::endl;
+  double spacing[3];
+  reader->GetOutput()->GetSpacing(spacing);
+  std::cout << "Spacing: " << spacing[0] << " "
+      << spacing[1] << " "
+      << spacing[2] << std::endl;
+
+  double origin[3];
+  reader->GetOutput()->GetOrigin(origin);
+  std::cout << "Origin: " << origin[0] << " "
+      << origin[1] << " "
+      << origin[2] << std::endl;
+
+
   QVTKOpenGLWidget *ppVTKOGLWidgets[4] = {
     this->ui->mrView0,
     this->ui->mrView1,
@@ -946,6 +999,15 @@ void App::ResetViews() {
   this->Render();
 }
 
+void App::ClearSeedsInView1() {
+  return ClearSeedsInView(1);
+}
+void App::ClearSeedsInView(int i) {
+  if (this->m_seeds[i]) {
+    this->m_seeds[i]->SetEnabled(0);
+    this->m_seeds[i] = nullptr;
+  }
+}
 
 void App::AddSeedsToView(int i) {
   // remove existing widgets.

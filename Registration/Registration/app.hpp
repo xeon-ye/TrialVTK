@@ -44,8 +44,10 @@ class App : public QMainWindow {
 
   void segmSliderChanged(int index);
 
-  virtual void AddSeedsToView1();
-  virtual void AddSeedsToView( int );
+  void AddSeedsToView1();
+  void AddSeedsToView( int );
+  void ClearSeedsInView1();
+  void ClearSeedsInView(int i);
 
  private Q_SLOTS:
   void updateChildWidgets();
@@ -55,6 +57,8 @@ class App : public QMainWindow {
   void onLoadVesselsClicked();
 
   void checkIfDone();
+
+  void onSegClick();
 
   void onRegClick();
   void onApplyPresetClick();

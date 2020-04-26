@@ -23,6 +23,10 @@ int main( int argc, char** argv ) {
   // QT Stuff
   QApplication app( argc, argv );
 
+  app.setApplicationName("ITK Segmentation");
+  app.setOrganizationName("Sexy Soft");
+  app.setOrganizationDomain("www.sexysoft.com");
+
   App myApp(argc, argv);
 
 
@@ -39,3 +43,4 @@ int main( int argc, char** argv ) {
 /* tab-width: 2 */
 /* c-basic-offset: 2 */
 /* End: */
+
