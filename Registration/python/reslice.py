@@ -17,11 +17,11 @@ def vtkToNumpy(data):
     temp = vtk_to_numpy(data.GetPointData().GetScalars())
     dims = data.GetDimensions()
     numpy_data = temp.reshape(dims[2], dims[1], dims[0])
-    numpy_data = numpy_data.transpose(2,1,0)
+    numpy_data = numpy_data.transpose(2,1,0) # avoid this
     return numpy_data
 
 def numpyToVTK(data):
-    flat_data_array = data.transpose(2,1,0).flatten()
+    flat_data_array = data.transpose(2,1,0).flatten() # avoid transpose
     vtk_data_array = numpy_to_vtk(flat_data_array)
     vtk_data = numpy_to_vtk(num_array=vtk_data_array, deep=True, array_type=vtk.VTK_FLOAT)
     img = vtk.vtkImageData()
