@@ -59,7 +59,7 @@
 #include <vtkResliceImageViewer.h>
 #include <vtkResliceImageViewerMeasurements.h>
 
-//#include <vtkPointHandleRepresentation2D.h>
+#include <vtkPointHandleRepresentation2D.h>
 #include <vtkPointHandleRepresentation3D.h>
 #include <vtkSeedRepresentation.h>
 
@@ -97,13 +97,13 @@ public:
     }
     if (event == vtkCommand::InteractionEvent)
     {
-      std::cout << "Interaction..." << std::endl;
+      // std::cout << "Interaction..." << std::endl;
       if (calldata)
       {
         double pos[3];
         this->SeedRepresentation->GetSeedDisplayPosition(0, pos);
-        std::cout << "Moved to (" << pos[0] << " " << pos[1] << " " << pos[2]
-                  << ")" << std::endl;
+        // std::cout << "Moved to (" << pos[0] << " " << pos[1] << " " << pos[2]
+        //           << ")" << std::endl;
       }
       return;
     }
@@ -151,8 +151,6 @@ void App::onApplyPresetClick() {
   qDebug() << "preset";
   for (size_t i = 0; i < 3 ; i++) {
     if (m_riw[i]) {
-      //m_riw[i]->GetWindowLevel()->SetWindow(50.0);
-      //m_riw[i]->GetWindowLevel()->SetLevel(145.0);
       m_riw[i]->SetColorWindow(50.0);
       m_riw[i]->SetColorLevel(145.0);
       m_riw[i]->Render();
@@ -1027,7 +1025,13 @@ void App::AddSeedsToView(int i) {
   // Create the representation
   auto handle =
     vtkSmartPointer<vtkPointHandleRepresentation3D>::New();
-  handle->GetProperty()->SetColor(1, 0, 0);
+  if (i == 0) {
+    handle->GetProperty()->SetColor(1, 0, 0);
+  } else if (i == 1) {
+    handle->GetProperty()->SetColor(0, 1, 0);
+  } else {
+    handle->GetProperty()->SetColor(0, 0, 1);
+  }
   auto rep =
     vtkSmartPointer<vtkSeedRepresentation>::New();
   rep->SetHandleRepresentation(handle);

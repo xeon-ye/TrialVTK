@@ -111,7 +111,7 @@ int main(int /* argc */, char* /* argv */[])
 
   // Create the representation
   auto handle =
-    vtkSmartPointer<vtkPointHandleRepresentation2D>::New();
+    vtkSmartPointer<vtkPointHandleRepresentation3D>::New();
   handle->GetProperty()->SetColor(1, 0, 0);
   auto rep =
     vtkSmartPointer<vtkSeedRepresentation>::New();
