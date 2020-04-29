@@ -31,9 +31,14 @@ class vtkResliceCursorCallback : public vtkCommand {
   void Execute(vtkObject *caller, unsigned long ev,
                void *callData ) override {
 
+    if (ev == vtkResliceCursorCallback::ResliceAxesChangedEvent) {
+      std::cout << "axes changed" << std::endl;
+    }
+
     if (ev == vtkResliceCursorWidget::WindowLevelEvent ||
         ev == vtkCommand::WindowLevelEvent ||
         ev == vtkResliceCursorWidget::ResliceThicknessChangedEvent) {
+
       // Render reslice cursor widgets
       for (int i = 0; i < 3; i++) {
         if (this->RCW[i]) {
@@ -43,7 +48,7 @@ class vtkResliceCursorCallback : public vtkCommand {
           this->USRCW[i]->Render();
         }
       }
-      // Render image-plane widget
+      // Render image-plane widget 3D
       if (this->IPW[0]) {
         this->IPW[0]->GetInteractor()->GetRenderWindow()->Render();
       }
@@ -53,6 +58,7 @@ class vtkResliceCursorCallback : public vtkCommand {
     vtkImagePlaneWidget* ipw =
       dynamic_cast< vtkImagePlaneWidget* >( caller );
     if (ipw) {
+      // Synchronize window level
       double* wl = static_cast<double*>( callData );
       if ( ipw == this->IPW[0] ) {
         if (this->IPW[1]) {
@@ -118,7 +124,20 @@ class vtkResliceCursorCallback : public vtkCommand {
               vtkResliceCursor* target =
                 this->USRCW[i]->GetResliceCursorRepresentation()->
                 GetResliceCursor();
+
+              // TODO: Consider using SetHoleWithInPixels(pixxels) so it is easier to see pixel at cursor
               target->SetCenter(cursor->GetCenter());
+
+              // rep->InitializeReslicePlane();
+
+              // std::cout << "update plane" << std::endl;
+              // TEST
+              // GetResliceAxes();
+              // this->USRCW[i]->SetResliceCursor
+
+              // ResliceAxesChangedEvent
+              // SetManipulationMode(vtkResliceCursorRepresentation::RotateBothAxes)
+              // CTRL - rotates both
 
               // TODO: Figure out to copy plane also
             }

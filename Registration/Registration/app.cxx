@@ -90,10 +90,23 @@ void App::segmSliderChanged(int value) {
 }
 void App::onApplyPresetClick() {
   qDebug() << "preset";
+  double window = 200;//50.0; // 200
+  double level = 100;//145.0; // 100
+
+  int index = this->ui->cboxPreset->currentIndex();
+
+  if (index == 0) {
+    double range[2];
+    if (m_riw[0]) {
+      m_riw[0]->GetInput()->GetScalarRange(range);
+      window = range[1]-range[0];
+      level = (range[0]+range[1])/2.0;
+    }
+  }
   for (size_t i = 0; i < 3 ; i++) {
     if (m_riw[i]) {
-      m_riw[i]->SetColorWindow(50.0);
-      m_riw[i]->SetColorLevel(145.0);
+      m_riw[i]->SetColorWindow(window);
+      m_riw[i]->SetColorLevel(level);
       m_riw[i]->Render();
     }
   }

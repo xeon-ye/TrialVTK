@@ -26,6 +26,13 @@
        </attribute>
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
+         <widget class="QSplitter" name="splitter_4">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+
+
+          
          <widget class="QSplitter" name="splitter_3">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
@@ -37,27 +44,20 @@
            <widget class="QVTKOpenGLWidget" name="mrView0" native="true">
             <property name="minimumSize">
              <size>
-              <width>50</width>
-              <height>50</height>
+              <width>200</width>
+              <height>300</height>
              </size>
             </property>
            </widget>
            <widget class="QVTKOpenGLWidget" name="mrView1" native="true">
             <property name="minimumSize">
              <size>
-              <width>50</width>
-              <height>50</height>
+              <width>200</width>
+              <height>300</height>
              </size>
             </property>
            </widget>
-           <widget class="QVTKOpenGLWidget" name="mrView3D" native="true">
-            <property name="minimumSize">
-             <size>
-              <width>50</width>
-              <height>50</height>
-             </size>
-            </property>
-           </widget>
+
           </widget>
           <widget class="QSplitter" name="splitter_1">
            <property name="orientation">
@@ -66,19 +66,37 @@
            <widget class="QVTKOpenGLWidget" name="usView0" native="true">
             <property name="minimumSize">
              <size>
-              <width>50</width>
-              <height>50</height>
+              <width>200</width>
+              <height>300</height>
              </size>
             </property>
            </widget>
            <widget class="QVTKOpenGLWidget" name="usView1" native="true">
             <property name="minimumSize">
              <size>
-              <width>50</width>
-              <height>50</height>
+              <width>200</width>
+              <height>300</height>
              </size>
             </property>
            </widget>
+
+
+          </widget>
+         </widget>
+          <widget class="QSplitter" name="splitter_5">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+
+           <widget class="QVTKOpenGLWidget" name="mrView3D" native="true">
+            <property name="minimumSize">
+             <size>
+              <width>200</width>
+              <height>300</height>
+             </size>
+            </property>
+           </widget>
+           
            <widget class="QWidget" name="widget" native="true">
             <layout class="QHBoxLayout" name="horizontalLayout_14">
              <item>
@@ -197,6 +215,8 @@
              </item>
             </layout>
            </widget>
+
+           
           </widget>
          </widget>
         </item>
@@ -227,8 +247,8 @@
                 <widget class="QVTKOpenGLWidget" name="mrView2" native="true">
                  <property name="minimumSize">
                   <size>
-                   <width>40</width>
-                   <height>60</height>
+                   <width>200</width>
+                   <height>300</height>
                   </size>
                  </property>
                 </widget>
@@ -237,8 +257,8 @@
                 <widget class="QVTKOpenGLWidget" name="usView2" native="true">
                  <property name="minimumSize">
                   <size>
-                   <width>40</width>
-                   <height>60</height>
+                   <width>200</width>
+                   <height>300</height>
                   </size>
                  </property>
                 </widget>
@@ -274,7 +294,12 @@
                        <widget class="QComboBox" name="cboxPreset">
                         <item>
                          <property name="text">
-                          <string>CT - Liver (B/W)</string>
+                          <string>Default</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>CT - Liver</string>
                          </property>
                         </item>
                        </widget>
