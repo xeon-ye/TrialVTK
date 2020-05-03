@@ -13,6 +13,7 @@ class Ui_Registration;
 
 #include <Registration/runnable.hpp>
 #include <Registration/SegRunner.hpp>
+#include <Registration/SurfRunner.hpp>
 
 //#include <Registration/QRangeSlider.hpp>
 //#include <Registration/superslider.h>
@@ -34,7 +35,7 @@ class App : public QMainWindow {
  public:
   App(int argc, char *argv[]);
   ~App() override;
- 
+
  public slots:
   void SeedsUpdated(vtkObject*, unsigned long, void*, void*);
 
@@ -54,9 +55,14 @@ class App : public QMainWindow {
   void ClearSeedsInView1();
   void ClearSeedsInView(int i);
 
+  void SliderLow(int value);
+  void SliderHigh(int value);
+
  private Q_SLOTS:
   void updateChildWidgets();
   void updateSegChildWidgets();
+  void updateSurfChildWidgets();
+
   void Render();
   void onLoadMRClicked();
   void onLoadUSClicked();
@@ -64,10 +70,16 @@ class App : public QMainWindow {
 
   void checkIfDone();
   void checkIfSegDone();
+  void checkIfSurfDone();
 
   void onSegClick();
   void onSegStartClick();
   void onSegCancelClick();
+
+  void onSurfClick();
+  void onSurfStartClick();
+  void onSurfCancelClick();
+
 
   void onRegClick();
   void onApplyPresetClick();
@@ -98,10 +110,12 @@ class App : public QMainWindow {
   QVariantMap data;
   volatile bool stopped;
   volatile bool segStopped;
+  volatile bool surfStopped;
 
 
   void (App::*regDelegate) ();
   void (App::*segDelegate) ();
+  void (App::*surfDelegate) ();
 
   vtkSmartPointer<vtkResliceCursorCallback> cbk;
 
@@ -109,6 +123,7 @@ class App : public QMainWindow {
   RegRunner* regrunner;
 
   SegRunner* segRunner;
+  SurfRunner* surfRunner;
 
   RangeSlider* thresholdsSlider;
 
@@ -126,4 +141,6 @@ class App : public QMainWindow {
   vtkSmartPointer<vtkEventQtSlotConnect> Connections;
   // Segmentation stuff
   vtkSmartPointer<vtkSeedWidget> m_seeds[3];
+
+  vtkSmartPointer<vtkActor> m_vessels;
 };

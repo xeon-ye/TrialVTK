@@ -89,11 +89,12 @@ void App::onRegStartClick() {
 }
 
 void App::onSegStartClick() {
-  ui->btnSeg->setEnabled(false);
+  ClearSeedsInView1();
+  //  ui->btnSeg->setEnabled(false);
   ui->segProgressBar->setValue(0);
   segStopped = false;
   segRunner =
-      new SegRunner(this, data, &retval, &stopped);
+      new SegRunner(this, data, &retval, &segStopped);
 
   segRunner->setAutoDelete(false);
   QThreadPool::globalInstance()->start(segRunner);
@@ -103,6 +104,28 @@ void App::onSegStartClick() {
   ui->btnSeg->setEnabled(true);
 
   checkIfSegDone();
+}
+
+void App::onSurfStartClick() {
+  ui->btnSurf->setEnabled(false);
+  ui->segProgressBar->setValue(0);
+  surfStopped = false;
+
+  // TODO: Read sliders
+  // data["low"] = this->thresholdsSlider->GetLowerValue();
+  // data["high"] = this->thresholdsSlider->GetUpperValue();
+
+  surfRunner =
+      new SurfRunner(this, data, &retval, &surfStopped);
+
+  surfRunner->setAutoDelete(false);
+  QThreadPool::globalInstance()->start(surfRunner);
+
+  // segDelegate = &App::onCancelClick;
+  ui->btnSurf->setText("Cancel");
+  ui->btnSurf->setEnabled(true);
+
+  checkIfSurfDone();
 }
 
 
@@ -137,6 +160,10 @@ void App::onApplyPresetClick() {
   }
 }
 
+void App::onSurfClick() {
+  (this->*surfDelegate)();
+}
+
 void App::onSegClick() {
   (this->*segDelegate)();
 }
@@ -155,6 +182,12 @@ void App::onSegCancelClick() {
   printf("Canceling\n");
   // Do something that interrupts registration
   segDelegate = &App::onSegClick;
+}
+
+void App::onSurfCancelClick() {
+  printf("Canceling\n");
+  // Do something that interrupts registration
+  surfDelegate = &App::onSurfClick;
 }
 
 void App::updateProgressBar(int progressPercent) {
@@ -179,6 +212,26 @@ void App::checkIfSegDone() {
     if (segRunner) {
       delete segRunner;
       segRunner = nullptr;
+    }
+    // Should only be set if segStopped = false
+    this->ui->btnSurf->setEnabled(true);
+  }
+}
+
+void App::checkIfSurfDone() {
+  // What if cancel happens before
+  if (QThreadPool::globalInstance()->activeThreadCount()) {
+    QTimer::singleShot(100, this, SLOT(checkIfSurfDone()));
+  } else {
+    if (!surfStopped) {
+      surfStopped = true;
+      updateSurfChildWidgets();
+      // Update widget with results
+      surfDelegate = &App::onSurfStartClick;
+    }
+    if (surfRunner) {
+      delete surfRunner;
+      surfRunner = nullptr;
     }
   }
 }
@@ -226,6 +279,18 @@ void App::updateSegChildWidgets() {
   }
 }
 
+void App::updateSurfChildWidgets() {
+  if (surfStopped) {
+    ui->btnSurf->setEnabled(false);
+    ui->btnSurf->setText("M&esh");
+    ui->btnSurf->setEnabled(true);
+    ui->segProgressBar->reset();
+  } else {
+    ui->btnSurf->setEnabled(false);
+    ui->segProgressBar->reset();
+  }
+}
+
 
 
 void App::SetupUI() {
@@ -241,8 +306,12 @@ void App::SetupUI() {
 
   this->thresholdsSlider =
     new RangeSlider(Qt::Horizontal, RangeSlider::Option::DoubleHandles, this);
+  this->thresholdsSlider->SetRange(100, 600);
   this->ui->segmVertLayout->insertWidget(0, this->thresholdsSlider);
+
+
   this->ui->btnSeg->setEnabled(false);
+  this->ui->btnSurf->setEnabled(false);
   this->ui->btnAddSeeds->setEnabled(false);
 
 
@@ -618,6 +687,9 @@ void App::PopulateMenus() {
   connect(ui->btnSeg, &QPushButton::clicked,
           this, &App::onSegClick);
 
+  connect(ui->btnSurf, &QPushButton::clicked,
+          this, &App::onSurfClick);
+
   connect(ui->btnReset, &QPushButton::clicked,
           this, &App::ResetViews);
 
@@ -628,6 +700,18 @@ void App::PopulateMenus() {
 
   connect(ui->btnAddSeeds, SIGNAL(pressed()), this, SLOT(AddSeedsToView1()));
   connect(ui->btnClearSeeds, SIGNAL(pressed()), this, SLOT(ClearSeedsInView1()));
+
+  connect(this->thresholdsSlider, SIGNAL(lowerValueChanged(int)), this, SLOT(SliderLow(int)));
+
+  connect(this->thresholdsSlider, SIGNAL(upperValueChanged(int)), this, SLOT(SliderHigh(int)));
+}
+
+void App::SliderLow(int value) {
+  data["low"] = value;
+}
+
+void App::SliderHigh(int value) {
+  data["high"] = value;
 }
 
 void App::AddSeedsToView1() {
@@ -717,16 +801,21 @@ void App::onLoadVesselsClicked() {
         vtkSmartPointer<vtkPolyDataMapper> mapper =
             vtkSmartPointer<vtkPolyDataMapper>::New();
         mapper->SetInputConnection(reader->GetOutputPort());
-        vtkSmartPointer<vtkActor> actor =
+
+        if (m_vessels) {
+          m_planeWidget[0]->GetDefaultRenderer()->RemoveActor(m_vessels);
+        }
+        m_vessels =
             vtkSmartPointer<vtkActor>::New();
-        actor->SetMapper(mapper);
-        auto prop = actor->GetProperty();
+
+        m_vessels->SetMapper(mapper);
+        auto prop = m_vessels->GetProperty();
         vtkSmartPointer<vtkNamedColors> namedColors =
             vtkSmartPointer<vtkNamedColors>::New();
 
         prop->SetColor(namedColors->GetColor3d("Red").GetData());
 
-        m_planeWidget[0]->GetDefaultRenderer()->AddActor(actor);
+        m_planeWidget[0]->GetDefaultRenderer()->AddActor(m_vessels);
         this->ui->mrView3D->GetRenderWindow()->Render();
       } else {
         return;
@@ -786,6 +875,8 @@ App::App(int argc, char* argv[]) {
 
   m_segmentation = nullptr;
 
+  m_vessels = nullptr;
+
   this->SetupUI();
   this->setupMR();
 
@@ -796,6 +887,8 @@ App::App(int argc, char* argv[]) {
   regDelegate = &App::onRegStartClick;
 
   segDelegate = &App::onSegStartClick;
+
+  surfDelegate = &App::onSurfStartClick;
 
   this->Connections = vtkSmartPointer<vtkEventQtSlotConnect>::New();
 
@@ -1189,6 +1282,9 @@ void App::SeedsUpdated(vtkObject* obj, unsigned long, void*, void*)
         data["seedX"] = ix;
         data["seedY"] = iy;
         data["seedZ"] = iz;
+        signed short iValue = pVoxels[iz*ny*nx + iy*nx + ix];
+        data["value"] = iValue;
+        std::cout << "Voxel value: " << iValue << std::endl;
       }
       // Hack to loop over 3x3 neighborhood
       for (int x = ix - 1 ; x < ix + 2 ; x++) {
@@ -1198,7 +1294,7 @@ void App::SeedsUpdated(vtkObject* obj, unsigned long, void*, void*)
                 (0 <= y) && (y < ny) &&
                 (0 <= z) && (z < nz)) {
               v = double(pVoxels[z*ny*nx + y*nx + x]);
-              std::cout << "v: " << v << std::endl;
+              // std::cout << "v: " << v << std::endl;
               v2 = v*v;
               vsum = vsum + v;
               vsqsum = vsqsum + v2;
@@ -1220,6 +1316,15 @@ void App::SeedsUpdated(vtkObject* obj, unsigned long, void*, void*)
       data["mean"]  = mean;
       // Enabled segmentation button
       this->ui->btnSeg->setEnabled(true);
+
+      int iLow = int(mean - 2.5*std);
+      int iHigh = int(mean + 2.5*std);
+      this->thresholdsSlider->setLowerValue(iLow);
+      this->thresholdsSlider->setUpperValue(iHigh);
+
+      data["low"] = iLow;
+      data["high"] = iHigh;
+
     }
 
     // (n vsqsum - vsum**2) / (n*(n-1))

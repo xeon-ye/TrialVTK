@@ -55,15 +55,20 @@ int main(int argc, char* argv[]) {
     seed[0] = atoi(argv[3]);
     seed[1] = atoi(argv[4]);
     seed[2] = atoi(argv[5]);
-    if (argc > 6 && argc > 7) {
-      lowerThreshold = atoi(argv[6]);
-      upperThreshold = atoi(argv[7]);
-    }
-    else {
-      std::cerr << "Usage: " << argv[0];
-      std::cerr << " inputImage outputImage seedX seedY seedZ lowerThreshold upperThreshold" << std::endl;
+    if (argc > 6) {
+      if (argc > 7) {
+        lowerThreshold = atoi(argv[6]);
+        upperThreshold = atoi(argv[7]);
+      }
+      else {
+        std::cerr << "Usage: " << argv[0];
+        std::cerr << " inputImage outputImage seedX seedY seedZ lowerThreshold upperThreshold" << std::endl;
+      }
     }
   }
+
+  std::cout << "Seed is: (" << seed[0] << ", " << seed[1] << ", " << seed[2] << ")" << std::endl;
+  std::cout << "Thresholds are: [" << lowerThreshold << ", " << upperThreshold << "]" << std::endl;
 
   reader->SetFileName(fInput);
   writer->SetFileName(fOutput);
@@ -86,7 +91,21 @@ int main(int argc, char* argv[]) {
 #else
   connectedThreshold->SetInput(reader->GetOutput());
 #endif
+
+
   caster->SetInput(connectedThreshold->GetOutput());
+
+  // Orient filter
+#if 0
+  typedef itk::OrientedImage<dcmAPI::PixelType, 3> OrientedVolumeType;
+  itk::OrientImageFilter<VolumeType,VolumeType>::Pointer orienter = itk::OrientImageFilter<VolumeType,VolumeType>::New();
+  orienter->UseImageDirectionOn();
+  orienter->SetDesiredCoordinateOrientation(
+      itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_LPS);
+  orienter->SetInput(volume);
+  orienter->Update();
+#endif
+
   writer->SetInput(caster->GetOutput());
 
   connectedThreshold->SetLower(lowerThreshold);

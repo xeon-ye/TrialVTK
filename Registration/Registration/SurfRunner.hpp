@@ -12,9 +12,9 @@
 class SurfRunner : public QRunnable {
  public:
   SurfRunner(QWidget *receiver,
-            QMap<QString, QVariant> data,
-            int* retval,
-            volatile bool *stopped);
+             QMap<QString, QVariant> data,
+             int* retval,
+             volatile bool *stopped);
   void run();
  private:
   QWidget* receiver;

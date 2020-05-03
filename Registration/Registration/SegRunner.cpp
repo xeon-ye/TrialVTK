@@ -1,5 +1,6 @@
 #include <Registration/SegRunner.hpp>
 #include <iostream>
+#include <sstream>
 #include <QDebug>
 
 SegRunner::SegRunner(QWidget *receiver,
@@ -11,23 +12,48 @@ SegRunner::SegRunner(QWidget *receiver,
 }
 
 void SegRunner::run() {
-  //*stopped = true;
-  // Signal complete (just in case)
-  qDebug() << "convert";
-  system("./SegmGrow");
-  std::cout << "Segmentation done" << std::endl;
+  const char* fInput = "/home/jmh/bkmedical/data/CT/CT-Abdomen.mhd";
+  const char* fOutput = "./seg.mhd";
 
-  std::cout << data["seedX"].toInt() << " " << data["seedY"].toInt() << " " << data["seedZ"].toInt() << std::endl;
+  int low = data["low"].toInt();
+  int high = data["high"].toInt();
 
-  double low = data["mean"].toFloat() - 2.5 * data["std"].toFloat();
-  double high = data["mean"].toFloat() + 2.5 * data["std"].toFloat();
-
-  // hard-coded
-  low = 168;
-  high = 576;
+  int seedX = data["seedX"].toInt();
+  int seedY = data["seedY"].toInt();
+  int seedZ = data["seedZ"].toInt();
 
   std::cout << "low: " << low << std::endl;
   std::cout << "high: " << high << std::endl;
+
+  std::cout <<  "seed: (" << seedX << ", " << seedY << "," << seedZ << ")" << std::endl;
+
+#if 0
+  // hard-coded
+  low = 168;
+  high = 576;
+  seedX = 185;
+  seedY = 217;
+  seedZ = 407;
+#endif
+
+  std::stringstream ss;
+
+  ss << "./SegmGrow ";
+  ss << fInput;
+  ss << " ";
+  ss << fOutput;
+  ss << " ";
+  ss << seedX << " " << seedY << " " << seedZ;
+  ss << " ";
+  ss << low << " " << high;
+  std::cout << ss.str() << std::endl;
+  system(ss.str().data());
+
+  // Old works
+  // system("./SegmGrow");
+  std::cout << "Segmentation done" << std::endl;
+
+  // *stopped = true; // only if cancelled
 
   QMetaObject::invokeMethod(receiver, "updateSegProgressBar",
                             Qt::QueuedConnection,

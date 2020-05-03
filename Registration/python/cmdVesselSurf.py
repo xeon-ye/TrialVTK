@@ -74,6 +74,7 @@ connectFilter.Update();
 #cleaner = vtk.vtkCleanPolyData()
 #cleaner.SetInputConnection(connectFilter.GetOutputPort())
 cleaner = connectFilter
+cleaner = stripper
 
 writer = vtk.vtkXMLPolyDataWriter()
 writer.SetFileName("/home/jmh/bkmedical/data/CT/vessels.vtp")

@@ -30,9 +30,6 @@
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
-
-
-          
          <widget class="QSplitter" name="splitter_3">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
@@ -180,7 +177,7 @@
                      </widget>
                     </item>
                     <item>
-                     <widget class="QPushButton" name="pushButton">
+                     <widget class="QPushButton" name="btnSurf">
                       <property name="text">
                        <string>Mesh</string>
                       </property>
@@ -342,6 +339,13 @@
                         <item>
                          <layout class="QHBoxLayout" name="horizontalLayout_4">
                           <item>
+                           <widget class="QPushButton" name="btnReset">
+                            <property name="text">
+                             <string>Reset View</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
                            <spacer name="horizontalSpacer">
                             <property name="orientation">
                              <enum>Qt::Horizontal</enum>
@@ -353,13 +357,6 @@
                              </size>
                             </property>
                            </spacer>
-                          </item>
-                          <item>
-                           <widget class="QPushButton" name="btnReset">
-                            <property name="text">
-                             <string>Reset View</string>
-                            </property>
-                           </widget>
                           </item>
                           <item>
                            <widget class="QSlider" name="sliderZoom">

@@ -3,9 +3,9 @@
 #include <QDebug>
 
 SurfRunner::SurfRunner(QWidget *receiver,
-                     QMap<QString, QVariant> data,
-                     int* retval,
-                     volatile bool *stopped) :
+                       QMap<QString, QVariant> data,
+                       int* retval,
+                       volatile bool *stopped) :
   QRunnable(), receiver(receiver),
   retval(retval), stopped(stopped), data(data) {
 }
