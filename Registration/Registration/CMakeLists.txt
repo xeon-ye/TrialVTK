@@ -20,6 +20,18 @@ find_package(VTK COMPONENTS
 
 include(${VTK_USE_FILE})
 
+find_package(ITK REQUIRED)
+include(${ITK_USE_FILE})
+
+if (ITKVtkGlue_LOADED)
+  find_package(VTK REQUIRED)
+  include(${VTK_USE_FILE})
+else()
+  find_package(ItkVtkGlue REQUIRED)
+  include(${ItkVtkGlue_USE_FILE})
+  set(Glue ItkVtkGlue)
+endif()
+
 if("${VTK_QT_VERSION}" STREQUAL "")
   message(FATAL_ERROR "VTK was not built with Qt")
 endif()
@@ -33,6 +45,8 @@ set( Srcs
   # QRangeSlider.cpp
   RangeSlider.cpp
   # superslider.cpp
+  SegRunner.cpp
+  SurfRunner.cpp
 )
 
 set( Hdrs

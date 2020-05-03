@@ -12,6 +12,7 @@ class Ui_Registration;
 #include <Registration/reslicecallback.h>
 
 #include <Registration/runnable.hpp>
+#include <Registration/SegRunner.hpp>
 
 //#include <Registration/QRangeSlider.hpp>
 //#include <Registration/superslider.h>
@@ -26,6 +27,8 @@ class Ui_Registration;
 
 #include <vtkSeedWidget.h>
 
+#include <vtkEventQtSlotConnect.h>
+
 class App : public QMainWindow {
   Q_OBJECT
  public:
@@ -33,6 +36,8 @@ class App : public QMainWindow {
   ~App() override;
  
  public slots:
+  void SeedsUpdated(vtkObject*, unsigned long, void*, void*);
+
   virtual void slotExit();
   void resizeEvent(QResizeEvent* event);
   void FileLoad(const QString &files, int type=0);
@@ -51,14 +56,18 @@ class App : public QMainWindow {
 
  private Q_SLOTS:
   void updateChildWidgets();
+  void updateSegChildWidgets();
   void Render();
   void onLoadMRClicked();
   void onLoadUSClicked();
   void onLoadVesselsClicked();
 
   void checkIfDone();
+  void checkIfSegDone();
 
   void onSegClick();
+  void onSegStartClick();
+  void onSegCancelClick();
 
   void onRegClick();
   void onApplyPresetClick();
@@ -66,6 +75,7 @@ class App : public QMainWindow {
   void onCancelClick();
 
   void updateProgressBar(int progressPercent);
+  void updateSegProgressBar(int progressPercent);
 
  private:
   void setupMR();
@@ -87,13 +97,19 @@ class App : public QMainWindow {
  private:
   QVariantMap data;
   volatile bool stopped;
+  volatile bool segStopped;
+
 
   void (App::*regDelegate) ();
+  void (App::*segDelegate) ();
 
   vtkSmartPointer<vtkResliceCursorCallback> cbk;
 
   int retval;
   RegRunner* regrunner;
+
+  SegRunner* segRunner;
+
   RangeSlider* thresholdsSlider;
 
   // MR view stuff
@@ -105,6 +121,9 @@ class App : public QMainWindow {
   vtkSmartPointer<vtkImageData> m_dummy1;
   vtkSmartPointer<vtkResliceImageViewer> m_riw_us[3];
 
+  vtkSmartPointer<vtkImageData> m_segmentation;
+
+  vtkSmartPointer<vtkEventQtSlotConnect> Connections;
   // Segmentation stuff
   vtkSmartPointer<vtkSeedWidget> m_seeds[3];
 };

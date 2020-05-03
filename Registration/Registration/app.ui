@@ -355,6 +355,13 @@
                            </spacer>
                           </item>
                           <item>
+                           <widget class="QPushButton" name="btnReset">
+                            <property name="text">
+                             <string>Reset View</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
                            <widget class="QSlider" name="sliderZoom">
                             <property name="orientation">
                              <enum>Qt::Horizontal</enum>
@@ -488,7 +495,7 @@
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionOpenMR">
    <property name="text">
-    <string>Open MR</string>
+    <string>Open MR/CT</string>
    </property>
   </action>
   <action name="actionOpenUS">

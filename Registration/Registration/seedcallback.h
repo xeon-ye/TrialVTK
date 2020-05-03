@@ -61,5 +61,3 @@ private:
     vtkSeedRepresentation * SeedRepresentation = nullptr;
     vtkSeedWidget* SeedWidget = nullptr;
 };
-
-

@@ -8,6 +8,9 @@
 
 // renderer->ResetCamera();
 // renderer->GetActiveCamera()->Zoom(1.5);
+#ifndef SQUARE
+# define SQUARE(z) ((z) * (z))
+#endif
 
 #include <Registration/ui_app.h>
 #include <Registration/reslicecallback.h>
@@ -85,13 +88,35 @@ void App::onRegStartClick() {
   checkIfDone();
 }
 
+void App::onSegStartClick() {
+  ui->btnSeg->setEnabled(false);
+  ui->segProgressBar->setValue(0);
+  segStopped = false;
+  segRunner =
+      new SegRunner(this, data, &retval, &stopped);
+
+  segRunner->setAutoDelete(false);
+  QThreadPool::globalInstance()->start(segRunner);
+
+  // segDelegate = &App::onCancelClick;
+  ui->btnSeg->setText("Cancel");
+  ui->btnSeg->setEnabled(true);
+
+  checkIfSegDone();
+}
+
+
+
 void App::segmSliderChanged(int value) {
   qDebug() << value;
 }
+
 void App::onApplyPresetClick() {
   qDebug() << "preset";
-  double window = 200;//50.0; // 200
-  double level = 100;//145.0; // 100
+  // CT Liver preset
+  double window = 200;
+  double level = 100; // [0,200]
+  //window = -200;
 
   int index = this->ui->cboxPreset->currentIndex();
 
@@ -111,38 +136,9 @@ void App::onApplyPresetClick() {
     }
   }
 }
+
 void App::onSegClick() {
-  const int i = 1;
-
-  double spacing[3];
-  double origin[3];
-  m_riw[1]->GetInput()->GetSpacing(spacing);
-  m_riw[1]->GetInput()->GetOrigin(origin);
-
-  // Or use Get
-  //        double *spacing = signedDistInfo->Get(vtkDataObject::SPACING());
-  // Get image from ResliceCursor, same center as input data
-
-  if (m_seeds[i]) {
-    auto rep = m_seeds[i]->GetSeedRepresentation();
-
-    for (unsigned int seedId = 0; static_cast<int>(seedId) <
-           rep->GetNumberOfSeeds();
-         seedId++) {
-      double pos[3];
-      rep->GetSeedWorldPosition(seedId, pos);
-      std::cout << "Seed " << seedId << " : (" << pos[0] << " " << pos[1]
-                << " " << pos[2] << ")" << std::endl;
-
-      int voxel[3];
-      voxel[0] = (pos[0] - origin[0]) / spacing[0];
-      voxel[1] = (pos[1] - origin[1]) / spacing[1];
-      voxel[2] = (pos[2] - origin[2]) / spacing[2];
-
-      std::cout << "Voxel " << seedId << " : (" << voxel[0] << " " << voxel[1]
-          << " " << voxel[2] << ")" << std::endl;
-    }
-  }
+  (this->*segDelegate)();
 }
 
 void App::onRegClick() {
@@ -155,9 +151,38 @@ void App::onCancelClick() {
   regDelegate = &App::onRegClick;
 }
 
+void App::onSegCancelClick() {
+  printf("Canceling\n");
+  // Do something that interrupts registration
+  segDelegate = &App::onSegClick;
+}
+
 void App::updateProgressBar(int progressPercent) {
   ui->progressBar->setValue(progressPercent);
 }
+
+void App::updateSegProgressBar(int progressPercent) {
+  ui->segProgressBar->setValue(progressPercent);
+}
+
+void App::checkIfSegDone() {
+  // What if cancel happens before
+  if (QThreadPool::globalInstance()->activeThreadCount()) {
+    QTimer::singleShot(100, this, SLOT(checkIfSegDone()));
+  } else {
+    if (!segStopped) {
+      segStopped = true;
+      updateSegChildWidgets();
+      // Update widget with results
+      segDelegate = &App::onSegStartClick;
+    }
+    if (segRunner) {
+      delete segRunner;
+      segRunner = nullptr;
+    }
+  }
+}
+
 
 void App::checkIfDone() {
   // What if cancel happens before
@@ -189,6 +214,18 @@ void App::updateChildWidgets() {
   }
 }
 
+void App::updateSegChildWidgets() {
+  if (segStopped) {
+    ui->btnSeg->setEnabled(false);
+    ui->btnSeg->setText("S&eg");
+    ui->btnSeg->setEnabled(true);
+    ui->segProgressBar->reset();
+  } else {
+    ui->btnSeg->setEnabled(false);
+    ui->segProgressBar->reset();
+  }
+}
+
 
 
 void App::SetupUI() {
@@ -205,6 +242,9 @@ void App::SetupUI() {
   this->thresholdsSlider =
     new RangeSlider(Qt::Horizontal, RangeSlider::Option::DoubleHandles, this);
   this->ui->segmVertLayout->insertWidget(0, this->thresholdsSlider);
+  this->ui->btnSeg->setEnabled(false);
+  this->ui->btnAddSeeds->setEnabled(false);
+
 
 }
 
@@ -578,6 +618,9 @@ void App::PopulateMenus() {
   connect(ui->btnSeg, &QPushButton::clicked,
           this, &App::onSegClick);
 
+  connect(ui->btnReset, &QPushButton::clicked,
+          this, &App::ResetViews);
+
   connect(ui->btnPreset, &QPushButton::clicked,
           this, &App::onApplyPresetClick);
 
@@ -741,6 +784,8 @@ App::App(int argc, char* argv[]) {
 
   m_seeds[0] = m_seeds[1] = m_seeds[2] = nullptr;
 
+  m_segmentation = nullptr;
+
   this->SetupUI();
   this->setupMR();
 
@@ -749,6 +794,11 @@ App::App(int argc, char* argv[]) {
   this->PopulateMenus();
 
   regDelegate = &App::onRegStartClick;
+
+  segDelegate = &App::onSegStartClick;
+
+  this->Connections = vtkSmartPointer<vtkEventQtSlotConnect>::New();
+
 
 }
 
@@ -909,6 +959,8 @@ void App::FileLoadMR(const vtkSmartPointer<vtkImageReader2>& reader) {
   // Interactor for other views are enabled through reslice image widgets
   this->ui->mrView3D->GetInteractor()->EnableRenderOn();
 
+  ui->btnAddSeeds->setEnabled(true);
+
   // view0 - view3 are already visible
 
   this->ResetViews();  // renders everything
@@ -968,9 +1020,11 @@ void App::FileLoadUS(const vtkSmartPointer<vtkImageReader2>& reader) {
 
 void App::resliceMode(int mode) {
   for (int i = 0; i < 3; i++) {
-    m_riw[i]->SetResliceMode(mode ? 1 : 0);
-    m_riw[i]->GetRenderer()->ResetCamera();
-    m_riw[i]->Render();
+    if (m_riw[i]) {
+      m_riw[i]->SetResliceMode(mode ? 1 : 0);
+      m_riw[i]->GetRenderer()->ResetCamera();
+      m_riw[i]->Render();
+    }
   }
 
   for (int i = 0; i < 3; i++) {
@@ -1013,7 +1067,8 @@ void App::ResetViews() {
 }
 
 void App::ClearSeedsInView1() {
-  return ClearSeedsInView(1);
+  ClearSeedsInView(1);
+  this->ui->btnSeg->setEnabled(false);
 }
 void App::ClearSeedsInView(int i) {
   if (this->m_seeds[i]) {
@@ -1048,6 +1103,9 @@ void App::AddSeedsToView(int i) {
   } else {
     handle->GetProperty()->SetColor(0, 0, 1);
   }
+  double sz = handle->GetHandleSize();
+  handle->SetHandleSize(2.0*sz);
+
   auto rep =
     vtkSmartPointer<vtkSeedRepresentation>::New();
   rep->SetHandleRepresentation(handle);
@@ -1060,8 +1118,16 @@ void App::AddSeedsToView(int i) {
     vtkSmartPointer<vtkSeedImageCallback>::New();
   seedCallback->SetRepresentation(rep);
   seedCallback->SetWidget(this->m_seeds[i]);
+
+  // LIFO behavior
+  this->Connections->Connect(this->m_seeds[i],
+                             vtkCommand::PlacePointEvent,
+                             this,
+                             SLOT(SeedsUpdated(vtkObject*, unsigned long, void*, void*)));
+
   this->m_seeds[i]->AddObserver(vtkCommand::PlacePointEvent, seedCallback);
   this->m_seeds[i]->AddObserver(vtkCommand::InteractionEvent, seedCallback);
+
 
   this->m_riw[i]->GetMeasurements()->AddItem(this->m_seeds[i]);
 
@@ -1069,8 +1135,99 @@ void App::AddSeedsToView(int i) {
   this->m_seeds[i]->EnabledOn();
 
 
-
+  // EventQtSlotConnect..
 }
+
+void App::SeedsUpdated(vtkObject* obj, unsigned long, void*, void*)
+{
+
+  vtkSeedWidget* seedWidget =
+      vtkSeedWidget::SafeDownCast(obj);
+
+  if (seedWidget) {
+    auto rep = seedWidget->GetSeedRepresentation();
+
+    double origin[3];
+    double spacing[3];
+    int imageDims[3];
+
+    vtkImageData* pImage = m_riw[1]->GetInput();
+
+    pImage->GetSpacing(spacing);
+    pImage->GetOrigin(origin);
+    pImage->GetDimensions(imageDims);
+
+    int nx = imageDims[0];
+    int ny = imageDims[1];
+    int nz = imageDims[2];
+
+    double vsum = 0.0;
+    double vsqsum = 0.0;
+
+    // std::cout << "scalar size: " << pImage->GetScalarSize() << std::endl;
+    assert(pImage->GetScalarType() == 4);
+
+    short* pVoxels = static_cast<short*>( pImage->GetScalarPointer());
+
+    int nPixels = 0;
+    double v;
+    double v2;
+
+    // TODO: Update last result instead of go throuh all
+    // TODO: Support more than one seed
+
+    for (unsigned int seedId = 0; static_cast<int>(seedId) <
+             rep->GetNumberOfSeeds();
+         seedId++) {
+      double pos[3];
+      rep->GetSeedWorldPosition(seedId, pos);
+      int ix = (pos[0] - origin[0]) / spacing[0];
+      int iy = (pos[1] - origin[1]) / spacing[1];
+      int iz = (pos[2] - origin[2]) / spacing[2];
+
+      if (seedId == 0) {
+        data["seedX"] = ix;
+        data["seedY"] = iy;
+        data["seedZ"] = iz;
+      }
+      // Hack to loop over 3x3 neighborhood
+      for (int x = ix - 1 ; x < ix + 2 ; x++) {
+        for (int y = iy - 1 ; y < iy + 2 ; y++) {
+          for (int z = iz - 1 ; z < iz + 2 ; z++) {
+            if ((0 <= x) && (x < nx) &&
+                (0 <= y) && (y < ny) &&
+                (0 <= z) && (z < nz)) {
+              v = double(pVoxels[z*ny*nx + y*nx + x]);
+              std::cout << "v: " << v << std::endl;
+              v2 = v*v;
+              vsum = vsum + v;
+              vsqsum = vsqsum + v2;
+              nPixels++;
+            }
+          }
+        }
+      }
+    }
+
+    if (nPixels > 1) {
+      double mean = vsum / nPixels;
+      std::cout << "mean: " << mean << std::endl;
+      double s2 = (vsqsum / double(nPixels) - SQUARE(vsum / double(nPixels))) * double(nPixels) / (double(nPixels) - 1.0);
+      double std = sqrt(s2);
+      std::cout << "std: " << std << std::endl;
+      // HERE
+      data["std"] = std;
+      data["mean"]  = mean;
+      // Enabled segmentation button
+      this->ui->btnSeg->setEnabled(true);
+    }
+
+    // (n vsqsum - vsum**2) / (n*(n-1))
+
+    // itk::ImageToVTKImageFilter
+  }
+}
+
 
 #if 0
 // Use vtkPointWidget or vtkSeedWidget
