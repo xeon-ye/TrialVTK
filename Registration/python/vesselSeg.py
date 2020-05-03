@@ -2,6 +2,12 @@ import sys
 import os
 import numpy as np
 
+# sitk.LabelOverlay
+# sitk.ConnectedThreshold
+# sitk.BinaryMorphologicalClosing
+# sitk.ConfidenceConnected
+
+
 from matplotlib import pyplot as plt
 
 plt.ion()
@@ -19,9 +25,9 @@ else:
 from myshow import myshow, myshow3d
 
 if os.name == 'nt':
-  img = sitk.ReadImage('e:/datavtk/CT/CT-Abdomen.mhd')
+  img16 = sitk.ReadImage('e:/datavtk/CT/CT-Abdomen.mhd')
 else:
-  img = sitk.ReadImage('/home/jmh/bkmedical/data/CT/CT-Abdomen.mhd')
+  img16 = sitk.ReadImage('/home/jmh/bkmedical/data/CT/CT-Abdomen.mhd')
 
 # itk::IntensityWindowingImageFilter
 
@@ -29,7 +35,7 @@ else:
 #img255 = sitk.Cast(sitk.RescaleIntensity(img),sitk.sitkUInt8)
 
 level = 145
-window = 50
+window = 55 # 50
 
 imax = level + 0.5*window
 imin = level - 0.5*window
@@ -37,16 +43,19 @@ imin = level - 0.5*window
 ifilter = sitk.IntensityWindowingImageFilter()
 ifilter.SetWindowMaximum(imax)
 ifilter.SetWindowMinimum(imin)
-img = ifilter.Execute(img)
+img = ifilter.Execute(img16)
 
 img255 = sitk.Cast(sitk.RescaleIntensity(img), sitk.sitkUInt8)
 
-size = img.GetSize()
+#img255 = sitk.Cast(img, sitk.sitkUInt16)
+
+size = img16.GetSize()
+
 #myshow3d(img255, xslices=range(50, size[0] - 50, 30), title='CT')
 
 seed = (185, 217, 407)
 
-seg = sitk.Image(img.GetSize(), sitk.sitkUInt8)
+seg = sitk.Image(img16.GetSize(), sitk.sitkUInt8)
 seg.CopyInformation(img)
 seg[seed] = 1
 
@@ -57,7 +66,7 @@ seg = sitk.BinaryDilate(seg, 3)
 # ImageToVTKImageFilter[itk.Image[itk.UC,3]].New()
 
 if 1:
-  myshow3d(sitk.LabelOverlay(img255, seg),
+  myshow3d(sitk.LabelOverlay(img255, seg, colormap=[255,0,0]),
            xslices=range(seed[0], seed[0]+1), yslices=range(seed[1], seed[1]+1),
            zslices=range(seed[2], seed[2]+1), title="Initial Seed")
 
@@ -71,20 +80,54 @@ if 1:
   # writer->SetFileName(outputFileName);
   # writer->SetInput(filter->GetOutput());
 
+# 181 - 576 (MITK)
+# 168 - 576
 
 if 1:
   start = timer()
-  seg_con = sitk.ConnectedThreshold(img, seedList=[seed],
-                                    lower=230, upper=255)
-  end = timer()
-  print('\nSeconds elapsed: %f' % (end - start))
+#  seg_con = sitk.ConnectedThreshold(img, seedList=[seed],
+#                                    lower=150, upper=255)
 
-  myshow3d(sitk.LabelOverlay(img255, seg_con, colormap = [255,0,0]),
-           xslices=range(seed[0], seed[0]+1), yslices=range(seed[1], seed[1]+1),
-           zslices=range(seed[2], seed[2]+1), title="Connected Threshold")
+  seg_con = sitk.ConnectedThreshold(img16, seedList=[seed],
+                                    lower=168, upper=576)
+  #seg_con255 = sitk.Cast(sitk.RescaleIntensity(seg_con), sitk.sitkUInt8)
+  seg_con255 = sitk.Cast(seg_con, sitk.sitkUInt8)
+  end = timer()
+  print('\nConnected Threshold: Seconds elapsed: %f' % (end - start))
+
+  if 1:
+    myshow3d(sitk.LabelOverlay(img255, seg_con255, colormap = [255,0,0]),
+             xslices=range(seed[0], seed[0]+1), yslices=range(seed[1], seed[1]+1),
+             zslices=range(seed[2], seed[2]+1), title="Connected Threshold")
+
+
+  if 1:
+    myshow3d(img16,
+             xslices=range(seed[0], seed[0]+1), yslices=range(seed[1], seed[1]+1),
+             zslices=range(seed[2], seed[2]+1), title="Connected Threshold")
+
+
+  if 0:
+    vectorRadius = (3, 3, 3)
+    kernel = sitk.sitkBall
+    #bum = sitk.Cast(seg_con, sitk.sitkUInt8)
+    start = timer()
+    seg_clean = sitk.BinaryMorphologicalClosing(seg_con255,
+                                                vectorRadius,
+                                                kernel)
+    end = timer()
+    print('\nMorphological closing: Seconds elapsed: %f' % (end - start))
+
+    myshow3d(sitk.LabelOverlay(img255, seg_clean, colormap=[255,0,0]),
+             xslices=range(seed[0], seed[0]+1), yslices=range(seed[1], seed[1]+1),
+             zslices=range(seed[2], seed[2]+1), title="Cleaned up segmentation")
+
+
+#sys.exit(0)
+seg_clean = seg_con255
 
 # TODO: Save and create mesh using VTK
-sitk.WriteImage(seg_con, 'seg.mhd')
+sitk.WriteImage(seg_clean, 'seg.mhd')
 
 
 
@@ -135,58 +178,3 @@ if 0:
            zslices=range(seed[2], seed[2]+1), title="Confidence Connected Threshold")
 
 
-def CreateFrogActor(fileName, tissue):
-    reader = vtk.vtkMetaImageReader()
-    reader.SetFileName(fileName)
-    reader.Update()
-
-    selectTissue = vtk.vtkImageThreshold()
-    selectTissue.ThresholdBetween(tissue, tissue)
-    selectTissue.SetInValue(255)
-    selectTissue.SetOutValue(0)
-    selectTissue.SetInputConnection(reader.GetOutputPort())
-
-    gaussianRadius = 1
-    gaussianStandardDeviation = 2.0
-    gaussian = vtk.vtkImageGaussianSmooth()
-    gaussian.SetStandardDeviations(gaussianStandardDeviation, gaussianStandardDeviation, gaussianStandardDeviation)
-    gaussian.SetRadiusFactors(gaussianRadius, gaussianRadius, gaussianRadius)
-    gaussian.SetInputConnection(selectTissue.GetOutputPort())
-
-    isoValue = 127.5
-    mcubes = vtk.vtkMarchingCubes()
-    mcubes.SetInputConnection(gaussian.GetOutputPort())
-    mcubes.ComputeScalarsOff()
-    mcubes.ComputeGradientsOff()
-    mcubes.ComputeNormalsOff()
-    mcubes.SetValue(0, isoValue)
-
-    smoothingIterations = 5
-    passBand = 0.001
-    featureAngle = 60.0
-    smoother = vtk.vtkWindowedSincPolyDataFilter()
-    smoother.SetInputConnection(mcubes.GetOutputPort())
-    smoother.SetNumberOfIterations(smoothingIterations)
-    smoother.BoundarySmoothingOff()
-    smoother.FeatureEdgeSmoothingOff()
-    smoother.SetFeatureAngle(featureAngle)
-    smoother.SetPassBand(passBand)
-    smoother.NonManifoldSmoothingOn()
-    smoother.NormalizeCoordinatesOn()
-    smoother.Update()
-
-    normals = vtk.vtkPolyDataNormals()
-    normals.SetInputConnection(smoother.GetOutputPort())
-    normals.SetFeatureAngle(featureAngle)
-
-    stripper = vtk.vtkStripper()
-    stripper.SetInputConnection(normals.GetOutputPort())
-
-    mapper = vtk.vtkPolyDataMapper()
-    mapper.SetInputConnection(stripper.GetOutputPort())
-
-    actor = vtk.vtkActor()
-    actor.SetMapper(mapper)
-
-    vtkPolyDataXMLWriter
-    return actor
