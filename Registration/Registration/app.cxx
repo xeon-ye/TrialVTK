@@ -8,6 +8,53 @@
 
 // renderer->ResetCamera();
 // renderer->GetActiveCamera()->Zoom(1.5);
+
+#if 0
+vtkContourWidget contourWidget = new vtkContourWidget();
+contourWidget.SetInteractor(panel.getRenWin().getIren());
+contourWidget.FollowCursorOn();
+
+vtkOrientedGlyphContourRepresentation rep = new vtkOrientedGlyphContourRepresentation();
+contourWidget.SetRepresentation(rep);
+
+vtkImageActorPointPlacer placer = new vtkImageActorPointPlacer();
+placer.SetImageActor(panel.getImageViewer().GetImageActor());
+rep.SetPointPlacer(placer);
+
+contourWidget.EnabledOn();
+contourWidget.ProcessEventsOn();
+
+What this point placer does is to constrain the contour to the plane defined by the ImageActor. However, given that the same image actor is used for multiple slices, when you change the slice, the position of the image actor effectively changes and the contour updates itself to lie on the new plane.
+
+What you need is to use a vtkBoundedPlanePointPlacer with the bounding planes de-lienating the bounds of the image actor when the contour is defined. That way it will not change when you change the slice.
+
+Also to manage visibility of the contour (the contour will be visible for all slices in front of the defined slice), you could subclass the contour representation, insert a clipper that clips the polydata based on the bounding planes, that way, visibility is implicitly managed by the representation.
+
+vtkBoundedPlanePointPlacer placer = new vtkBoundedPlanePointPlacer();
+        placer.SetProjectionNormalToZAxis();
+        placer.SetProjectionPosition(panel.getImageViewer().GetImageActor().GetCenter()[2]);
+        rep.SetPointPlacer(placer);
+
+This is almost right.  The contour now appears on the plane that I drew it on and the plane above it and that is it.  I just want the contour on the plane I drew it on.  I tried playing around with placer.SetPixelTolerance() but that did not make a difference.
+
+    // Solution
+    placer.RemoveAllBoundingPlanes();
+placer.SetProjectionNormalToZAxis();
+
+imageActor.GetBounds(bounds);
+plane = new vtkPLane()
+    plane->SetOrigin( bounds[0], bounds[2], bounds[4] );
+plane->SetNormal( 0.0, 0.0, 1.0 );
+this->Placer->AddBoundingPlane( plane );
+
+plane2 = vtkPlane::New();
+plane2->SetOrigin( bounds[1], bounds[3], bounds[5] );
+plane2->SetNormal( 0.0, 0.0, -1.0 );
+placer.AddBoundingPlane( plane2 );
+
+#endif
+
+
 #ifndef SQUARE
 # define SQUARE(z) ((z) * (z))
 #endif
@@ -89,8 +136,35 @@ void App::onRegStartClick() {
 }
 
 void App::onSegStartClick() {
-  ClearSeedsInView1();
+  // Read again first seed in case you have moved it
+  // TODO: Update data[seedX] upon moving seeds
+
+  double origin[3];
+  double spacing[3];
+  int imageDims[3];
+
+  vtkImageData* pImage = m_riw[1]->GetInput();
+
+  pImage->GetSpacing(spacing);
+  pImage->GetOrigin(origin);
+  pImage->GetDimensions(imageDims);
+
+  auto rep = m_seeds[1]->GetSeedRepresentation();
+
+  if (rep->GetNumberOfSeeds() > 0) {
+    double pos[3];
+    rep->GetSeedWorldPosition(0, pos);
+    int ix = (pos[0] - origin[0]) / spacing[0];
+    int iy = (pos[1] - origin[1]) / spacing[1];
+    int iz = (pos[2] - origin[2]) / spacing[2];
+
+    data["seedX"] = ix;
+    data["seedY"] = iy;
+    data["seedZ"] = iz;
+  }
+
   //  ui->btnSeg->setEnabled(false);
+
   ui->segProgressBar->setValue(0);
   segStopped = false;
   segRunner =
@@ -107,6 +181,8 @@ void App::onSegStartClick() {
 }
 
 void App::onSurfStartClick() {
+  ClearSeedsInView1();
+
   ui->btnSurf->setEnabled(false);
   ui->segProgressBar->setValue(0);
   surfStopped = false;
