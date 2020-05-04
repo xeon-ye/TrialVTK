@@ -6,6 +6,9 @@
 #include <QDebug>
 #include <QMap>
 #include <QVector>
+#include <QHBoxLayout>
+#include <QLineEdit>
+#include <QWidget>
 
 class Ui_Registration;
 
@@ -127,6 +130,11 @@ class App : public QMainWindow {
 
   RangeSlider* thresholdsSlider;
 
+  QHBoxLayout* m_sliderLayout;
+  QLineEdit* m_sliderLblHigh;
+  QLineEdit* m_sliderLblLow;
+  QWidget* m_pWidget;
+
   // MR view stuff
   vtkSmartPointer<vtkImageData> m_dummy;
   vtkSmartPointer<vtkResliceImageViewer> m_riw[3];
@@ -142,5 +150,5 @@ class App : public QMainWindow {
   // Segmentation stuff
   vtkSmartPointer<vtkSeedWidget> m_seeds[3];
 
-  vtkSmartPointer<vtkActor> m_vessels;
+  //  vtkSmartPointer<vtkActor> m_vessels;
 };

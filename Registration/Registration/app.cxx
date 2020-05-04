@@ -307,7 +307,22 @@ void App::SetupUI() {
   this->thresholdsSlider =
     new RangeSlider(Qt::Horizontal, RangeSlider::Option::DoubleHandles, this);
   this->thresholdsSlider->SetRange(100, 600);
-  this->ui->segmVertLayout->insertWidget(0, this->thresholdsSlider);
+
+  // TODO: Add labels
+  this->m_pWidget = new QWidget(this);
+  this->m_sliderLayout = new QHBoxLayout(this->m_pWidget);
+  this->m_sliderLblLow = new QLineEdit(this);
+  this->m_sliderLblHigh = new QLineEdit(this);
+  this->m_sliderLblLow->setMaximumWidth(100);
+  this->m_sliderLblHigh->setMaximumWidth(100);
+  this->m_sliderLayout->addWidget(this->thresholdsSlider);
+  this->m_sliderLayout->addWidget(this->m_sliderLblLow);
+  this->m_sliderLayout->addWidget(this->m_sliderLblHigh);
+
+  m_pWidget->setLayout(this->m_sliderLayout);
+
+  this->ui->segmVertLayout->insertWidget(0, m_pWidget);
+  //this->ui->segmVertLayout->insertWidget(0, this->thresholdsSlider);
 
 
   this->ui->btnSeg->setEnabled(false);
@@ -708,10 +723,12 @@ void App::PopulateMenus() {
 
 void App::SliderLow(int value) {
   data["low"] = value;
+  this->m_sliderLblLow->setText(QString::number(value));
 }
 
 void App::SliderHigh(int value) {
   data["high"] = value;
+  this->m_sliderLblHigh->setText(QString::number(value));
 }
 
 void App::AddSeedsToView1() {
@@ -802,10 +819,13 @@ void App::onLoadVesselsClicked() {
             vtkSmartPointer<vtkPolyDataMapper>::New();
         mapper->SetInputConnection(reader->GetOutputPort());
 
+        /*
         if (m_vessels) {
           m_planeWidget[0]->GetDefaultRenderer()->RemoveActor(m_vessels);
         }
-        m_vessels =
+        */
+
+        vtkSmartPointer<vtkActor> m_vessels =
             vtkSmartPointer<vtkActor>::New();
 
         m_vessels->SetMapper(mapper);
@@ -875,7 +895,7 @@ App::App(int argc, char* argv[]) {
 
   m_segmentation = nullptr;
 
-  m_vessels = nullptr;
+  //  m_vessels = nullptr;
 
   this->SetupUI();
   this->setupMR();
@@ -1212,11 +1232,15 @@ void App::AddSeedsToView(int i) {
   seedCallback->SetRepresentation(rep);
   seedCallback->SetWidget(this->m_seeds[i]);
 
+  // TODO: Catch also move point event
   // LIFO behavior
   this->Connections->Connect(this->m_seeds[i],
                              vtkCommand::PlacePointEvent,
                              this,
                              SLOT(SeedsUpdated(vtkObject*, unsigned long, void*, void*)));
+
+
+
 
   this->m_seeds[i]->AddObserver(vtkCommand::PlacePointEvent, seedCallback);
   this->m_seeds[i]->AddObserver(vtkCommand::InteractionEvent, seedCallback);
@@ -1324,6 +1348,8 @@ void App::SeedsUpdated(vtkObject* obj, unsigned long, void*, void*)
 
       data["low"] = iLow;
       data["high"] = iHigh;
+      this->m_sliderLblLow->setText(QString::number(iLow));
+      this->m_sliderLblHigh->setText(QString::number(iHigh));
 
     }
 

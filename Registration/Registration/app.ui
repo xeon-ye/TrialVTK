@@ -179,7 +179,7 @@
                     <item>
                      <widget class="QPushButton" name="btnSurf">
                       <property name="text">
-                       <string>Mesh</string>
+                       <string>Confirm</string>
                       </property>
                      </widget>
                     </item>
