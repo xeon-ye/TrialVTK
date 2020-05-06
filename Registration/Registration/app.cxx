@@ -163,6 +163,7 @@ void App::onSegStartClick() {
     data["seedZ"] = iz;
   }
 
+  //  data["finput"] = QString("/home/jmh/bkmedical/data/CT/CT-Abdomen.mhd");
   //  ui->btnSeg->setEnabled(false);
 
   ui->segProgressBar->setValue(0);
@@ -1048,6 +1049,7 @@ void App::FileLoad(const QString &files, int type) {
     }
   }
   if (type == 0) {
+    data["finput"] = QString(files.toUtf8().constData());
     return FileLoadMR(reader);
   }
   else {
@@ -1367,9 +1369,13 @@ void App::SeedsUpdated(vtkObject* obj, unsigned long, void*, void*)
     // Quick hack
     printf("ScalarType: %d\n", pImage->GetScalarType());
     // std::cout << "scalar size: " << pImage->GetScalarSize() << std::endl;
-    assert(pImage->GetScalarType() == 4);
+    assert(pImage->GetScalarType() == 4 || pImage->GetScalarType() == 5);
+
+    // TODO: Template this
+    int iType = pImage->GetScalarType();
 
     short* pVoxels = static_cast<short*>( pImage->GetScalarPointer());
+    unsigned short* pVoxels0 = static_cast<unsigned short*>( pImage->GetScalarPointer());
 
     int nPixels = 0;
     double v;
@@ -1391,9 +1397,16 @@ void App::SeedsUpdated(vtkObject* obj, unsigned long, void*, void*)
         data["seedX"] = ix;
         data["seedY"] = iy;
         data["seedZ"] = iz;
-        signed short iValue = pVoxels[iz*ny*nx + iy*nx + ix];
-        data["value"] = iValue;
-        std::cout << "Voxel value: " << iValue << std::endl;
+
+        if (iType == 4) {
+          signed short iValue = pVoxels[iz*ny*nx + iy*nx + ix];
+          data["value"] = iValue;
+          std::cout << "Voxel value: " << iValue << std::endl;
+        } else {
+          unsigned short iValue = pVoxels0[iz*ny*nx + iy*nx + ix];
+          data["value"] = iValue;
+          std::cout << "Voxel value: " << iValue << std::endl;
+        }
       }
       // Hack to loop over 3x3 neighborhood
       for (int x = ix - 1 ; x < ix + 2 ; x++) {
@@ -1402,7 +1415,11 @@ void App::SeedsUpdated(vtkObject* obj, unsigned long, void*, void*)
             if ((0 <= x) && (x < nx) &&
                 (0 <= y) && (y < ny) &&
                 (0 <= z) && (z < nz)) {
-              v = double(pVoxels[z*ny*nx + y*nx + x]);
+              if (iType == 4) {
+                v = double(pVoxels[z*ny*nx + y*nx + x]);
+              } else {
+                v = double(pVoxels0[z*ny*nx + y*nx + x]);
+              }
               // std::cout << "v: " << v << std::endl;
               v2 = v*v;
               vsum = vsum + v;

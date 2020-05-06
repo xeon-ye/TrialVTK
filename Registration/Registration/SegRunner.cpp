@@ -12,7 +12,11 @@ SegRunner::SegRunner(QWidget *receiver,
 }
 
 void SegRunner::run() {
-  const char* fInput = "/home/jmh/bkmedical/data/CT/CT-Abdomen.mhd";
+  const char* fInput = nullptr;
+
+  QString fileInput = data.value("finput").toString();
+  //"/home/jmh/bkmedical/data/CT/CT-Abdomen.mhd";
+
   const char* fOutput = "./seg.mhd";
 
   int low = data["low"].toInt();
@@ -39,7 +43,7 @@ void SegRunner::run() {
   std::stringstream ss;
 
   ss << "./SegmGrow ";
-  ss << fInput;
+  ss << fileInput.toStdString();
   ss << " ";
   ss << fOutput;
   ss << " ";
