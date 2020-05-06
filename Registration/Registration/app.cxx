@@ -558,7 +558,10 @@ void App::setupMR() {
 
     if (i==2) {
       // Must set vtkResliceCursorActor on vtkResliceCursorLineRepresentation
-      rep->Highlight(1);//GetImageActor()->SetVisibility(0);
+
+      // Was uncommented
+      // rep->Highlight(1);//GetImageActor()->SetVisibility(0);
+
       // rep->VisibilityOff(); // Works as off
       // Consider calling InitPathTraversal + and traverse props
       // rep->GetResliceCursorActor()->SetVisibility(0);
@@ -609,11 +612,14 @@ void App::setupMR() {
     m_planeWidget[i]->RestrictPlaneToVolumeOn();
     double color[3] = { 0, 0, 0 };
     color[i] = 1;
+
     m_planeWidget[i]->GetPlaneProperty()->SetColor(color);
 
     color[0] /= 4.0;
     color[1] /= 4.0;
     color[2] /= 4.0;
+
+
     m_riw[i]->GetRenderer()->SetBackground(color);
 
     m_planeWidget[i]->SetTexturePlaneProperty(ipwProp); // PROPERTY
@@ -895,13 +901,12 @@ void App::onLoadVesselsClicked() {
             vtkSmartPointer<vtkPolyDataMapper>::New();
         mapper->SetInputConnection(reader->GetOutputPort());
 
-        /*
         if (m_vessels) {
           m_planeWidget[0]->GetDefaultRenderer()->RemoveActor(m_vessels);
+          m_vessels = nullptr;
         }
-        */
 
-        vtkSmartPointer<vtkActor> m_vessels =
+        m_vessels =
             vtkSmartPointer<vtkActor>::New();
 
         m_vessels->SetMapper(mapper);
@@ -1331,6 +1336,8 @@ void App::AddSeedsToView(int i) {
   // EventQtSlotConnect..
 }
 
+// TODO: Templated function
+
 void App::SeedsUpdated(vtkObject* obj, unsigned long, void*, void*)
 {
 
@@ -1357,6 +1364,8 @@ void App::SeedsUpdated(vtkObject* obj, unsigned long, void*, void*)
     double vsum = 0.0;
     double vsqsum = 0.0;
 
+    // Quick hack
+    printf("ScalarType: %d\n", pImage->GetScalarType());
     // std::cout << "scalar size: " << pImage->GetScalarSize() << std::endl;
     assert(pImage->GetScalarType() == 4);
 

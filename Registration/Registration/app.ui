@@ -41,7 +41,7 @@
            <widget class="QVTKOpenGLWidget" name="mrView0" native="true">
             <property name="minimumSize">
              <size>
-              <width>200</width>
+              <width>400</width>
               <height>300</height>
              </size>
             </property>
@@ -49,7 +49,7 @@
            <widget class="QVTKOpenGLWidget" name="mrView1" native="true">
             <property name="minimumSize">
              <size>
-              <width>200</width>
+              <width>400</width>
               <height>300</height>
              </size>
             </property>
@@ -63,7 +63,7 @@
            <widget class="QVTKOpenGLWidget" name="usView0" native="true">
             <property name="minimumSize">
              <size>
-              <width>200</width>
+              <width>400</width>
               <height>300</height>
              </size>
             </property>
@@ -71,7 +71,7 @@
            <widget class="QVTKOpenGLWidget" name="usView1" native="true">
             <property name="minimumSize">
              <size>
-              <width>200</width>
+              <width>400</width>
               <height>300</height>
              </size>
             </property>
@@ -88,7 +88,7 @@
            <widget class="QVTKOpenGLWidget" name="mrView3D" native="true">
             <property name="minimumSize">
              <size>
-              <width>200</width>
+              <width>400</width>
               <height>300</height>
              </size>
             </property>
@@ -244,7 +244,7 @@
                 <widget class="QVTKOpenGLWidget" name="mrView2" native="true">
                  <property name="minimumSize">
                   <size>
-                   <width>200</width>
+                   <width>400</width>
                    <height>300</height>
                   </size>
                  </property>
@@ -254,7 +254,7 @@
                 <widget class="QVTKOpenGLWidget" name="usView2" native="true">
                  <property name="minimumSize">
                   <size>
-                   <width>200</width>
+                   <width>400</width>
                    <height>300</height>
                   </size>
                  </property>

@@ -77,7 +77,7 @@ cleaner = connectFilter
 cleaner = stripper
 
 writer = vtk.vtkXMLPolyDataWriter()
-writer.SetFileName("/home/jmh/bkmedical/data/CT/vessels.vtp")
+writer.SetFileName("/home/jmh/bkmedical/data/CT/A.vtp")
 writer.SetInputConnection(cleaner.GetOutputPort())
 writer.Write()
 

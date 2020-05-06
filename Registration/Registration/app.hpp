@@ -150,5 +150,5 @@ class App : public QMainWindow {
   // Segmentation stuff
   vtkSmartPointer<vtkSeedWidget> m_seeds[3];
 
-  //  vtkSmartPointer<vtkActor> m_vessels;
+  vtkSmartPointer<vtkActor> m_vessels;
 };
