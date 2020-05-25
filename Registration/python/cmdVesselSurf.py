@@ -77,7 +77,7 @@ def main():
   connectFilter.SetInputConnection(stripper.GetOutputPort())
   #connectFilter.SetExtractionModeToSpecifiedRegions()
   #connectFilter.AddSpecifiedRegion(0)
-  connectivityFilter->SetExtractionModeToLargestRegion()
+  connectivityFilter.SetExtractionModeToLargestRegion()
   connectFilter.Update();
 
   #cleaner = vtk.vtkCleanPolyData()
