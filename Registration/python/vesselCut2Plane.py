@@ -6,7 +6,8 @@ import vtk
 import math
 from vtk.util.colors import red, blue, black, yellow
 
-filename = '/home/jmh/bkmedical/data/CT/vessels.vtp'
+filename = '/home/jmh/bkmedical/data/CT/Connected.vtp'
+#filename = '/home/jmh/bkmedical/data/CT/detailed.vtp'
 
 reader = vtk.vtkXMLPolyDataReader()
 reader.SetFileName(filename)
@@ -45,7 +46,14 @@ cutStrips = vtk.vtkStripper()
 cutStrips.SetInputConnection(cutEdges.GetOutputPort())
 cutStrips.Update()
 
-circle = cutStrips.GetOutput()
+circle = cutStrips.GetOutput() # vtkPolyData
+
+circleWriter = vtk.vtkXMLPolyDataWriter()
+circleWriter.SetFileName("./2D.vtp")
+circleWriter.SetInputConnection(cutStrips.GetOutputPort())
+circleWriter.Write()
+
+
 
 tubes = vtk.vtkTubeFilter()
 tubes.SetInputConnection(cutStrips.GetOutputPort()) # works
@@ -100,7 +108,7 @@ cubeAxesActor.GetProperty().SetColor(black)
 
 renderer.AddActor(cubeAxesActor)
 
-# TEST
+# TODO: Draw circle in 2D using stencil
 if 1:
   whiteImage = vtk.vtkImageData()
   bounds = [0] * 6
