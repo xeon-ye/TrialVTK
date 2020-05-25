@@ -15,3 +15,7 @@ endif()
 add_executable(SegmGrow MACOSX_BUNDLE segm.cxx)
 target_link_libraries(SegmGrow
   ${Glue}  ${VTK_LIBRARIES} ${ITK_LIBRARIES})
+
+if (WIN32)
+  add_custom_command(TARGET SegmGrow POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:SegmGrow> $<TARGET_FILE_DIR:Registration>/$<CONFIGURATION:Registration>)
+endif()

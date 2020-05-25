@@ -47,12 +47,14 @@ set( Srcs
   # superslider.cpp
   SegRunner.cpp
   SurfRunner.cpp
+  whereami.c
 )
 
 set( Hdrs
   app.hpp
   reslicecallback.h
   seedcallback.h
+  whereami.h
   )
 
 set( MOC_Hdrs app.hpp )
@@ -73,4 +75,6 @@ target_link_libraries(Registration ${VTK_LIBRARIES})
 
 include(deploy_vtk_windows)
 # windeployqt(Registration ${CMAKE_CURRENT_BINARY_DIR})
-windeployvtk(Registration ${CMAKE_CURRENT_BINARY_DIR})
+if (WIN32)
+  windeployvtk(Registration $<$<CONFIG:Release>:${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}>$<$<NOT:$<CONFIG:Release>>:${CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG}>)
+endif()
