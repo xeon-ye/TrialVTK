@@ -77,7 +77,7 @@ def main():
   connectFilter.SetInputConnection(stripper.GetOutputPort())
   #connectFilter.SetExtractionModeToSpecifiedRegions()
   #connectFilter.AddSpecifiedRegion(0)
-  connectivityFilter.SetExtractionModeToLargestRegion()
+  connectFilter.SetExtractionModeToLargestRegion()
   connectFilter.Update();
 
   #cleaner = vtk.vtkCleanPolyData()
@@ -86,7 +86,8 @@ def main():
   #cleaner = stripper
 
   writer = vtk.vtkXMLPolyDataWriter()
-  writer.SetFileName("./A.vtp")
+  oFileName = os.path.join(filedir, 'A.vtp')
+  writer.SetFileName(oFileName)
   writer.SetInputConnection(cleaner.GetOutputPort())
   writer.Write()
 
