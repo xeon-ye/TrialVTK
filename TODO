@@ -1,0 +1,25 @@
+x 3D Region growing (3 paramters)
+x  - single seed (or more)
+x  - upper - high as possible without including everything
+x  - lower - low enough to close holes
+x  - adjust region growing to fill holes
+
+x Create smoothed polygon model
+x  - No parameters
+
+Cut smoothed polygon using clipping planes
+
+Create mask from surface
+ - Select original image and polygon model
+
+x Find largest component for mask
+
+x Create smoothed polygon model
+
+Show segmentation before meshing
+
+Sample points on polydata mesh
+
+
+
+
