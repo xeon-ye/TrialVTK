@@ -73,7 +73,7 @@ function(windeployvtk target directory)
     set(FOUND_DLL "FOUND_DLL-NOTFOUND")
     find_file(FOUND_DLL
       ${DLL}
-      PATHS "${VTK_DIR}/../../../bin"
+      PATHS "${VTK_DIR}/bin/Release"
       NO_DEFAULT_PATH)
     if (FOUND_DLL)
       list(APPEND VTK_RUNTIME_LIBRARIES ${FOUND_DLL})
@@ -96,7 +96,7 @@ function(windeployvtk target directory)
       COMMAND ${CMAKE_COMMAND} -E
       $<$<NOT:$<CONFIG:Release>>:echo>
       $<$<NOT:$<CONFIG:Release>>:"omitted">
-      copy_if_different "${DLL}" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION:${target}>")
+      copy_if_different "${DLL}" "${directory}")
   endforeach(DLL)
 
   # Consider using
@@ -108,6 +108,6 @@ function(windeployvtk target directory)
       COMMAND ${CMAKE_COMMAND} -E
       $<$<CONFIG:Release>:echo>
       $<$<CONFIG:Release>:"omitted">
-      copy_if_different "${DLL}" "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION:${target}>")
+      copy_if_different "${DLL}" "${directory}")
   endforeach(DLL)
 endfunction()
