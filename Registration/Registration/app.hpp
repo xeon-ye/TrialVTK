@@ -40,7 +40,10 @@ class App : public QMainWindow {
   ~App() override;
 
  public slots:
-  void SeedsUpdated(vtkObject*, unsigned long, void*, void*);
+  void SeedsUpdated(vtkObject* obj, unsigned long event, void* calldata, void* clientData);
+
+  void SeedsUpdateData(vtkObject* obj, unsigned long event, void* calldata, void* clientData);
+
 
   virtual void slotExit();
   void resizeEvent(QResizeEvent* event);
@@ -151,4 +154,9 @@ class App : public QMainWindow {
   vtkSmartPointer<vtkSeedWidget> m_seeds[3];
 
   vtkSmartPointer<vtkActor> m_vessels;
+
+  // Ugly explicit data (just for testing).
+  float m_vsum;
+  float m_vsum2;
+                
 };

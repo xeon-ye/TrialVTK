@@ -31,9 +31,11 @@ class vtkResliceCursorCallback : public vtkCommand {
   void Execute(vtkObject *caller, unsigned long ev,
                void *callData ) override {
 
-    if (ev == vtkResliceCursorCallback::ResliceAxesChangedEvent) {
-      std::cout << "axes changed" << std::endl;
+    std::cout << "ev: " << ev << std::endl;
+    if (ev == vtkResliceCursorWidget::ResliceAxesChangedEvent) {
+      std::cout << "axes changed2" << std::endl;
     }
+
 
     if (ev == vtkResliceCursorWidget::WindowLevelEvent ||
         ev == vtkCommand::WindowLevelEvent ||

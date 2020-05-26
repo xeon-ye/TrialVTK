@@ -977,6 +977,8 @@ App::App(int argc, char* argv[]) {
 
   m_segmentation = nullptr;
 
+  m_vsum = 0.0f;
+  m_vsum2 = 0.0f;
   //  m_vessels = nullptr;
 
   this->SetupUI();
@@ -1316,14 +1318,24 @@ void App::AddSeedsToView(int i) {
   seedCallback->SetWidget(this->m_seeds[i]);
 
   // TODO: Catch also move point event
-  // LIFO behavior
+  // LIFO behavior: This is called after seedCallback (registered below)
+#if 0
   this->Connections->Connect(this->m_seeds[i],
                              vtkCommand::PlacePointEvent,
                              this,
-                             SLOT(SeedsUpdated(vtkObject*, unsigned long, void*, void*)));
-
-
-
+                             SLOT(SeedsUpdated(vtkObject*, unsigned long, void*, void*)),
+                             nullptr /*  void* clientData */,
+                             0.0f /*  float priority */,
+                             Qt::AutoConnection /*  connection type */);
+#endif
+  this->Connections->Connect(this->m_seeds[i],
+                             vtkCommand::PlacePointEvent || vtkCommand::DeletePointEvent || vtkCommand::InteractionEvent ||
+                             vtkCommand::EndInteractionEvent,
+                             this,
+                             SLOT(SeedsUpdateData(vtkObject*, unsigned long, void*, void*)),
+                             nullptr /*  void* clientData */,
+                             0.0f /*  float priority */,
+                             Qt::AutoConnection /*  connection type */);
 
   this->m_seeds[i]->AddObserver(vtkCommand::PlacePointEvent, seedCallback);
   this->m_seeds[i]->AddObserver(vtkCommand::InteractionEvent, seedCallback);
@@ -1338,10 +1350,59 @@ void App::AddSeedsToView(int i) {
   // EventQtSlotConnect..
 }
 
-// TODO: Templated function
+// TODO: Adding points update statistics, moving or deleting -> redo statistics
+void App::SeedsUpdateData(vtkObject* obj, unsigned long event, void* calldata, void* clientData) {
+  vtkSeedWidget* seedWidget =
+      vtkSeedWidget::SafeDownCast(obj);
 
-void App::SeedsUpdated(vtkObject* obj, unsigned long, void*, void*)
+  static bool activeInteraction = false;
+  static bool justPlacedPoint = false;
+  if (seedWidget) {
+    // std::cout << "SeedsUpdateData: " << event << std::endl;
+    auto rep = seedWidget->GetSeedRepresentation();
+
+    double origin[3];
+    double spacing[3];
+    int imageDims[3];
+
+    vtkImageData* pImage = m_riw[1]->GetInput();
+
+    pImage->GetSpacing(spacing);
+    pImage->GetOrigin(origin);
+    pImage->GetDimensions(imageDims);
+
+    int nx = imageDims[0];
+    int ny = imageDims[1];
+    int nz = imageDims[2];
+
+    if (event == vtkCommand::PlacePointEvent) {
+      // New point - update vsum and vsum2
+      std::cout << "PlacePointEvent" << std::endl;
+      justPlacedPoint = true;
+    } else if (event == vtkCommand::InteractionEvent) {
+      // No action needed
+      std::cout << "InteractionEvent" << std::endl;
+      if (!justPlacedPoint) {
+        activeInteraction = true;
+      }
+      justPlacedPoint = false;
+    } else if (event == vtkCommand::EndInteractionEvent) {
+      std::cout << "EndInteractionEvent" << std::endl;
+      // Done moving point
+      if (activeInteraction) {
+        // Update vsum and vsum2 using last position or redo everything
+
+
+        activeInteraction = false;
+      }
+      justPlacedPoint = false;
+    }
+  }
+}
+
+void App::SeedsUpdated(vtkObject* obj, unsigned long event, void* calldata, void* clientData)
 {
+  // TODO: Subscribe to more than one event type and maintain a list
 
   vtkSeedWidget* seedWidget =
       vtkSeedWidget::SafeDownCast(obj);

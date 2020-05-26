@@ -5,6 +5,8 @@
 #include <vtkPointHandleRepresentation3D.h>
 #include <vtkSeedRepresentation.h>
 
+// Event bindings can be changed by using vtkWidgetEventTranslator of the vtkSeedWidget
+
 class vtkSeedImageCallback : public vtkCommand {
  public:
   static vtkSeedImageCallback* New() {
@@ -14,6 +16,9 @@ class vtkSeedImageCallback : public vtkCommand {
   vtkSeedImageCallback() = default;
 
   virtual void Execute(vtkObject*, unsigned long event, void* calldata) {
+    //std::cout << "Execute" << std::endl;
+    //std::cout << "event: " << event << std::endl;
+
     if (event == vtkCommand::PlacePointEvent) {
       std::cout << "Placing point..." << std::endl;
       std::cout << "There are now "
@@ -33,12 +38,23 @@ class vtkSeedImageCallback : public vtkCommand {
     if (event == vtkCommand::InteractionEvent) {
       // std::cout << "Interaction..." << std::endl;
       if (calldata) {
+        // Move event
         double pos[3];
         this->SeedRepresentation->GetSeedDisplayPosition(0, pos);
         // std::cout << "Moved to (" << pos[0] << " " << pos[1] << " " << pos[2]
         //           << ")" << std::endl;
+
+        int handle = this->SeedRepresentation->GetActiveHandle();
+        // std::cout << "active handle: " << handle << std::endl;
+
       }
       return;
+    }
+    if (event == vtkCommand::DeletePointEvent) {
+
+    }
+    if (event == vtkCommand::EndInteractionEvent) {
+
     }
   }
 
