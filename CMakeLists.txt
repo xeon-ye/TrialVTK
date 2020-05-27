@@ -17,9 +17,16 @@ set(CMAKE_MODULE_PATH
 include(deploy_qt_windows)
 include(deploy_vtk_windows)
 
+if (WIN32)
+  set (CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_BINARY_DIR}/Debug")
+  set (CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_BINARY_DIR}/Release")
+  set (CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_BINARY_DIR}/Debug")
+  set (CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_BINARY_DIR}/Release")
+endif()
+
 #add_subdirectory(WidgetExample)
 #add_subdirectory(QuickExample)
-add_subdirectory(SlicerWidget)
+#add_subdirectory(SlicerWidget)
 #add_subdirectory(QuickDockExample)
 add_subdirectory(Registration)
 #add_subdirectory(SlicerWidget)
