@@ -9,7 +9,6 @@
 #include <itkImageFileReader.h>
 #include <itkImageFileWriter.h>
 #include <itkMetaImageIO.h>
-//#include <itkCommonEnums.h>
 
 #include <itkMacro.h>
 

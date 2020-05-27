@@ -20,16 +20,27 @@ find_package(VTK COMPONENTS
 
 include(${VTK_USE_FILE})
 
-find_package(ITK REQUIRED)
-include(${ITK_USE_FILE})
+set(INTEGRATED_SEGMENTATION 1)
+set(INTEGRATED_SURFACING 1)
 
-if (ITKVtkGlue_LOADED)
-  find_package(VTK REQUIRED)
-  include(${VTK_USE_FILE})
-else()
-  find_package(ItkVtkGlue REQUIRED)
-  include(${ItkVtkGlue_USE_FILE})
-  set(Glue ItkVtkGlue)
+if (INTEGRATED_SURFACING)
+  if (NOT INTEGRATED_SEGMENTATION)
+    message(FATAL_ERROR "Integrated surfacing requires integrated segmentation")
+  endif()
+endif()
+
+if (INTEGRATED_SEGMENTATION)
+  find_package(ITK REQUIRED)
+  include(${ITK_USE_FILE})
+
+  if (ITKVtkGlue_LOADED)
+    find_package(VTK REQUIRED)
+    include(${VTK_USE_FILE})
+  else()
+    find_package(ItkVtkGlue REQUIRED)
+    include(${ItkVtkGlue_USE_FILE})
+    set(Glue ItkVtkGlue)
+  endif()
 endif()
 
 if("${VTK_QT_VERSION}" STREQUAL "")
@@ -42,9 +53,7 @@ set( Srcs
   app.cxx
   filedialog.cxx
   runnable.cpp
-  # QRangeSlider.cpp
   RangeSlider.cpp
-  # superslider.cpp
   SegRunner.cpp
   SurfRunner.cpp
   whereami.c
@@ -67,11 +76,19 @@ set(CMAKE_AUTOMOC ON)
 
 qt5_wrap_ui(UI_Srcs ${UIs})
 
+
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
+
 # CMAKE_AUTOMOC in ON so the MocHdrs will be automatically wrapped.
 add_executable(Registration ${Srcs} ${Hdrs} ${UI_Srcs} ${MOC_Hdrs})
 
 target_link_libraries(Registration Qt5::Core Qt5::Gui Qt5::Widgets)
-target_link_libraries(Registration ${VTK_LIBRARIES})
+
+if (INTEGRATED_SEGMENTATION)
+  target_link_libraries(Registration ${Glue}  ${VTK_LIBRARIES} ${ITK_LIBRARIES})
+else()
+  target_link_libraries(Registration ${VTK_LIBRARIES})
+endif()
 
 include(deploy_vtk_windows)
 # windeployqt(Registration ${CMAKE_CURRENT_BINARY_DIR})

@@ -63,6 +63,7 @@ placer.AddBoundingPlane( plane2 );
 #include <Registration/reslicecallback.h>
 #include <Registration/seedcallback.h>
 #include <Registration/utils.hpp>
+#include <Registration/config.h>
 
 #include <QSettings>
 #include <QDebug>
@@ -135,50 +136,53 @@ void App::onRegStartClick() {
   checkIfDone();
 }
 
+void App::onSegStartInView(int iView) {
+    // Read again first seed in case you have moved it
+    // TODO: Update data[seedX] upon moving seeds
+
+    double origin[3];
+    double spacing[3];
+    int imageDims[3];
+
+    vtkImageData* pImage = m_riw[iView]->GetInput();
+
+    pImage->GetSpacing(spacing);
+    pImage->GetOrigin(origin);
+    pImage->GetDimensions(imageDims);
+
+    auto rep = m_seeds[iView]->GetSeedRepresentation();
+
+    if (rep->GetNumberOfSeeds() > 0) {
+        double pos[3];
+        rep->GetSeedWorldPosition(0, pos);
+        int ix = (pos[0] - origin[0]) / spacing[0];
+        int iy = (pos[1] - origin[1]) / spacing[1];
+        int iz = (pos[2] - origin[2]) / spacing[2];
+
+        data["seedX"] = ix;
+        data["seedY"] = iy;
+        data["seedZ"] = iz;
+    }
+
+    //  data["finput"] = QString("/home/jmh/bkmedical/data/CT/CT-Abdomen.mhd");
+    //  ui->btnSeg->setEnabled(false);
+
+    ui->segProgressBar->setValue(0);
+    segStopped = false;
+    segRunner =
+        new SegRunner(this, data, pImage, m_segmentation, &retval, &segStopped);
+    segRunner->setAutoDelete(false);
+    QThreadPool::globalInstance()->start(segRunner);
+
+    // segDelegate = &App::onCancelClick;
+    ui->btnSeg->setText("Cancel");
+    ui->btnSeg->setEnabled(true);
+
+    checkIfSegDone();
+}
+
 void App::onSegStartClick() {
-  // Read again first seed in case you have moved it
-  // TODO: Update data[seedX] upon moving seeds
-
-  double origin[3];
-  double spacing[3];
-  int imageDims[3];
-
-  vtkImageData* pImage = m_riw[1]->GetInput();
-
-  pImage->GetSpacing(spacing);
-  pImage->GetOrigin(origin);
-  pImage->GetDimensions(imageDims);
-
-  auto rep = m_seeds[1]->GetSeedRepresentation();
-
-  if (rep->GetNumberOfSeeds() > 0) {
-    double pos[3];
-    rep->GetSeedWorldPosition(0, pos);
-    int ix = (pos[0] - origin[0]) / spacing[0];
-    int iy = (pos[1] - origin[1]) / spacing[1];
-    int iz = (pos[2] - origin[2]) / spacing[2];
-
-    data["seedX"] = ix;
-    data["seedY"] = iy;
-    data["seedZ"] = iz;
-  }
-
-  //  data["finput"] = QString("/home/jmh/bkmedical/data/CT/CT-Abdomen.mhd");
-  //  ui->btnSeg->setEnabled(false);
-
-  ui->segProgressBar->setValue(0);
-  segStopped = false;
-  segRunner =
-      new SegRunner(this, data, &retval, &segStopped);
-
-  segRunner->setAutoDelete(false);
-  QThreadPool::globalInstance()->start(segRunner);
-
-  // segDelegate = &App::onCancelClick;
-  ui->btnSeg->setText("Cancel");
-  ui->btnSeg->setEnabled(true);
-
-  checkIfSegDone();
+    return this->onSegStartInView(1);
 }
 
 void App::onSurfStartClick() {
@@ -975,7 +979,9 @@ App::App(int argc, char* argv[]) {
 
   m_seeds[0] = m_seeds[1] = m_seeds[2] = nullptr;
 
-  m_segmentation = nullptr;
+#ifdef INTEGRATED_SURFACING
+  m_segmentation = vtkSmartPointer<vtkImageData>::New();
+#endif
 
   m_vsum = 0.0f;
   m_vsum2 = 0.0f;
@@ -1319,7 +1325,7 @@ void App::AddSeedsToView(int i) {
 
   // TODO: Catch also move point event
   // LIFO behavior: This is called after seedCallback (registered below)
-#if 0
+#if 1
   this->Connections->Connect(this->m_seeds[i],
                              vtkCommand::PlacePointEvent,
                              this,
@@ -1327,7 +1333,7 @@ void App::AddSeedsToView(int i) {
                              nullptr /*  void* clientData */,
                              0.0f /*  float priority */,
                              Qt::AutoConnection /*  connection type */);
-#endif
+#else
   this->Connections->Connect(this->m_seeds[i],
                              vtkCommand::PlacePointEvent || vtkCommand::DeletePointEvent || vtkCommand::InteractionEvent ||
                              vtkCommand::EndInteractionEvent,
@@ -1336,6 +1342,7 @@ void App::AddSeedsToView(int i) {
                              nullptr /*  void* clientData */,
                              0.0f /*  float priority */,
                              Qt::AutoConnection /*  connection type */);
+#endif
 
   this->m_seeds[i]->AddObserver(vtkCommand::PlacePointEvent, seedCallback);
   this->m_seeds[i]->AddObserver(vtkCommand::InteractionEvent, seedCallback);

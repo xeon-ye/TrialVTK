@@ -80,6 +80,9 @@ class App : public QMainWindow {
 
   void onSegClick();
   void onSegStartClick();
+  
+  void onSegStartInView(int);
+
   void onSegCancelClick();
 
   void onSurfClick();
@@ -160,3 +163,4 @@ class App : public QMainWindow {
   float m_vsum2;
                 
 };
+
