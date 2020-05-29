@@ -9,14 +9,15 @@
 #include <QVariant>
 #include <QMap>
 
-class vtkImageData;
+#include <vtkSmartPointer.h>
+#include <vtkImageData.h>
 
 class SegRunner : public QRunnable {
  public:
   SegRunner(QWidget *receiver,
             QMap<QString, QVariant> data,
             vtkImageData* pData,
-            vtkImageData* pOutData,
+            vtkSmartPointer<vtkImageData>& pOutData,
             int* retval,
             volatile bool *stopped);
   void run();
@@ -27,7 +28,7 @@ class SegRunner : public QRunnable {
 
   QWidget* receiver;
   vtkImageData* pData;
-  vtkImageData* pOutData;
+  vtkSmartPointer<vtkImageData>& pOutData;
   int* retval;
   volatile bool* stopped;
   QMap<QString, QVariant> data;

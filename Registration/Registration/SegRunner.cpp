@@ -25,7 +25,7 @@
 
 template <typename T>
 void SegmentationConnectedThreshold(vtkImageData* pData,
-                                    vtkImageData* pOutData,
+                                    vtkSmartPointer<vtkImageData>& pOutData,
                                     int inputSeed[3],
                                     int thresholds[2],
                                     const char* fOutput) {
@@ -61,7 +61,7 @@ void SegmentationConnectedThreshold(vtkImageData* pData,
 #endif
 
   // Used for converting from VTK to ITK
-  VTK2ITKFilterType::Pointer vtk2itkFilter = VTK2ITKFilterType::New();
+  typename VTK2ITKFilterType::Pointer vtk2itkFilter = VTK2ITKFilterType::New();
   vtk2itkFilter->SetInput(pData);
 
   InternalVoxelType lowerThreshold = thresholds[0];
@@ -138,7 +138,7 @@ void SegmentationConnectedThreshold(vtkImageData* pData,
 SegRunner::SegRunner(QWidget* receiver,
                      QMap<QString, QVariant> data,
                      vtkImageData* pData,
-                     vtkImageData* pOutData,
+                     vtkSmartPointer<vtkImageData>& pOutData,
                      int* retval,
                      volatile bool* stopped) : QRunnable(), receiver(receiver),
   pData(pData), pOutData(pOutData), retval(retval), stopped(stopped), data(data) {

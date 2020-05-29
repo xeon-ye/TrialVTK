@@ -18,14 +18,13 @@ class Ui_Registration;
 #include <Registration/SegRunner.hpp>
 #include <Registration/SurfRunner.hpp>
 
-//#include <Registration/QRangeSlider.hpp>
-//#include <Registration/superslider.h>
 #include <Registration/RangeSlider.h>
 
 #include <vtkSmartPointer.h>
 #include <vtkResliceImageViewer.h>
 #include <vtkImagePlaneWidget.h>
 #include <vtkImageData.h>
+#include <vtkPolyData.h>
 #include <vtkImageViewer2.h>
 #include <vtkImageReader2.h>
 
@@ -65,6 +64,8 @@ class App : public QMainWindow {
   void SliderHigh(int value);
 
  private Q_SLOTS:
+  void updateSurface();
+
   void updateChildWidgets();
   void updateSegChildWidgets();
   void updateSurfChildWidgets();
@@ -151,6 +152,7 @@ class App : public QMainWindow {
   vtkSmartPointer<vtkResliceImageViewer> m_riw_us[3];
 
   vtkSmartPointer<vtkImageData> m_segmentation;
+  vtkSmartPointer<vtkPolyData> m_polydata;
 
   vtkSmartPointer<vtkEventQtSlotConnect> Connections;
   // Segmentation stuff

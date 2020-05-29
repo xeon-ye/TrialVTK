@@ -196,8 +196,25 @@ void App::onSurfStartClick() {
   // data["low"] = this->thresholdsSlider->GetLowerValue();
   // data["high"] = this->thresholdsSlider->GetUpperValue();
 
+#ifdef INTEGRATED_SURFACING
+
+  int imageDims[3];
+  m_segmentation->GetDimensions(imageDims);
+
+  // Display dimensions
+  std::cout << "Segmentation dimensions: " << imageDims[0] << " "
+      << imageDims[1] << " "
+      << imageDims[2] << std::endl;
+
+  surfStopped = false;
   surfRunner =
-      new SurfRunner(this, data, &retval, &surfStopped);
+      new SurfRunner(this, data, m_polydata, m_segmentation, &retval, &surfStopped);
+#else
+  surfRunner =
+      new SurfRunner(this, data, nullptr, nullptr, &retval, &surfStopped);
+#endif
+
+  connect(this->surfRunner, SIGNAL(Done()), this, SLOT(updateSurface()));
 
   surfRunner->setAutoDelete(false);
   QThreadPool::globalInstance()->start(surfRunner);
@@ -288,6 +305,8 @@ void App::checkIfSegDone() {
       segStopped = true;
       updateSegChildWidgets();
       // Update widget with results
+
+
       segDelegate = &App::onSegStartClick;
     }
     if (segRunner) {
@@ -308,15 +327,48 @@ void App::checkIfSurfDone() {
       surfStopped = true;
       updateSurfChildWidgets();
       // Update widget with results
+
+
+
       surfDelegate = &App::onSurfStartClick;
     }
     if (surfRunner) {
+      disconnect(this->surfRunner, SIGNAL(Done()), 0, 0);
       delete surfRunner;
       surfRunner = nullptr;
     }
   }
 }
 
+
+void App::updateSurface() {
+#ifdef INTEGRATED_SURFACING
+
+    std::cout << m_polydata->GetNumberOfCells() << std::endl;
+    // TEST: Update 3D vessels here
+    vtkSmartPointer<vtkPolyDataMapper> mapper =
+        vtkSmartPointer<vtkPolyDataMapper>::New();
+    mapper->SetInputData(m_polydata);
+
+    if (m_vessels) {
+        m_planeWidget[0]->GetDefaultRenderer()->RemoveActor(m_vessels);
+        m_vessels = nullptr;
+    }
+
+    m_vessels =
+        vtkSmartPointer<vtkActor>::New();
+
+    m_vessels->SetMapper(mapper);
+    auto prop = m_vessels->GetProperty();
+    vtkSmartPointer<vtkNamedColors> namedColors =
+        vtkSmartPointer<vtkNamedColors>::New();
+
+    prop->SetColor(namedColors->GetColor3d("Red").GetData());
+
+    m_planeWidget[0]->GetDefaultRenderer()->AddActor(m_vessels);
+    this->ui->mrView3D->GetRenderWindow()->Render();
+#endif
+}
 
 void App::checkIfDone() {
   // What if cancel happens before
@@ -615,8 +667,8 @@ void App::setupMR() {
     m_planeWidget[i]->SetInteractor(iren);
     m_planeWidget[i]->SetPicker(picker); // PICKER
     m_planeWidget[i]->RestrictPlaneToVolumeOn();
-    double color[3] = { 0, 0, 0 };
-    color[i] = 1;
+    double color[3] = { 0.0, 0.0, 0.0 };
+    color[i] = 1.0;
 
     m_planeWidget[i]->GetPlaneProperty()->SetColor(color);
 
@@ -806,6 +858,9 @@ void App::PopulateMenus() {
   connect(this->thresholdsSlider, SIGNAL(lowerValueChanged(int)), this, SLOT(SliderLow(int)));
 
   connect(this->thresholdsSlider, SIGNAL(upperValueChanged(int)), this, SLOT(SliderHigh(int)));
+
+  // void updateSurface();
+  
 }
 
 void App::SliderLow(int value) {
@@ -981,6 +1036,7 @@ App::App(int argc, char* argv[]) {
 
 #ifdef INTEGRATED_SURFACING
   m_segmentation = vtkSmartPointer<vtkImageData>::New();
+  m_polydata = vtkSmartPointer<vtkPolyData>::New();
 #endif
 
   m_vsum = 0.0f;
@@ -1001,8 +1057,6 @@ App::App(int argc, char* argv[]) {
   surfDelegate = &App::onSurfStartClick;
 
   this->Connections = vtkSmartPointer<vtkEventQtSlotConnect>::New();
-
-
 }
 
 void App::slotExit() {
