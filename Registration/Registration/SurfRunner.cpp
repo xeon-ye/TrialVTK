@@ -140,7 +140,11 @@ void SurfRunner::externalRun() {
 }
 
 void SurfRunner::run() {
+#if INTEGRATED_SURFACING
     return internalRun();
+#else
+    return externalRun();
+#endif
 }
 
 /* Local variables: */

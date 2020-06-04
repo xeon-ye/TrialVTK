@@ -21,7 +21,9 @@ find_package(VTK COMPONENTS
 include(${VTK_USE_FILE})
 
 set(INTEGRATED_SEGMENTATION 1)
-set(INTEGRATED_SURFACING 1)
+
+# TODO: Find bug in the C++ code (currently disabled)
+set(INTEGRATED_SURFACING 0)
 
 if (INTEGRATED_SURFACING)
   if (NOT INTEGRATED_SEGMENTATION)

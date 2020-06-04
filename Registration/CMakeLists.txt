@@ -6,3 +6,4 @@ include_directories(
 #add_subdirectory(MI)
 add_subdirectory(Registration)
 add_subdirectory(Segmentation)
+add_subdirectory(Surfacing)

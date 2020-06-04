@@ -192,7 +192,7 @@ void SegRunner::externalRun() {
     std::cout << ss.str() << std::endl;
     system(ss.str().data());
     free(path);
-    std::cout << "Segmentation done" << std::endl;
+    qDebug() << "Segmentation done";
 
     // *stopped = true; // Replace with atomic and set this to true when cancel is pressed
 
@@ -233,8 +233,7 @@ void SegRunner::internalRun() {
             thresholds,
             fOutput);
     }
-
-    std::cout << "Segmentation done" << std::endl;
+    qDebug() << "Segmentation done";
 
     // *stopped = true; // Replace with atomic and set this to true when cancel is pressed
 
@@ -248,8 +247,11 @@ void SegRunner::internalRun() {
 
 
 void SegRunner::run() {
-//    return this->externalRun();
+#ifdef INTEGRATED_SEGMENTATION
     return this->internalRun();
+#else
+    return this->externalRun();
+#endif
 }
 
 /* Local variables: */
