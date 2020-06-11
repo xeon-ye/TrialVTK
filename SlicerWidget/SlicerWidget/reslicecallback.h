@@ -60,6 +60,20 @@ class vtkResliceCursorCallback : public vtkCommand {
       // in case they had side-effects
       rep->GetResliceCursorActor()->GetCursorAlgorithm()->GetResliceCursor();
 
+      vtkSmartPointer<vtkMatrix4x4> resliceAxes =
+        vtkSmartPointer<vtkMatrix4x4>::New();
+
+      resliceAxes->DeepCopy(rep->GetResliceCursorRepresentation()->GetResliceAxes()->GetData());
+
+      double trans[4][4];
+      memcpy(&trans[0][0], resliceAxes->GetData(), 16*sizeof(double));
+      for (size_t i = 0 ; i < 4 ; i++) {
+        for (size_t j = 0 ; j < 4 ; j++) {
+          std::cout << trans[i][j] << " ";
+        }
+        std::cout << std::endl;
+      }
+
       // Update 3D widget
       for (int i = 0; i < 3; i++) {
         vtkPlaneSource *ps = static_cast< vtkPlaneSource * >(
