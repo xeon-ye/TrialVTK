@@ -12,6 +12,8 @@
 
 #include <vtkResliceCursorWidget.h>
 
+#include <vtkMatrix4x4.h>
+
 #include <QDebug>
 
 class vtkResliceCursorCallback : public vtkCommand {
@@ -63,7 +65,7 @@ class vtkResliceCursorCallback : public vtkCommand {
       vtkSmartPointer<vtkMatrix4x4> resliceAxes =
         vtkSmartPointer<vtkMatrix4x4>::New();
 
-      resliceAxes->DeepCopy(rep->GetResliceCursorRepresentation()->GetResliceAxes()->GetData());
+      resliceAxes->DeepCopy(rep->GetResliceAxes()->GetData());
 
       double trans[4][4];
       memcpy(&trans[0][0], resliceAxes->GetData(), 16*sizeof(double));

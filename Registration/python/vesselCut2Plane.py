@@ -5,6 +5,7 @@
 import vtk
 import math
 from vtk.util.colors import red, blue, black, yellow
+import numpy as np
 
 filename = '/home/jmh/bkmedical/data/CT/Connected.vtp'
 #filename = '/home/jmh/bkmedical/data/CT/detailed.vtp'
@@ -71,6 +72,27 @@ edgeActor.SetMapper(edgeMapper)
 edgeActor.GetProperty().SetColor(yellow)
 edgeActor.GetProperty().SetLineWidth(3)
 
+# Hack for bad registration
+
+zrot = 3.0/180.0 * np.pi
+
+trans_init = np.asarray([[np.cos(zrot),  np.sin(zrot), 0.0, 0.0],
+                         [-np.sin(zrot),  np.cos(zrot), 0.0, 0.0],
+                         [0.0, 0.0, 1.0, 0.0],
+                         [0.0, 0.0, 0.0, 1.0]])
+
+transform = vtk.vtkTransform()
+mat = vtk.vtkMatrix4x4()
+for i in range(4):
+  for j in range(4):
+    mat.SetElement(i, j, trans_init[i,j])
+transform.SetMatrix(mat)
+
+# edgeActor.SetUserTransform(transform)
+
+
+
+
 cubeAxesActor = vtk.vtkCubeAxesActor()
 cubeAxesActor.SetUseTextActor3D(1)
 cubeAxesActor.SetBounds(reader.GetOutput().GetBounds())
@@ -106,7 +128,7 @@ cubeAxesActor.GetZAxesLinesProperty().SetColor(black)
 
 cubeAxesActor.GetProperty().SetColor(black)
 
-renderer.AddActor(cubeAxesActor)
+#renderer.AddActor(cubeAxesActor)
 
 # TODO: Draw circle in 2D using stencil
 if 1:

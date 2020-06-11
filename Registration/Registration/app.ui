@@ -18,7 +18,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -30,61 +30,57 @@
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
-         <widget class="QSplitter" name="splitter_3">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <widget class="QSplitter" name="splitter_2">
+          <widget class="QSplitter" name="splitter_3">
            <property name="orientation">
-            <enum>Qt::Horizontal</enum>
+            <enum>Qt::Vertical</enum>
            </property>
-           <widget class="QVTKOpenGLWidget" name="mrView0" native="true">
-            <property name="minimumSize">
-             <size>
-              <width>400</width>
-              <height>300</height>
-             </size>
+           <widget class="QSplitter" name="splitter_2">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
             </property>
+            <widget class="QVTKOpenGLWidget" name="mrView0" native="true">
+             <property name="minimumSize">
+              <size>
+               <width>400</width>
+               <height>300</height>
+              </size>
+             </property>
+            </widget>
+            <widget class="QVTKOpenGLWidget" name="mrView1" native="true">
+             <property name="minimumSize">
+              <size>
+               <width>400</width>
+               <height>300</height>
+              </size>
+             </property>
+            </widget>
            </widget>
-           <widget class="QVTKOpenGLWidget" name="mrView1" native="true">
-            <property name="minimumSize">
-             <size>
-              <width>400</width>
-              <height>300</height>
-             </size>
+           <widget class="QSplitter" name="splitter_1">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
             </property>
+            <widget class="QVTKOpenGLWidget" name="usView0" native="true">
+             <property name="minimumSize">
+              <size>
+               <width>400</width>
+               <height>300</height>
+              </size>
+             </property>
+            </widget>
+            <widget class="QVTKOpenGLWidget" name="usView1" native="true">
+             <property name="minimumSize">
+              <size>
+               <width>400</width>
+               <height>300</height>
+              </size>
+             </property>
+            </widget>
            </widget>
-
           </widget>
-          <widget class="QSplitter" name="splitter_1">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <widget class="QVTKOpenGLWidget" name="usView0" native="true">
-            <property name="minimumSize">
-             <size>
-              <width>400</width>
-              <height>300</height>
-             </size>
-            </property>
-           </widget>
-           <widget class="QVTKOpenGLWidget" name="usView1" native="true">
-            <property name="minimumSize">
-             <size>
-              <width>400</width>
-              <height>300</height>
-             </size>
-            </property>
-           </widget>
-
-
-          </widget>
-         </widget>
           <widget class="QSplitter" name="splitter_5">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
            </property>
-
            <widget class="QVTKOpenGLWidget" name="mrView3D" native="true">
             <property name="minimumSize">
              <size>
@@ -93,7 +89,6 @@
              </size>
             </property>
            </widget>
-           
            <widget class="QWidget" name="widget" native="true">
             <layout class="QHBoxLayout" name="horizontalLayout_14">
              <item>
@@ -212,8 +207,6 @@
              </item>
             </layout>
            </widget>
-
-           
           </widget>
          </widget>
         </item>
@@ -277,7 +270,7 @@
                    <property name="title">
                     <string>Image</string>
                    </property>
-                   <layout class="QHBoxLayout" name="horizontalLayout_10">
+                   <layout class="QVBoxLayout" name="verticalLayout_10">
                     <item>
                      <layout class="QHBoxLayout" name="horizontalLayout_9">
                       <item>
@@ -307,6 +300,13 @@
                          <string>Apply</string>
                         </property>
                        </widget>
+                      </item>
+                     </layout>
+                    </item>
+                    <item>
+                     <layout class="QHBoxLayout" name="horizontalLayout_9">
+                      <item>
+                       <widget class="QTableView" name="tableView"/>
                       </item>
                      </layout>
                     </item>
@@ -475,7 +475,7 @@
      <x>0</x>
      <y>0</y>
      <width>1377</width>
-     <height>27</height>
+     <height>44</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

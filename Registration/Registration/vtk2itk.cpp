@@ -4,10 +4,8 @@
 #include "itkVTKImageToImageFilter.h"
 
 int
-main(int argc, char * argv[])
-{
-  if (argc != 2)
-  {
+main(int argc, char * argv[]) {
+  if (argc != 2) {
     std::cerr << "Usage: " << std::endl;
     std::cerr << argv[0];
     std::cerr << " <InputFileName>";
@@ -34,12 +32,9 @@ main(int argc, char * argv[])
   FilterType::Pointer filter = FilterType::New();
   filter->SetInput(magnitude->GetOutput());
 
-  try
-  {
+  try {
     filter->Update();
-  }
-  catch (itk::ExceptionObject & error)
-  {
+  } catch (itk::ExceptionObject & error) {
     std::cerr << "Error: " << error << std::endl;
     return EXIT_FAILURE;
   }
