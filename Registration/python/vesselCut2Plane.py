@@ -39,8 +39,25 @@ prop.SetColor(red)
 plane = vtk.vtkPlane()
 #plane.SetOrigin(-90,-150, 0)
 #plane.SetNormal(1, 0, 0)
-plane.SetOrigin(-61.81, -149.31, -203.60)
-plane.SetNormal(0, 1, 0)
+
+if 0:
+  plane.SetOrigin(-61.81, -149.31, -203.60)
+  plane.SetNormal(0, 1, 0)
+else:
+  plane.SetOrigin(0, 0, 0)
+  plane.SetNormal(0, 1, 0)
+  transform = vtk.vtkTransform()
+  mat = vtk.vtkMatrix4x4()
+  for i in range(4):
+    for j in range(4):
+      mat.SetElement(i,j,bifurcation[i,j])
+
+  transform.SetMatrix(mat)
+  #plane.SetTransform(transform)
+  normal = plane.GetNormal()
+  rotatedNormal = transform.TransformPoint(normal)
+  plane.SetNormal(rotatedNormal)
+
 
 # -76.95,-146.88, -226.91
 
