@@ -2,13 +2,24 @@
 
 # TODO: Use vtkLinearExtrusionfilter and vtkPolyDataToImagestencil to create mask in 2D
 
+# Slice obtained from slicer
+
+import os
 import vtk
 import math
 from vtk.util.colors import red, blue, black, yellow
 import numpy as np
 
-filename = '/home/jmh/bkmedical/data/CT/Connected.vtp'
-#filename = '/home/jmh/bkmedical/data/CT/detailed.vtp'
+bifurcation = np.array([[0, 0.479847, 0.877352, -238.812],
+                        [1,0,0,-337.073],
+                        [0,0.877352, -0.479847, -524.914],
+                        [0,0,0,1]])
+
+if os.name == 'nt':
+  filename = 'e:/analogic/TrialVTK/data/Abdomen/BestTree.vtp'
+else:
+  filename = '/home/jmh/bkmedical/data/CT/Connected.vtp'
+  #filename = '/home/jmh/bkmedical/data/CT/detailed.vtp'
 
 reader = vtk.vtkXMLPolyDataReader()
 reader.SetFileName(filename)
