@@ -59,6 +59,7 @@ set( Srcs
   SegRunner.cpp
   SurfRunner.cpp
   whereami.c
+  transformmodel.cpp
 )
 
 set( Hdrs
@@ -66,6 +67,7 @@ set( Hdrs
   reslicecallback.h
   seedcallback.h
   whereami.h
+  transformmodel.h
   )
 
 set( MOC_Hdrs app.hpp )

@@ -85,6 +85,7 @@ placer.AddBoundingPlane( plane2 );
 #include <vtkImageReader2.h>
 #include <vtkImageMapToWindowLevelColors.h>
 #include <vtkNamedColors.h>
+#include <vtkMatrix4x4.h>
 #include <vtkMetaImageReader.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkXMLPolyDataReader.h>
@@ -455,13 +456,24 @@ void App::SetupUI() {
   m_pWidget->setLayout(this->m_sliderLayout);
 
   this->ui->segmVertLayout->insertWidget(0, m_pWidget);
-  //this->ui->segmVertLayout->insertWidget(0, this->thresholdsSlider);
 
 
   this->ui->btnSeg->setEnabled(false);
   this->ui->btnSurf->setEnabled(false);
   this->ui->btnAddSeeds->setEnabled(false);
 
+  this->transModel = new TransformModel(this);
+
+  this->ui->tableView->setModel(this->transModel);
+
+  ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+  ui->tableView->verticalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
+  this->ui->tableView->setVisible(false);
+  this->ui->tableView->resizeColumnsToContents();
+  this->ui->tableView->resizeRowsToContents();
+
+  this->ui->tableView->setVisible(true);
 
 }
 
@@ -859,6 +871,8 @@ void App::PopulateMenus() {
 
   connect(this->thresholdsSlider, SIGNAL(upperValueChanged(int)), this, SLOT(SliderHigh(int)));
 
+  connect(ui->cboxPlane, SIGNAL(currentIndexChanged(int)),
+      SLOT(TransformationUpdated(int)));
   // void updateSurface();
   
 }
@@ -1043,6 +1057,10 @@ App::App(int argc, char* argv[]) {
   m_vsum2 = 0.0f;
   //  m_vessels = nullptr;
 
+  this->Connections = vtkSmartPointer<vtkEventQtSlotConnect>::New();
+
+  this->ConnectionsTest = vtkSmartPointer<vtkEventQtSlotConnect>::New();
+
   this->SetupUI();
   this->setupMR();
 
@@ -1056,7 +1074,7 @@ App::App(int argc, char* argv[]) {
 
   surfDelegate = &App::onSurfStartClick;
 
-  this->Connections = vtkSmartPointer<vtkEventQtSlotConnect>::New();
+
 }
 
 void App::slotExit() {
@@ -1274,6 +1292,8 @@ void App::FileLoadUS(const vtkSmartPointer<vtkImageReader2>& reader) {
   this->ResetViews();  // renders everything
 
   this->resliceMode(1);  // Only renders again the 3 reslice image planes
+
+
 }
 
 void App::resliceMode(int mode) {
@@ -1387,6 +1407,7 @@ void App::AddSeedsToView(int i) {
                              nullptr /*  void* clientData */,
                              0.0f /*  float priority */,
                              Qt::AutoConnection /*  connection type */);
+
 #else
   this->Connections->Connect(this->m_seeds[i],
                              vtkCommand::PlacePointEvent || vtkCommand::DeletePointEvent || vtkCommand::InteractionEvent ||
@@ -1460,7 +1481,31 @@ void App::SeedsUpdateData(vtkObject* obj, unsigned long event, void* calldata, v
     }
   }
 }
+void App::TransformationUpdated(int index) {
+    vtkResliceCursorLineRepresentation *rep = dynamic_cast<
+        vtkResliceCursorLineRepresentation * >(
+        m_riw[index]->GetResliceCursorWidget()->GetRepresentation());
+    if (rep) {
+      rep->GetResliceCursorActor()->GetCursorAlgorithm()->GetResliceCursor();
 
+      vtkSmartPointer<vtkMatrix4x4> resliceAxes =
+          vtkSmartPointer<vtkMatrix4x4>::New();
+
+      resliceAxes->DeepCopy(rep->GetResliceAxes()->GetData());
+
+      double trans[4][4];
+      memcpy(&trans[0][0], resliceAxes->GetData(), 16 * sizeof(double));
+
+      for (size_t i = 0; i < 4; i++) {
+        for (size_t j = 0; j < 4; j++) {
+            QModelIndex _index = transModel->index(i, j);
+            this->transModel->setData(_index, trans[i][j], Qt::EditRole);
+        }
+      }
+    }
+
+    std::cout << "Hello";
+}
 void App::SeedsUpdated(vtkObject* obj, unsigned long event, void* calldata, void* clientData)
 {
   // TODO: Subscribe to more than one event type and maintain a list

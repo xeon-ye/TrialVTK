@@ -1,32 +1,45 @@
 #pragma once
 
-#include <QStandardItemModel>
+#include <QAbstractTableModel>
 #include <QList>
+#include <QMap>
 #include <QStringList>
+#include <QStandardItem>
 
-class TransformModel : public QStandardItemModel {
- Q_OBJECT:
+class TransformModel : public QAbstractTableModel {
+  Q_OBJECT
  public:
-  explicit TransformModel(QObject *parent = 0);
+  explicit TransformModel(QObject* parent);
+
   explicit TransformModel(QList<QList<QVariant> > data,
-                          QObject *parent = 0);
+                          QStringList horzHeader,
+                          QStringList vertHeader,
+                          QObject *parent);
 
-  virtual int rowCount(const QModelIndex &parent) const;
+  int rowCount(const QModelIndex &parent) const;
 
-  virtual int columnCount(const QModelIndex &parent) const;
+  int columnCount(const QModelIndex &parent) const;
 
-  virtual Qt::ItemFlags flags(const QModelIndex &index) const;
+  Qt::ItemFlags flags(const QModelIndex &index) const;
 
-  virtual QVariant data(const QModelIndex &index, int role) const;
+  QVariant data(const QModelIndex &index, int role) const;
 
- signals:
+  bool setData(const QModelIndex &index, const QVariant &value, int role);
 
- public slots:
+  QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+
+  QMap<QString,QVariant> getData() const;
+
+
+  Q_SLOT
   void onSelectedItemsChanged(QStandardItem *item);
+
+  Q_SLOT
+  void onMyItemsChanged(const QModelIndex & topLeft, const QModelIndex & bottomRight);
 
  private:
   QStringList horzHeader;
   QStringList vertHeader;
-  QList<QList<QVariant> > data;
+  QList<QList<QVariant> > gridData;
 };
 

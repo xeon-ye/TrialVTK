@@ -19,6 +19,7 @@ class Ui_Registration;
 #include <Registration/SurfRunner.hpp>
 
 #include <Registration/RangeSlider.h>
+#include <Registration/transformmodel.h>
 
 #include <vtkSmartPointer.h>
 #include <vtkResliceImageViewer.h>
@@ -43,6 +44,7 @@ class App : public QMainWindow {
 
   void SeedsUpdateData(vtkObject* obj, unsigned long event, void* calldata, void* clientData);
 
+  void TransformationUpdated(int index);
 
   virtual void slotExit();
   void resizeEvent(QResizeEvent* event);
@@ -141,6 +143,8 @@ class App : public QMainWindow {
   QLineEdit* m_sliderLblHigh;
   QLineEdit* m_sliderLblLow;
   QWidget* m_pWidget;
+  
+  TransformModel* transModel;
 
   // MR view stuff
   vtkSmartPointer<vtkImageData> m_dummy;
@@ -155,6 +159,10 @@ class App : public QMainWindow {
   vtkSmartPointer<vtkPolyData> m_polydata;
 
   vtkSmartPointer<vtkEventQtSlotConnect> Connections;
+
+  vtkSmartPointer<vtkEventQtSlotConnect> ConnectionsTest;
+
+
   // Segmentation stuff
   vtkSmartPointer<vtkSeedWidget> m_seeds[3];
 
