@@ -31,12 +31,16 @@ bifurcation = np.array([[0, 0.504867,  0.863197,  -246.731],
                         [0, 0.863197, -0.5004867, -520.683],
                         [0,0,0,1]])
 
+
+
 if iPlane == 0:
   redplane = redplane
+  redplane = bifurcation
 elif iPlane == 1:
   redplane = greenplane
 else:
   redplane = blueplane
+  redplane = bifurcation
 
 if 0:
   # RAS to LPS
@@ -80,22 +84,8 @@ actor0.SetMapper(mapper0)
 prop0 = actor0.GetProperty()
 prop0.SetColor(red)
 
-
 # create source
 source1 = vtk.vtkPlaneSource()
-
-if iPlane == 0:
-  ii = np.r_[0,0,1]
-  jj = np.r_[1,0,0]
-  kk = np.cross(ii,jj)
-elif iPlane == 1:
-  ii = np.r_[1,0,0]
-  jj = np.r_[0,1,0]
-  kk = np.cross(ii,jj)
-else:
-  ii = np.r_[1,0,0]
-  jj = np.r_[0,1,0]
-  kk = np.cross(ii,jj)
 
 if 0:
   # Works for iPlane==2
@@ -134,36 +124,6 @@ else:
   source1.SetPoint2(p2)
   source1.Update()
 
-# transform plane
-
-if 0:
-  center = np.r_[0,0,0]
-  p1 = center + 500*ii
-  p2 = center + 500*jj
-
-  source1.SetPoint1(p1.tolist())
-  source1.SetPoint2(p2.tolist())
-
-  transform = vtk.vtkTransform()
-  mat = vtk.vtkMatrix4x4()
-  for i in range(4):
-    for j in range(4):
-      mat.SetElement(j,i, redplane[i,j])
-
-  transform.SetMatrix(mat)
-  #transform.Inverse()
-
-  center = source1.GetCenter()
-  center = transform.TransformPoint(center)
-  source1.SetCenter(center)
-
-  p1 = source1.GetPoint1()
-  p1 = transform.TransformPoint(p1)
-  source1.SetPoint1(p1)
-
-  p2 = source1.GetPoint2()
-  p2 = transform.TransformPoint(p2)
-  source1.SetPoint2(p2)
 
 # mapper
 mapper1 = vtk.vtkPolyDataMapper()
@@ -172,6 +132,9 @@ mapper1.SetInputConnection(source1.GetOutputPort())
 # actor
 actor1 = vtk.vtkActor()
 actor1.SetMapper(mapper1)
+prop0 = actor1.GetProperty()
+prop0.SetColor(blue)
+prop0.SetOpacity(0.5)
 
 # assign actor to the renderer
 ren.AddActor(actor0)
