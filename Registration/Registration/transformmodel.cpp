@@ -45,8 +45,8 @@ TransformModel::TransformModel(QObject *parent) :
   this->horzHeader = _horzHeader;
 
   bool ok = connect(this,
-      SIGNAL(dataChanged(QModelIndex, QModelIndex)),
-      this, SLOT(onMyItemsChanged(QModelIndex, QModelIndex)));
+                    SIGNAL(dataChanged(QModelIndex, QModelIndex)),
+                    this, SLOT(onMyItemsChanged(QModelIndex, QModelIndex)));
 
   Q_ASSERT(ok);
 }
@@ -82,11 +82,14 @@ int TransformModel::columnCount(const QModelIndex &parent) const {
 
 // Editable models must implement this
 Qt::ItemFlags TransformModel::flags(const QModelIndex &index) const {
+  return QAbstractTableModel::flags(index) | Qt::ItemIsEditable;
+#if 0
   Qt::ItemFlags f = Qt::NoItemFlags;
   if (index.row() < 3) {
     f = f | Qt::ItemIsEditable | Qt::ItemIsEnabled;
   }
   return f;
+#endif
 }
 
 QVariant TransformModel::data(const QModelIndex &index, int role) const {
@@ -122,9 +125,9 @@ QVariant TransformModel::headerData(int section, Qt::Orientation orientation, in
         return QVariant(this->horzHeader[section]);
       }
     } else {
-       if (section < this->vertHeader.size()) {
-         return QVariant(this->vertHeader[section]);
-       }
+      if (section < this->vertHeader.size()) {
+        return QVariant(this->vertHeader[section]);
+      }
     }
   }
 
@@ -187,6 +190,3 @@ QMap<QString,QVariant> TransformModel::getData() const {
 
   return _gridData;
 }
-
-
-

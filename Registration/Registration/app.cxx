@@ -119,6 +119,64 @@ placer.AddBoundingPlane( plane2 );
 
 App::~App() {}
 
+void App::keyPressEvent(QKeyEvent *event) {
+  QModelIndexList selectedRows = this->ui->tableView->selectionModel()->selectedRows();
+
+#if 0
+  // at least one entire row selected
+  if(!selectedRows.isEmpty()){
+    if(event->key() == Qt::Key_Insert)
+      this->ui->tableView->model()->insertRows(selectedRows.at(0).row(),
+                                               selectedRows.size());
+    else if(event->key() == Qt::Key_Delete)
+      this->ui->tableView->model()->removeRows(selectedRows.at(0).row(),
+                                               selectedRows.size());
+  }
+#else
+  // at least one cell selected
+  if(!ui->tableView->selectionModel()->selectedIndexes().isEmpty()){
+#if 0
+    if(event->key() == Qt::Key_Delete){
+      foreach (QModelIndex index, selectedIndexes())
+          model()->setData(index, QString());
+    }
+#endif
+    /* else */ if(event->matches(QKeySequence::Copy)){
+      QString text;
+      QItemSelectionRange range = ui->tableView->selectionModel()->selection().first();
+      for (auto i = range.top() ; i <= range.bottom(); ++i) {
+        QStringList rowContents;
+        for (auto j = range.left(); j <= range.right(); ++j)
+          rowContents << ui->tableView->model()->index(i,j).data().toString();
+        text += rowContents.join("\t");
+        text += "\n";
+      }
+      QApplication::clipboard()->setText(text);
+    }
+#if 0
+    else if(event->matches(QKeySequence::Paste)) {
+      QString text = QApplication::clipboard()->text();
+      QStringList rowContents = text.split("\n", QString::SkipEmptyParts);
+
+      QModelIndex initIndex = selectedIndexes().at(0);
+      auto initRow = initIndex.row();
+      auto initCol = initIndex.column();
+
+      for (auto i = 0; i < rowContents.size(); ++i) {
+        QStringList columnContents = rowContents.at(i).split("\t");
+        for (auto j = 0; j < columnContents.size(); ++j) {
+          model()->setData(model()->index(
+              initRow + i, initCol + j), columnContents.at(j));
+        }
+      }
+    }
+    else
+      QTableView::keyPressEvent(event);
+#endif
+  }
+#endif
+}
+
 void App::onRegStartClick() {
   ui->btnReg->setEnabled(false);
   ui->progressBar->setValue(0);

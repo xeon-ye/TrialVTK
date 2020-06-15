@@ -65,6 +65,8 @@ class App : public QMainWindow {
   void SliderLow(int value);
   void SliderHigh(int value);
 
+  void keyPressEvent(QKeyEvent *event);
+
  private Q_SLOTS:
   void updateSurface();
 
@@ -83,7 +85,7 @@ class App : public QMainWindow {
 
   void onSegClick();
   void onSegStartClick();
-  
+
   void onSegStartInView(int);
 
   void onSegCancelClick();
@@ -143,7 +145,7 @@ class App : public QMainWindow {
   QLineEdit* m_sliderLblHigh;
   QLineEdit* m_sliderLblLow;
   QWidget* m_pWidget;
-  
+
   TransformModel* transModel;
 
   // MR view stuff
@@ -171,6 +173,6 @@ class App : public QMainWindow {
   // Ugly explicit data (just for testing).
   float m_vsum;
   float m_vsum2;
-                
+
 };
 
