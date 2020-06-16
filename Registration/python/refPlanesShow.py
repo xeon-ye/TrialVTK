@@ -4,6 +4,10 @@ from vtk.util.colors import red, blue, black, yellow
 
 import numpy as np
 
+# TODO: Fast version - make tube filter work
+fast = False
+
+
 # create a rendering window and renderer
 ren = vtk.vtkRenderer()
 renWin = vtk.vtkRenderWindow()
@@ -122,16 +126,35 @@ for iPlane in range(len(refplanes)):
   plane.SetOrigin(source.GetOrigin())
   plane.SetNormal(source.GetNormal())
 
-  cutEdges = vtk.vtkCutter()
-  cutEdges.SetInputConnection(vesselNormals.GetOutputPort())
-  cutEdges.SetCutFunction(plane)
-  cutEdges.GenerateCutScalarsOn()
-  cutEdges.SetValue(0, 0.5)
-  cutEdges.Update()
+  if not(fast):
+    # vtkPlaneCutter is faster
+    cutEdges = vtk.vtkCutter()
+    cutEdges.SetInputConnection(vesselNormals.GetOutputPort())
+    cutEdges.SetCutFunction(plane)
+    cutEdges.GenerateCutScalarsOn()
+    cutEdges.SetValue(0, 0.5)
+    cutEdges.Update()
+  else:
+    # TODO Add tube filter
+    cutEdges = vtk.vtkPlaneCutter()
+    cutEdges.SetPlane(plane)
+    cutEdges.SetComputeNormals(1)
+    cutEdges.SetInputConnection(reader.GetOutputPort())
+    cutEdges.Update()
+
+    sCutterMapper = vtk.vtkCompositePolyDataMapper()
+    sCutterMapper.SetInputConnection(cutEdges.GetOutputPort())
+    sCutterMapper.ScalarVisibilityOff()
+
+    sCutterActor = vtk.vtkActor()
+    sCutterActor.SetMapper(sCutterMapper)
+
+    # vtkPointLocator and get surface contour
 
   cutStrips = vtk.vtkStripper()
   cutStrips.SetInputConnection(cutEdges.GetOutputPort())
   cutStrips.Update()
+  #cutStrips = cutEdges
 
   tubes = vtk.vtkTubeFilter()
   tubes.SetInputConnection(cutStrips.GetOutputPort()) # works
@@ -181,10 +204,11 @@ for iPlane in range(len(refplanes)):
   edgeActors[iPlane].GetProperty().SetColor(yellow)
   edgeActors[iPlane].GetProperty().SetLineWidth(3)
 
-  ren.AddActor(actors[iPlane])
-  ren.AddActor(edgeActors[iPlane])
-
-
+  if fast:
+    ren.AddActor(sCutterActor)
+  else:
+    ren.AddActor(actors[iPlane])
+    ren.AddActor(edgeActors[iPlane])
 
 ren.SetBackground(1,1,1)
 ren.ResetCamera()
