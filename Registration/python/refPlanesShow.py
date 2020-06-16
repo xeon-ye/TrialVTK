@@ -116,7 +116,9 @@ edgeActors = []
 lineActors = []
 intActors = []
 
-for iPlane in range(len(refplanes)):
+nPlanes = 1
+nPlanes = len(refplanes)
+for iPlane in range(nPlanes):
   source = vtk.vtkPlaneSource()
   source.SetOrigin(0,  0, 0)
   source.SetPoint1(hw, 0, 0)
@@ -192,7 +194,6 @@ for iPlane in range(len(refplanes)):
   cutStrips = vtk.vtkStripper()
   cutStrips.SetInputConnection(cutEdges.GetOutputPort())
   cutStrips.Update()
-  #cutStrips = cutEdges
 
   tubes = vtk.vtkTubeFilter()
   tubes.SetInputConnection(cutStrips.GetOutputPort()) # works
@@ -218,6 +219,9 @@ for iPlane in range(len(refplanes)):
   cutStrips0.SetInputConnection(cutSurf.GetOutputPort())
   cutStrips0.Update()
 
+  # Is empty
+  surfCircle = cutSurf.GetOutput() # vtkPolyData
+
 
   # Visualizer surface intersection
   tubes0 = vtk.vtkTubeFilter()
@@ -234,29 +238,28 @@ for iPlane in range(len(refplanes)):
   intActors.append(vtk.vtkActor())
   intActors[iPlane].SetMapper(edgeMapper0)
 
-  # Is empty
-  surfCircle = cutStrips0.GetOutput() # vtkPolyData
 
-  if 0:
+  if 1:
     points = surfCircle.GetPoints()
     pointTree = vtk.vtkKdTree()
     pointTree.BuildLocatorFromPoints(points)
 
+    nClosest = 3
     result = vtk.vtkIdList()
-    pointTree.FindClosestNPoints(1, centers[iPlane], result)
-    dataArray = points.GetData()
-    x = dataArray.GetComponent(result.GetId(2), 0)
-    y = dataArray.GetComponent(result.GetId(0), 1)
-    z = dataArray.GetComponent(result.GetId(0), 2)
+    pointTree.FindClosestNPoints(nClosest+1, centers[iPlane], result)
+    #dataArray = points.GetData()
+    #x = dataArray.GetComponent(result.GetId(2), 0)
+    #y = dataArray.GetComponent(result.GetId(0), 1)
+    #z = dataArray.GetComponent(result.GetId(0), 2)
 
-    print(x,y,z)
-    print(points.GetPoint(result.GetId(0)))
+    #print(x,y,z)
+    print(points.GetPoint(result.GetId(nClosest)))
     # Visualize line
     #lineSource = vtk.vtkLineSource()
     lineSource = vtk.vtkSphereSource()
     #lineSource.SetPoint1((x,y,z))
     #lineSource.SetPoint2(source.GetCenter())
-    lineSource.SetCenter(points.GetPoint(result.GetId(0)))
+    lineSource.SetCenter(points.GetPoint(result.GetId(nClosest)))
     lineSource.SetRadius(5)
     lineSource.Update()
 
@@ -269,8 +272,8 @@ for iPlane in range(len(refplanes)):
     prop.SetColor(colors.GetColor3d("Red"))
 
     # Dist plane center to intersection
-    d2p = np.sqrt(np.sum((np.array(source.GetCenter()) - np.r_[x,y,z])**2))
-    print(d2p)
+    #d2p = np.sqrt(np.sum((np.array(source.GetCenter()) - np.r_[x,y,z])**2))
+    #print(d2p)
 
   # Clipping planes
   planes = vtk.vtkPlaneCollection()
@@ -316,7 +319,7 @@ for iPlane in range(len(refplanes)):
     ren.AddActor(edgeActors[iPlane])
 
   ren.AddActor(intActors[iPlane])
-  #ren.AddActor(lineActors[iPlane])
+  ren.AddActor(lineActors[iPlane])
 
 ren.SetBackground(1,1,1)
 ren.ResetCamera()
