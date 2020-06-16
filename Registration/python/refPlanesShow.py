@@ -113,6 +113,8 @@ hw = 50.0
 #mappers = []
 actors = []
 edgeActors = []
+lineActors = []
+intActors = []
 
 for iPlane in range(len(refplanes)):
   source = vtk.vtkPlaneSource()
@@ -216,8 +218,53 @@ for iPlane in range(len(refplanes)):
   cutStrips0.SetInputConnection(cutSurf.GetOutputPort())
   cutStrips0.Update()
 
-  surfCircle = cutStrips.GetOutput() # vtkPolyData
 
+  # Visualizer surface intersection
+  tubes0 = vtk.vtkTubeFilter()
+  tubes0.SetInputConnection(cutStrips0.GetOutputPort()) # works
+  tubes0.CappingOn()
+  tubes0.SidesShareVerticesOff()
+  tubes0.SetNumberOfSides(12)
+  tubes0.SetRadius(1.0)
+
+  edgeMapper0 = vtk.vtkPolyDataMapper()
+  edgeMapper0.ScalarVisibilityOff()
+  edgeMapper0.SetInputConnection(tubes0.GetOutputPort())
+
+  intActors.append(vtk.vtkActor())
+  intActors[iPlane].SetMapper(edgeMapper0)
+
+
+
+  surfCircle = cutStrips.GetOutput() # vtkPolyData
+  points = surfCircle.GetPoints()
+  pointTree = vtk.vtkKdTree()
+  pointTree.BuildLocatorFromPoints(points)
+
+  result = vtk.vtkIdList()
+  pointTree.FindClosestNPoints(2, source.GetCenter(), result)
+  dataArray = points.GetData()
+  x = dataArray.GetComponent(result.GetId(1), 0)
+  y = dataArray.GetComponent(result.GetId(1), 1)
+  z = dataArray.GetComponent(result.GetId(1), 2)
+
+  # Visualize line
+  line = vtk.vtkLineSource()
+  line.SetPoint1((x,y,z))
+  line.SetPoint2(source.GetCenter())
+  line.Update()
+
+  lineMapper = vtk.vtkPolyDataMapper()
+  lineMapper.SetInputConnection(line.GetOutputPort())
+  lineActors.append(vtk.vtkActor())
+  lineActors[iPlane].SetMapper(lineMapper)
+  prop = lineActors[iPlane].GetProperty()
+  prop.SetLineWidth(20)
+  prop.SetColor(colors.GetColor3d("Red"))
+
+  # Dist plane center to intersection
+  d2p = np.sqrt(np.sum((np.array(source.GetCenter()) - np.r_[x,y,z])**2))
+  print(d2p)
 
 
   # Clipping planes
@@ -262,6 +309,8 @@ for iPlane in range(len(refplanes)):
   else:
     ren.AddActor(actors[iPlane])
     ren.AddActor(edgeActors[iPlane])
+  ren.AddActor(intActors[iPlane])
+  ren.AddActor(lineActors[iPlane])
 
 ren.SetBackground(1,1,1)
 ren.ResetCamera()
