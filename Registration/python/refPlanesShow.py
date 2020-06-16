@@ -7,6 +7,16 @@ import numpy as np
 # TODO: Fast version - make tube filter work
 fast = False
 
+def hexCol(s):
+  if isinstance(s,str):
+    if "#" in s:  # hex to rgb
+      h = s.lstrip("#")
+      rgb255 = list(int(h[i : i + 2], 16) for i in (0, 2, 4))
+      rgbh = np.array(rgb255) / 255.0
+      return tuple(rgbh)
+
+colors = vtk.vtkNamedColors()
+
 
 # create a rendering window and renderer
 ren = vtk.vtkRenderer()
@@ -28,8 +38,32 @@ iren.SetRenderWindow(renWin)
 # read vessel data
 if os.name == 'nt':
   filename = 'e:/analogic/TrialVTK/data/Abdomen/A.vtp'
+  fileLiver = 'e:/analogic/TrialVTK/data/Abdomen/Liver_3D-interpolation.vtp'
 else:
   filename = '/home/jmh/bkmedical/data/CT/Connected.vtp'
+  fileLiver = '/home/jmh/bkmedical/data/CT/Liver_3D-interpolation.vtp'
+
+# read liver data
+readerLiver = vtk.vtkXMLPolyDataReader()
+readerLiver.SetFileName(fileLiver)
+readerLiver.Update()
+
+surfNormals = vtk.vtkPolyDataNormals()
+surfNormals.SetInputConnection(readerLiver.GetOutputPort())
+
+
+#Create a mapper and actor
+mapperLiver = vtk.vtkPolyDataMapper()
+mapperLiver.SetInputConnection(surfNormals.GetOutputPort()) # was readerLiver
+actorLiver = vtk.vtkActor()
+actorLiver.SetMapper(mapperLiver)
+prop = actorLiver.GetProperty()
+#prop.SetColor(colors.GetColor3d("Purple"))
+
+#prop.SetColor(vtk.vtkColor3d(hexCol("#6c2e1f")))
+prop.SetColor(vtk.vtkColor3d(hexCol("#873927")))  # (25% lighter)
+prop.SetOpacity(0.5)
+
 
 # read data
 reader = vtk.vtkXMLPolyDataReader()
@@ -48,11 +82,13 @@ mapper.SetInputConnection(vesselNormals.GetOutputPort())
 actor = vtk.vtkActor()
 actor.SetMapper(mapper)
 prop = actor.GetProperty()
-prop.SetColor(red)
-
+#prop.SetColor(red)
+#prop.SetColor(vtk.vtkColor3d(hexCol("#415d6c")))
+prop.SetColor(vtk.vtkColor3d(hexCol("#517487"))) # 25% lighter
 
 # assign actor to the renderer
 ren.AddActor(actor)
+ren.AddActor(actorLiver)
 
 # loop over reference planes
 refplanes = []
@@ -166,6 +202,23 @@ for iPlane in range(len(refplanes)):
   edgeMapper = vtk.vtkPolyDataMapper()
   edgeMapper.ScalarVisibilityOff()
   edgeMapper.SetInputConnection(tubes.GetOutputPort())
+
+  # Find nearest point on surface
+  cutSurf = vtk.vtkCutter()
+  cutSurf.SetInputConnection(surfNormals.GetOutputPort())
+  cutSurf.SetCutFunction(plane)
+  cutSurf.GenerateCutScalarsOn()
+  cutSurf.SetValue(0, 0.5)
+  cutSurf.Update()
+
+  # Find nearest point
+  cutStrips0 = vtk.vtkStripper()
+  cutStrips0.SetInputConnection(cutSurf.GetOutputPort())
+  cutStrips0.Update()
+
+  surfCircle = cutStrips.GetOutput() # vtkPolyData
+
+
 
   # Clipping planes
   planes = vtk.vtkPlaneCollection()
