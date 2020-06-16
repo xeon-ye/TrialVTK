@@ -6,7 +6,7 @@ TransformModel::TransformModel(QObject *parent) :
   QStringList _horzHeader;
   _horzHeader << "X" << "Y" << "Z" << "W";
   QStringList _vertHeader;
-  _vertHeader << "X" << "Y" << "Z" << "W";
+  _vertHeader << "X" << "Y" << "Z" << "W" << "O";
 
   QList<QList<QVariant> > data;
 
@@ -34,11 +34,17 @@ TransformModel::TransformModel(QObject *parent) :
   row3.append(0);
   row3.append(1);
 
+  QList<QVariant> row4;
+  row4.append(0);
+  row4.append(0);
+  row4.append(0);
+  row4.append(0);
 
   data.append(row0);
   data.append(row1);
   data.append(row2);
   data.append(row3);
+  data.append(row4);
 
   this->gridData = data;
   this->vertHeader = _vertHeader;
@@ -82,7 +88,7 @@ int TransformModel::columnCount(const QModelIndex &parent) const {
 
 // Editable models must implement this
 Qt::ItemFlags TransformModel::flags(const QModelIndex &index) const {
-  return QAbstractTableModel::flags(index) | Qt::ItemIsEditable;
+  return QAbstractTableModel::flags(index);// | Qt::ItemIsEditable;
 #if 0
   Qt::ItemFlags f = Qt::NoItemFlags;
   if (index.row() < 3) {

@@ -310,14 +310,14 @@
                         <property name="minimumSize">
                          <size>
                           <width>4</width>
-                          <height>4</height>
+                          <height>5</height>
                          </size>
                         </property>
                         <attribute name="horizontalHeaderCascadingSectionResizes">
-                         <bool>false</bool>
+                         <bool>true</bool>
                         </attribute>
                         <attribute name="verticalHeaderCascadingSectionResizes">
-                         <bool>false</bool>
+                         <bool>true</bool>
                         </attribute>
                        </widget>
                       </item>
@@ -331,7 +331,7 @@
                     <property name="sizeHint" stdset="0">
                      <size>
                       <width>20</width>
-                      <height>128</height>
+                      <height>10</height>
                      </size>
                     </property>
                    </spacer>

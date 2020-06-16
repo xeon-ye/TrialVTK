@@ -527,12 +527,13 @@ void App::SetupUI() {
   ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
   ui->tableView->verticalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
-  this->ui->tableView->setVisible(false);
+  //  this->ui->tableView->setVisible(false);
+
+  this->ui->tableView->setVisible(true);
   this->ui->tableView->resizeColumnsToContents();
   this->ui->tableView->resizeRowsToContents();
 
-  this->ui->tableView->setVisible(true);
-
+  //  this->ui->tableView->horizontalHeader()->setResizeMode(QHeaderView::ResizeToContents);
 }
 
 void App::dumpImages() {
@@ -1540,6 +1541,7 @@ void App::SeedsUpdateData(vtkObject* obj, unsigned long event, void* calldata, v
   }
 }
 void App::TransformationUpdated(int index) {
+  if (m_riw[index]) {
     vtkResliceCursorLineRepresentation *rep = dynamic_cast<
         vtkResliceCursorLineRepresentation * >(
         m_riw[index]->GetResliceCursorWidget()->GetRepresentation());
@@ -1561,8 +1563,15 @@ void App::TransformationUpdated(int index) {
         }
       }
     }
-
-    std::cout << "Hello";
+    auto ps = m_riw[index]->GetResliceCursorWidget()->GetResliceCursorRepresentation()->GetResliceCursor();
+    if (ps) {
+      double* pTmp = ps->GetCenter();
+      for (size_t i = 0 ; i < 3 ; i++) {
+        QModelIndex _index = transModel->index(4, i);
+        this->transModel->setData(_index, pTmp[i], Qt::EditRole);
+      }
+    }
+  }
 }
 void App::SeedsUpdated(vtkObject* obj, unsigned long event, void* calldata, void* clientData)
 {
@@ -1731,4 +1740,3 @@ void QtVTKRenderWindows::AddDistanceMeasurementToView(int i) {
 /* tab-width: 2 */
 /* c-basic-offset: 2 */
 /* End: */
-
