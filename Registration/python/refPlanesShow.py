@@ -62,9 +62,17 @@ refplanes.append(np.array([[0.9972221078443415,	-0.00658366270883304,	0.07419382
 centers = []
 centers.append(np.r_[-75.69560243429154,	-149.41579842495196,	-231.76170945617494])
 
+refplanes.append(np.array([[0.9824507428729312,	-0.028608856565971154,	0.1843151408713164,	-221.425151769367],
+                           [0.18431514087131629,	0.3004711475787132,	-0.935812491003576,	-325.6553959586223],
+                           [-0.028608856565971223,	0.9533617481306448,	0.3004711475787133,	-547.1574253306663],
+                           [0,	0,	0,	1]]))
+
+centers.append(np.r_[-31.317285034663634,	-174.62449255285645,	-193.39018826551072])
+
 hw = 50.0
 #mappers = []
 actors = []
+edgeActors = []
 
 for iPlane in range(len(refplanes)):
   source = vtk.vtkPlaneSource()
@@ -96,7 +104,7 @@ for iPlane in range(len(refplanes)):
   source.Update()
 
   # TEST
-  source.SetCenter(centers[0])
+  source.SetCenter(centers[iPlane])
   source.Update()
 
   # mapper
@@ -168,13 +176,13 @@ for iPlane in range(len(refplanes)):
 
   edgeMapper.SetClippingPlanes(planes)
 
-  edgeActor = vtk.vtkActor()
-  edgeActor.SetMapper(edgeMapper)
-  edgeActor.GetProperty().SetColor(yellow)
-  edgeActor.GetProperty().SetLineWidth(3)
+  edgeActors.append(vtk.vtkActor())
+  edgeActors[iPlane].SetMapper(edgeMapper)
+  edgeActors[iPlane].GetProperty().SetColor(yellow)
+  edgeActors[iPlane].GetProperty().SetLineWidth(3)
 
   ren.AddActor(actors[iPlane])
-  ren.AddActor(edgeActor)
+  ren.AddActor(edgeActors[iPlane])
 
 
 
