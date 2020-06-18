@@ -83,7 +83,13 @@ def MyFunc(obj, ev):
 
   # Not working
   translate = np.array(obj.GetCenter()) - np.array(axes.GetOrigin())
-  mat[:3,3] = translate # final - rot * initial
+  mat[:3,3] = translate
+
+  # TEST (why is this working)
+  tmp = vtk.vtkVector3d()
+  vtk.vtkMath.Multiply3x3(rot, axes.GetOrigin(), tmp)
+  mat[:3,3] = np.array(obj.GetCenter()) - np.array(tmp)
+
 
   # Construct 4x4 matrix
   trans = vtk.vtkMatrix4x4()
