@@ -81,9 +81,6 @@ def MyFunc(obj, ev):
   mat[:3,:3] = rot
   mat[3,3] = 1.0
 
-  # Not working
-  translate = np.array(obj.GetCenter()) - np.array(axes.GetOrigin())
-  mat[:3,3] = translate
 
   # TEST (why is this working)
   tmp = vtk.vtkVector3d()
@@ -125,9 +122,18 @@ renderWindowInteractor.SetRenderWindow(renderWindow)
 
 planeWidget = vtk.vtkPlaneWidget()
 planeWidget.SetInteractor(renderWindowInteractor)
-
 planeWidget.AddObserver(vtk.vtkCommand.EndInteractionEvent, MyFunc, 1.0)
 
+# FIX THIS
+
+initialMovement = True
+
+if initialMovement:
+  planeWidget.SetOrigin(1.5, 0.5, 2)
+  planeWidget.SetPoint1(2.5, 0.5, 2)
+  planeWidget.SetPoint2(1.5, 1.5, 2)
+
+planeWidget.Modified()
 planeWidget.On()
 
 lastNormal = planeWidget.GetNormal()
@@ -146,7 +152,30 @@ renderWindowInteractor.Initialize()
 
 renderer.ResetCamera()
 
+# Crazy behavior for origin
 axes = vtk.vtkAxesActor()
+if initialMovement:
+  tf = vtk.vtkTransform()
+
+  rot = np.diag(np.ones(3, dtype=np.float))
+  mat = np.zeros((4,4), dtype=np.float)
+  mat[:3,:3] = rot
+  mat[3,3] = 1.0
+  tmp = vtk.vtkVector3d()
+  vtk.vtkMath.Multiply3x3(rot, axes.GetOrigin(), tmp)
+  mat[:3,3] = np.array(planeWidget.GetCenter()) - np.array(tmp)
+
+  # Construct 4x4 matrix
+  tfm = vtk.vtkMatrix4x4()
+  tfm.DeepCopy(mat.flatten().tolist())
+  tfm.Modified()
+  tf.SetMatrix(tfm)
+  tf.PostMultiply()
+  tf.Update()
+  axes.SetUserTransform(tf)
+  axes.SetOrigin(planeWidget.GetCenter())
+  axes.Modified()
+axes.Modified()
 
 renderer.AddActor(axes)
 
