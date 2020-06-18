@@ -5,6 +5,8 @@ from vtk.util.colors import red, blue, black, yellow
 import numpy as np
 
 # TODO: Fast version - make tube filter work
+# TODO: Hole in segmentation - not surface of liver
+
 fast = False
 
 def hexCol(s):
@@ -147,6 +149,8 @@ for iPlane in range(nPlanes):
 
   source.Update()
 
+  if iPlane == 1:
+    ref = source
   # TEST
   source.SetCenter(centers[iPlane])
   source.Update()
@@ -324,6 +328,21 @@ for iPlane in range(nPlanes):
 ren.SetBackground(1,1,1)
 ren.ResetCamera()
 
+planeWidget = vtk.vtkPlaneWidget()
+planeWidget.SetInteractor(iren)
+planeWidget.SetOrigin(ref.GetOrigin())
+planeWidget.SetPoint1(ref.GetPoint1())
+planeWidget.SetPoint2(ref.GetPoint2())
+planeWidget.SetHandleSize(0.5)
+planeWidget.SetPlaceFactor(20.0)
+planeWidget.On()
+planeWidget.UpdatePlacement()
+# TODO: GetProp3D
+
+prop = planeWidget.GetHandleProperty()
+prop.SetColor(colors.GetColor3d("Black"))
+
+planeWidget.Modified()
 
 # enable user interface interactor
 iren.Initialize()

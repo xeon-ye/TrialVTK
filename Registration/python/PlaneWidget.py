@@ -175,7 +175,6 @@ if initialMovement:
   axes.SetUserTransform(tf)
   axes.SetOrigin(planeWidget.GetCenter())
   axes.Modified()
-axes.Modified()
 
 renderer.AddActor(axes)
 
