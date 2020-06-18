@@ -1,11 +1,30 @@
 import vtk
 import numpy as np
+import sys
+
+global lastNormal
+global lastAxis1
+global lastAxis2
+global axes
 
 def MyFunc(obj, ev):
-  # Out-of-plane rotation
+  global lastNormal
+  global lastAxis1
+  global axes
+
   saxis = np.array(obj.GetPoint1()) - np.array(obj.GetOrigin())
   taxis = np.array(obj.GetPoint2()) - np.array(obj.GetOrigin())
   axis = np.array(obj.GetNormal())
+
+  if 0:
+    sys.stdout.write('lastNormal: ')
+    print(lastNormal)
+    sys.stdout.write('lastAxis1: ')
+    print(lastAxis1)
+    sys.stdout.write('newNormal: ')
+    print(axis)
+    sys.stdout.write('newAxis1: ')
+    print(saxis)
 
   # TODO: Ensure axis,taxis and saxis are e.g. [0,1,0], [0,0,1] and
   # [1,0,0] if normal is [0.48, 0.84, -0.21]
@@ -13,12 +32,12 @@ def MyFunc(obj, ev):
   # Below constrain rotation of 4x4 such that the axis of rotation
   # is parallel to the plane (so there is no in-plane rotation)
 
-  normal = (0,0,1) # Old normal
   vec = vtk.vtkVector3d() # Axis of rotation
-  vtk.vtkMath.Cross(axis,normal,vec)
-  costheta = vtk.vtkMath.Dot(axis, normal)
+  vtk.vtkMath.Cross(lastNormal, axis, vec)
+  costheta = vtk.vtkMath.Dot(axis, lastNormal)
   sintheta = vtk.vtkMath.Norm(vec)
   theta = np.arctan2(sintheta, costheta)
+
   if sintheta != 0.0:
     vec[0] = vec[0]/sintheta
     vec[1] = vec[1]/sintheta
@@ -28,32 +47,66 @@ def MyFunc(obj, ev):
   costheta = np.cos(0.5*theta)
   sintheta = np.sin(0.5*theta)
   quat = vtk.vtkQuaterniond(costheta, vec[0]*sintheta, vec[1]*sintheta, vec[2]*sintheta)
-  mat = np.ones((3,3),dtype=np.float)
-  vtk.vtkMath.QuaternionToMatrix3x3(quat, mat)
+  rot0 = np.ones((3,3),dtype=np.float)
+  vtk.vtkMath.QuaternionToMatrix3x3(quat, rot0)
+
+  #vtkMath.vtkMultiply3x3(mat, lastAxis2, newAxis2)
+
+  if 1:
+    newAxis1 = vtk.vtkVector3d()
+    vtk.vtkMath.Multiply3x3(rot0, lastAxis1, newAxis1)
+
+    # Rotate newAxis1 into saxis
+    vec = vtk.vtkVector3d() # Axis of rotation
+    vtk.vtkMath.Cross(newAxis1, saxis, vec)
+    costheta = vtk.vtkMath.Dot(saxis, newAxis1)
+    sintheta = vtk.vtkMath.Norm(vec)
+    theta = np.arctan2(sintheta, costheta)
+    if sintheta != 0.0:
+      vec[0] = vec[0]/sintheta
+      vec[1] = vec[1]/sintheta
+      vec[2] = vec[2]/sintheta
+
+    # Convert to Quaternion
+    costheta = np.cos(0.5*theta)
+    sintheta = np.sin(0.5*theta)
+    quat = vtk.vtkQuaterniond(costheta, vec[0]*sintheta, vec[1]*sintheta, vec[2]*sintheta)
+    rot1 = np.ones((3,3),dtype=np.float)
+    vtk.vtkMath.QuaternionToMatrix3x3(quat, rot1)
+
+    # Concatenate rotations
+    rot = np.dot(rot1, rot0)
+
+  mat = np.zeros((4,4), dtype=np.float)
+  mat[:3,:3] = rot
+  mat[3,3] = 1.0
+
+  # Not working
+  translate = np.array(obj.GetCenter()) - np.array(axes.GetOrigin())
+  mat[:3,3] = translate # final - rot * initial
 
   # Construct 4x4 matrix
-  v1 = vtk.vtkVector3d()
-  v2 = vtk.vtkVector3d()
-  vtk.vtkMath.Multiply3x3(mat, saxis, v1)
-  vtk.vtkMath.Multiply3x3(mat, taxis, v2)
-
   trans = vtk.vtkMatrix4x4()
-  trans.SetElement(0,0,v1[0])
-  trans.SetElement(1,0,v1[1])
-  trans.SetElement(2,0,v1[2])
-  trans.SetElement(3,0,0.0)
+  trans.DeepCopy(mat.flatten().tolist())
 
-  trans.SetElement(0,1,v2[0])
-  trans.SetElement(1,1,v2[1])
-  trans.SetElement(2,1,v2[2])
-  trans.SetElement(3,1,0.0)
+  if axes.GetUserTransform() is not None:
+    axes.GetUserTransform().Concatenate(trans)
+  else:
+    transform = vtk.vtkTransform()
+    transform.SetMatrix(trans)
+    transform.PostMultiply()
+    axes.SetUserTransform(transform)
 
-  trans.SetElement(0,2,normal[0])
-  trans.SetElement(1,2,normal[1])
-  trans.SetElement(2,2,normal[2])
-  trans.SetElement(3,2,0.0)
+  # Only for book keeping
+  axes.SetOrigin(obj.GetCenter()) # Not modified by SetUserTransform
+  axes.Modified()
 
-  # 4x4 with translation = input center - Rot x output center
+  lastAxis1[0] = saxis[0]
+  lastAxis1[1] = saxis[1]
+  lastAxis1[2] = saxis[2]
+
+  lastNormal = (axis[0], axis[1], axis[2])
+
 
 renderer = vtk.vtkRenderer()
 renderWindow = vtk.vtkRenderWindow()
@@ -71,8 +124,25 @@ planeWidget.AddObserver(vtk.vtkCommand.EndInteractionEvent, MyFunc, 1.0)
 
 planeWidget.On()
 
+lastNormal = planeWidget.GetNormal()
+lastAxis1 = vtk.vtkVector3d()
+lastAxis2 = vtk.vtkVector3d()
+
+vtk.vtkMath.Subtract(planeWidget.GetPoint1(),
+                     planeWidget.GetOrigin(),
+                     lastAxis1)
+vtk.vtkMath.Subtract(planeWidget.GetPoint2(),
+                     planeWidget.GetOrigin(),
+                     lastAxis2)
+
+
 renderWindowInteractor.Initialize()
 
 renderer.ResetCamera()
+
+axes = vtk.vtkAxesActor()
+
+renderer.AddActor(axes)
+
 renderWindow.Render()
 renderWindowInteractor.Start()
