@@ -5,8 +5,6 @@ from vtk.util.colors import red, blue, black, yellow
 import numpy as np
 
 # TODO: Fast version - make tube filter work
-# TODO: Hole in segmentation - not surface of liver
-
 fast = False
 
 def hexCol(s):
@@ -16,6 +14,13 @@ def hexCol(s):
       rgb255 = list(int(h[i : i + 2], 16) for i in (0, 2, 4))
       rgbh = np.array(rgb255) / 255.0
       return tuple(rgbh)
+
+def DummyFunc1(obj, ev):
+  print("Before Event")
+
+def DummyFunc2(obj, ev):
+  print(edgeActors[0].GetUserTransform())
+  print("After Event")
 
 colors = vtk.vtkNamedColors()
 
@@ -149,8 +154,6 @@ for iPlane in range(nPlanes):
 
   source.Update()
 
-  if iPlane == 1:
-    ref = source
   # TEST
   source.SetCenter(centers[iPlane])
   source.Update()
@@ -322,27 +325,28 @@ for iPlane in range(nPlanes):
     ren.AddActor(actors[iPlane])
     ren.AddActor(edgeActors[iPlane])
 
+  if iPlane == 0:
+    planeWidget = vtk.vtkPlaneWidget()
+    planeWidget.SetInteractor(iren)
+    planeWidget.SetOrigin(source.GetOrigin())
+    planeWidget.SetPoint1(source.GetPoint1())
+    planeWidget.SetPoint2(source.GetPoint2())
+    planeWidget.SetEnabled(1)
+    tf = vtk.vtkTransform()
+    edgeActors[0].SetUserTransform(tf)
+    planeWidget.AddObserver(vtk.vtkCommand.EndInteractionEvent, DummyFunc2, 1.0)
   ren.AddActor(intActors[iPlane])
   ren.AddActor(lineActors[iPlane])
 
 ren.SetBackground(1,1,1)
 ren.ResetCamera()
 
-planeWidget = vtk.vtkPlaneWidget()
-planeWidget.SetInteractor(iren)
-planeWidget.SetOrigin(ref.GetOrigin())
-planeWidget.SetPoint1(ref.GetPoint1())
-planeWidget.SetPoint2(ref.GetPoint2())
-planeWidget.SetHandleSize(0.5)
-planeWidget.SetPlaceFactor(20.0)
-planeWidget.On()
-planeWidget.UpdatePlacement()
-# TODO: GetProp3D
 
-prop = planeWidget.GetHandleProperty()
-prop.SetColor(colors.GetColor3d("Black"))
+def onKeyPressed(obj, ev):
+    key = obj.GetKeySym()
+    print(key, 'was pressed')
 
-planeWidget.Modified()
+iren.AddObserver('KeyPressEvent', onKeyPressed, 1.0)
 
 # enable user interface interactor
 iren.Initialize()

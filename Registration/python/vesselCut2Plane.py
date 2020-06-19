@@ -15,6 +15,11 @@ bifurcation = np.array([[0, 0.479847, 0.877352, -238.812],
                         [0,0.877352, -0.479847, -524.914],
                         [0,0,0,1]])
 
+redplane = np.array([[0,0,1,4.99987],
+                     [1,0,0,-302.671],
+                     [0,1,0,-570.6],
+                     [0,0,0,1]])
+
 if os.name == 'nt':
   filename = 'e:/analogic/TrialVTK/data/Abdomen/BestTree.vtp'
 else:
