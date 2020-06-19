@@ -69,7 +69,7 @@ prop = actorLiver.GetProperty()
 
 #prop.SetColor(vtk.vtkColor3d(hexCol("#6c2e1f")))
 prop.SetColor(vtk.vtkColor3d(hexCol("#873927")))  # (25% lighter)
-prop.SetOpacity(0.5)
+prop.SetOpacity(0.25)
 
 
 # read data
@@ -259,28 +259,26 @@ for iPlane in range(nPlanes):
     #y = dataArray.GetComponent(result.GetId(0), 1)
     #z = dataArray.GetComponent(result.GetId(0), 2)
 
-    #print(x,y,z)
-    print(points.GetPoint(result.GetId(nClosest)))
-    # Visualize line
-    #lineSource = vtk.vtkLineSource()
-    lineSource = vtk.vtkSphereSource()
-    #lineSource.SetPoint1((x,y,z))
-    #lineSource.SetPoint2(source.GetCenter())
-    lineSource.SetCenter(points.GetPoint(result.GetId(nClosest)))
-    lineSource.SetRadius(5)
-    lineSource.Update()
+    if 0:
+      #print(x,y,z)
+      print(points.GetPoint(result.GetId(nClosest)))
+      # Visualize line
+      #lineSource = vtk.vtkLineSource()
+      lineSource = vtk.vtkSphereSource()
+      #lineSource.SetPoint1((x,y,z))
+      #lineSource.SetPoint2(source.GetCenter())
+      lineSource.SetCenter(points.GetPoint(result.GetId(nClosest)))
+      lineSource.SetRadius(5)
+      lineSource.Update()
 
-    lineMapper = vtk.vtkPolyDataMapper()
-    lineMapper.SetInputConnection(lineSource.GetOutputPort())
-    lineActors.append(vtk.vtkActor())
-    lineActors[iPlane].SetMapper(lineMapper)
-    prop = lineActors[iPlane].GetProperty()
-    prop.SetLineWidth(20)
-    prop.SetColor(colors.GetColor3d("Red"))
+      lineMapper = vtk.vtkPolyDataMapper()
+      lineMapper.SetInputConnection(lineSource.GetOutputPort())
+      lineActors.append(vtk.vtkActor())
+      lineActors[iPlane].SetMapper(lineMapper)
+      prop = lineActors[iPlane].GetProperty()
+      prop.SetLineWidth(20)
+      prop.SetColor(colors.GetColor3d("Red"))
 
-    # Dist plane center to intersection
-    #d2p = np.sqrt(np.sum((np.array(source.GetCenter()) - np.r_[x,y,z])**2))
-    #print(d2p)
 
   # Clipping planes
   planes = vtk.vtkPlaneCollection()
@@ -335,8 +333,8 @@ for iPlane in range(nPlanes):
     tf = vtk.vtkTransform()
     edgeActors[0].SetUserTransform(tf)
     planeWidget.AddObserver(vtk.vtkCommand.EndInteractionEvent, DummyFunc2, 1.0)
-  ren.AddActor(intActors[iPlane])
-  ren.AddActor(lineActors[iPlane])
+  #ren.AddActor(intActors[iPlane])
+  #ren.AddActor(lineActors[iPlane])
 
 ren.SetBackground(1,1,1)
 ren.ResetCamera()
