@@ -1,11 +1,21 @@
 import os
+import sys
 import vtk
-from vtk.util.colors import red, blue, black, yellow
+from vtk.util.colors import red, blue, black, yellow, green
 
 import numpy as np
 
+# TODO: Make reset work
+#       Make registration work
+
 # TODO: Fast version - make tube filter work
 fast = False
+
+global lastNormal
+global lastAxis1
+global lastOrigin
+
+from vtkUtils import AxesToTransform
 
 def hexCol(s):
   if isinstance(s,str):
@@ -15,12 +25,54 @@ def hexCol(s):
       rgbh = np.array(rgb255) / 255.0
       return tuple(rgbh)
 
-def DummyFunc1(obj, ev):
-  print("Before Event")
-
 def DummyFunc2(obj, ev):
-  print(edgeActors[0].GetUserTransform())
-  print("After Event")
+  global lastNormal
+  global lastAxis1
+  global lastOrigin
+
+  normal0 = lastNormal
+  first0  = lastAxis1
+  origin0 = lastOrigin
+
+  normal1 = np.array(obj.GetNormal())
+  first1 = np.array(obj.GetPoint1()) - np.array(obj.GetOrigin())
+  origin1 = obj.GetCenter()
+
+  trans = AxesToTransform(normal0, first0, origin0,
+                          normal1, first1, origin1)
+
+  if extraActor.GetUserTransform() is not None:
+    extraActor.GetUserTransform().Concatenate(trans)
+  else:
+    transform = vtk.vtkTransform()
+    transform.SetMatrix(trans)
+    transform.PostMultiply()
+    extraActor.SetUserTransform(transform)
+
+  lastOrigin = obj.GetCenter()
+
+  lastAxis1[0] = first1[0]
+  lastAxis1[1] = first1[1]
+  lastAxis1[2] = first1[2]
+
+  lastNormal = (normal1[0], normal1[1], normal1[2])
+
+  extraActor.Modified()
+
+  if 0:
+    # Transform contours
+    tfpdf0 = vtk.vtkTransformPolyDataFilter()
+    tfpdf0.SetInputData(oldContours)
+    tfpdf0.SetTransform(transform)
+    tfpdf0.Update()
+    wrongContours = tfpdf0.GetOutput()
+    mapper = vtk.vtkPolyDataMapper()
+    mapper.SetInputData(wrongContours)
+    actorTf = vtk.vtkActor()
+    actorTf.SetMapper(mapper)
+    prop = actorTf.GetProperty()
+    prop.SetColor(colors.GetColor3d("Green"))
+    ren.AddActor(actorTf)
 
 colors = vtk.vtkNamedColors()
 
@@ -125,6 +177,7 @@ intActors = []
 
 nPlanes = 1
 nPlanes = len(refplanes)
+
 for iPlane in range(nPlanes):
   source = vtk.vtkPlaneSource()
   source.SetOrigin(0,  0, 0)
@@ -154,9 +207,11 @@ for iPlane in range(nPlanes):
 
   source.Update()
 
-  # TEST
   source.SetCenter(centers[iPlane])
   source.Update()
+
+
+  # This is the reference location and orientation
 
   # mapper
   mapper0 = vtk.vtkPolyDataMapper()
@@ -178,7 +233,7 @@ for iPlane in range(nPlanes):
     cutEdges = vtk.vtkCutter()
     cutEdges.SetInputConnection(vesselNormals.GetOutputPort())
     cutEdges.SetCutFunction(plane)
-    cutEdges.GenerateCutScalarsOn()
+    cutEdges.GenerateCutScalarsOff() # Was on
     cutEdges.SetValue(0, 0.5)
     cutEdges.Update()
   else:
@@ -226,9 +281,7 @@ for iPlane in range(nPlanes):
   cutStrips0.SetInputConnection(cutSurf.GetOutputPort())
   cutStrips0.Update()
 
-  # Is empty
   surfCircle = cutSurf.GetOutput() # vtkPolyData
-
 
   # Visualizer surface intersection
   tubes0 = vtk.vtkTubeFilter()
@@ -314,9 +367,17 @@ for iPlane in range(nPlanes):
 
   edgeActors.append(vtk.vtkActor())
   edgeActors[iPlane].SetMapper(edgeMapper)
-  edgeActors[iPlane].GetProperty().SetColor(yellow)
+  edgeActors[iPlane].GetProperty().SetColor(green)
   edgeActors[iPlane].GetProperty().SetLineWidth(3)
 
+  if iPlane == 0:
+    extraActor = vtk.vtkActor()
+    oldContours = cutStrips.GetOutput()
+    mapper7 = vtk.vtkPolyDataMapper()
+    mapper7.SetInputData(oldContours)
+    extraActor.SetMapper(mapper7)
+    extraActor.GetProperty().SetColor(red)
+    ren.AddActor(extraActor)
   if fast:
     ren.AddActor(sCutterActor)
   else:
@@ -329,20 +390,55 @@ for iPlane in range(nPlanes):
     planeWidget.SetOrigin(source.GetOrigin())
     planeWidget.SetPoint1(source.GetPoint1())
     planeWidget.SetPoint2(source.GetPoint2())
+    storeOrigin = planeWidget.GetOrigin()
+    storePoint1 = planeWidget.GetPoint1()
+    storePoint2 = planeWidget.GetPoint2()
+
     planeWidget.SetEnabled(1)
     tf = vtk.vtkTransform()
     edgeActors[0].SetUserTransform(tf)
     planeWidget.AddObserver(vtk.vtkCommand.EndInteractionEvent, DummyFunc2, 1.0)
-  #ren.AddActor(intActors[iPlane])
-  #ren.AddActor(lineActors[iPlane])
+    lastNormal = planeWidget.GetNormal()
+    lastAxis1 = vtk.vtkVector3d()
+    vtk.vtkMath.Subtract(planeWidget.GetPoint1(),
+                         planeWidget.GetOrigin(),
+                         lastAxis1)
+    lastOrigin = planeWidget.GetCenter()
+
+
+  #ren.AddActor(intActors[iPlane])  # Curve of intersection
+  #ren.AddActor(lineActors[iPlane]) # Point of intersection
 
 ren.SetBackground(1,1,1)
 ren.ResetCamera()
 
+# TODO: Make reset work
 
 def onKeyPressed(obj, ev):
-    key = obj.GetKeySym()
-    print(key, 'was pressed')
+  global lastOrigin
+  global lastNormal
+  global lastAxis1
+
+  key = obj.GetKeySym()
+  print(key, 'was pressed')
+  if key == 'r':
+    print('Reset')
+    extraActor.SetUserTransform(None)
+    extraActor.Modified()
+
+    # Reset planeWidget
+    planeWidget.SetOrigin(storeOrigin)
+    planeWidget.SetPoint1(storePoint1)
+    planeWidget.SetPoint2(storePoint2)
+
+    lastNormal = planeWidget.GetNormal()
+    lastAxis1 = vtk.vtkVector3d()
+    vtk.vtkMath.Subtract(planeWidget.GetPoint1(),
+                         planeWidget.GetOrigin(),
+                         lastAxis1)
+    lastOrigin = planeWidget.GetCenter()
+  elif key == 's':
+    print('Registration')
 
 iren.AddObserver('KeyPressEvent', onKeyPressed, 1.0)
 

@@ -70,6 +70,7 @@ dst = vtk.vtkPolyData()
 dst.SetPoints(targetPoints)
 dst.SetVerts(targetVertices)
 
+start0 = timer()
 
 
 # ============ run ICP ==============
@@ -96,6 +97,9 @@ icpTransformFilter.SetTransform(icp)
 icpTransformFilter.Update()
 
 tf = icpTransformFilter.GetOutput()
+
+elapsed = timer() - start0
+print('elapsed: %f' % (elapsed))
 
 renderer = vtk.vtkRenderer()
 renderWindow = vtk.vtkRenderWindow()

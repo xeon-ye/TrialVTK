@@ -24,10 +24,10 @@ def AxesToTransform(normal0, first0, origin0,
   sintheta = np.sin(0.5*theta)
   quat0 = vtk.vtkQuaterniond(costheta, vec[0]*sintheta, vec[1]*sintheta, vec[2]*sintheta)
 
+  newFirst = vtk.vtkVector3d()
+
   rot0 = np.ones((3,3),dtype=np.float)
   vtk.vtkMath.QuaternionToMatrix3x3(quat0, rot0)
-
-  newFirst = vtk.vtkVector3d()
 
   if 1:
     # Can be performed using quaternions
