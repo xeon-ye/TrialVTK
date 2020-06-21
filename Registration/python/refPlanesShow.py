@@ -59,20 +59,6 @@ def DummyFunc2(obj, ev):
 
   extraActor.Modified()
 
-  if 0:
-    # Transform contours
-    tfpdf0 = vtk.vtkTransformPolyDataFilter()
-    tfpdf0.SetInputData(oldContours)
-    tfpdf0.SetTransform(transform)
-    tfpdf0.Update()
-    wrongContours = tfpdf0.GetOutput()
-    mapper = vtk.vtkPolyDataMapper()
-    mapper.SetInputData(wrongContours)
-    actorTf = vtk.vtkActor()
-    actorTf.SetMapper(mapper)
-    prop = actorTf.GetProperty()
-    prop.SetColor(colors.GetColor3d("Green"))
-    ren.AddActor(actorTf)
 
 colors = vtk.vtkNamedColors()
 
@@ -128,6 +114,8 @@ prop.SetOpacity(0.25)
 reader = vtk.vtkXMLPolyDataReader()
 reader.SetFileName(filename)
 reader.Update()
+
+vesselPolyData = reader.GetOutput()
 
 # compute normals
 vesselNormals = vtk.vtkPolyDataNormals()
@@ -439,6 +427,51 @@ def onKeyPressed(obj, ev):
     lastOrigin = planeWidget.GetCenter()
   elif key == 's':
     print('Registration')
+    # ============ run ICP ==============
+    icp = vtk.vtkIterativeClosestPointTransform()
+
+    # Transform contours
+    tfpdf0 = vtk.vtkTransformPolyDataFilter()
+    tfpdf0.SetInputData(oldContours)
+    tfpdf0.SetTransform(extraActor.GetUserTransform())
+    tfpdf0.Update()
+    wrongContours = tfpdf0.GetOutput()
+    icp.SetSource(wrongContours)
+    icp.SetTarget(vesselPolyData)
+    icp.GetLandmarkTransform().SetModeToRigidBody()
+    icp.DebugOn()
+    icp.SetMaximumNumberOfIterations(10)
+    icp.StartByMatchingCentroidsOff()
+    #icp.SetMeanDistanceModeToRMS()
+    icp.SetMeanDistanceModeToAbsoluteValue()
+
+    #icp.StartByMatchingCentroidsOn()
+    icp.Modified()
+    icp.Update()
+    icpTransformFilter = vtk.vtkTransformPolyDataFilter()
+    icpTransformFilter.SetInputData(wrongContours)
+    icpTransformFilter.SetTransform(icp)
+    icpTransformFilter.Update()
+
+    correctedContours = icpTransformFilter.GetOutput()
+
+    tubes = vtk.vtkTubeFilter()
+    tubes.SetInputData(correctedContours)
+    tubes.CappingOn()
+    tubes.SidesShareVerticesOff()
+    tubes.SetNumberOfSides(12)
+    tubes.SetRadius(1.0)
+
+    edgeMapper = vtk.vtkPolyDataMapper()
+    edgeMapper.ScalarVisibilityOff()
+    edgeMapper.SetInputConnection(tubes.GetOutputPort())
+    #mapper = vtk.vtkPolyDataMapper()
+    #mapper.SetInputData(correctedContours)
+    actorTf = vtk.vtkActor()
+    actorTf.SetMapper(edgeMapper)
+    prop = actorTf.GetProperty()
+    prop.SetColor(colors.GetColor3d("Yellow"))
+    ren.AddActor(actorTf)
 
 iren.AddObserver('KeyPressEvent', onKeyPressed, 1.0)
 
