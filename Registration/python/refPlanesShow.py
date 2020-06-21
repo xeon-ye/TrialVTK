@@ -15,6 +15,9 @@ global lastNormal
 global lastAxis1
 global lastOrigin
 
+global testActor
+testActor = None
+
 from vtkUtils import AxesToTransform
 
 def hexCol(s):
@@ -378,6 +381,13 @@ for iPlane in range(nPlanes):
     planeWidget.SetOrigin(source.GetOrigin())
     planeWidget.SetPoint1(source.GetPoint1())
     planeWidget.SetPoint2(source.GetPoint2())
+    bum = planeWidget.GetHandleProperty()
+    bum.SetColor(colors.GetColor3d("Red"))
+    bum = planeWidget.GetPlaneProperty()
+    bum.SetColor(colors.GetColor3d("Red"))
+
+    #bum.SetRenderLinesAsTubes(1)
+    bum.SetRenderPointsAsSpheres(True)
     storeOrigin = planeWidget.GetOrigin()
     storePoint1 = planeWidget.GetPoint1()
     storePoint2 = planeWidget.GetPoint2()
@@ -406,10 +416,11 @@ def onKeyPressed(obj, ev):
   global lastOrigin
   global lastNormal
   global lastAxis1
+  global testActor
 
   key = obj.GetKeySym()
   print(key, 'was pressed')
-  if key == 'r':
+  if key == 'c':
     print('Reset')
     extraActor.SetUserTransform(None)
     extraActor.Modified()
@@ -425,6 +436,11 @@ def onKeyPressed(obj, ev):
                          planeWidget.GetOrigin(),
                          lastAxis1)
     lastOrigin = planeWidget.GetCenter()
+
+    if testActor is not None:
+      ren.RemoveActor(testActor)
+      testActor = None
+
   elif key == 's':
     print('Registration')
     # ============ run ICP ==============
@@ -467,11 +483,30 @@ def onKeyPressed(obj, ev):
     edgeMapper.SetInputConnection(tubes.GetOutputPort())
     #mapper = vtk.vtkPolyDataMapper()
     #mapper.SetInputData(correctedContours)
-    actorTf = vtk.vtkActor()
-    actorTf.SetMapper(edgeMapper)
-    prop = actorTf.GetProperty()
+    if testActor is not None:
+      ren.RemoveActor(testActor)
+    testActor = vtk.vtkActor()
+    testActor.SetMapper(edgeMapper)
+    prop = testActor.GetProperty()
     prop.SetColor(colors.GetColor3d("Yellow"))
-    ren.AddActor(actorTf)
+    ren.AddActor(testActor)
+
+    # Reset afterwards
+    extraActor.SetUserTransform(None)
+    extraActor.Modified()
+
+    # Reset planeWidget
+    planeWidget.SetOrigin(storeOrigin)
+    planeWidget.SetPoint1(storePoint1)
+    planeWidget.SetPoint2(storePoint2)
+
+    lastNormal = planeWidget.GetNormal()
+    lastAxis1 = vtk.vtkVector3d()
+    vtk.vtkMath.Subtract(planeWidget.GetPoint1(),
+                         planeWidget.GetOrigin(),
+                         lastAxis1)
+    lastOrigin = planeWidget.GetCenter()
+
 
 iren.AddObserver('KeyPressEvent', onKeyPressed, 1.0)
 
