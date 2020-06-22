@@ -5,7 +5,7 @@ import numpy as np
 
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from vtk.util.colors import red, blue, black, yellow, green
-from qtpy.QtCore import (qDebug)
+from qtpy.QtCore import (qDebug, Signal, Slot)
 
 from qtpy import (QtWidgets)
 
@@ -19,16 +19,14 @@ def hexCol(s):
       rgbh = np.array(rgb255) / 255.0
       return tuple(rgbh)
 
-def onKeyPressed(obj, ev):
-  key = obj.GetKeySym()
-  print(key, 'was pressed')
-
 class QLiverViewer(QtWidgets.QFrame):
   colors = vtk.vtkNamedColors()
+  widgetMoved = Signal(object)#float)
 
   def __init__(self, parent):
     super(QLiverViewer,self).__init__(parent)
 
+    self.widgetMoved.connect(self.onWidgetMoved2)
     # Make the actual QtWidget a child so that it can be re_parented
     self.interactor = QVTKRenderWindowInteractor(self)
     self.layout = QtWidgets.QHBoxLayout()
@@ -41,10 +39,14 @@ class QLiverViewer(QtWidgets.QFrame):
     self.brighter25:bool = True
     self.opacity:float = 0.35
 
-    self.refplanes = []
-    self.planeWidgets = []
-    self.contours = []
+    self.nReferences = 2
+
+    self.refplanes = [] # Displayed reference planes
+    self.planeWidgets = [] # Widgets for manipulation
+    self.contours = [] # Contours clipped to reference plane
+    self.fullcontours = [] # Full contour data
     self.userAttempts = []
+    self.contourResults = self.nReferences * [None]
     self.vessels = None
     self.liver = None
 
@@ -52,7 +54,6 @@ class QLiverViewer(QtWidgets.QFrame):
     self.initLiver()
     self.initVessels() # Must be before planeWidgets
 
-    self.nReferences = 2
     self.lastPositions = dict({'origin' : self.nReferences*[None],
                                'normal' : self.nReferences*[None],
                                'axis1'  : self.nReferences*[None],
@@ -69,9 +70,9 @@ class QLiverViewer(QtWidgets.QFrame):
     self.style.SetDefaultRenderer(self.renderer)
     self.interactor.SetInteractorStyle(self.style)
 
-    self.interactor.AddObserver('KeyPressEvent', self.bum, 1.0)
+    self.interactor.AddObserver('KeyPressEvent', self.KeyPress, 1.0)
 
-  def bum(self, obj, ev):
+  def KeyPress(self, obj, ev):
     key = obj.GetKeySym()
     index = self.lastIndex
     if key == 'c':
@@ -81,14 +82,15 @@ class QLiverViewer(QtWidgets.QFrame):
       self.userAttempts[index].SetUserTransform(None)
       self.userAttempts[index].Modified()
 
-      storeOrigin = self.lastPositions['reset'][0]
-      storePoint1 = self.lastPositions['reset'][1]
-      storePoint2 = self.lastPositions['reset'][2]
+      storeOrigin = self.lastPositions['reset'][index][0]
+      storePoint1 = self.lastPositions['reset'][index][1]
+      storePoint2 = self.lastPositions['reset'][index][2]
 
       # Reset planeWidget
       planeWidget.SetOrigin(storeOrigin)
       planeWidget.SetPoint1(storePoint1)
       planeWidget.SetPoint2(storePoint2)
+      planeWidget.Modified()
 
       lastNormal = planeWidget.GetNormal()
       lastAxis1 = vtk.vtkVector3d()
@@ -100,11 +102,10 @@ class QLiverViewer(QtWidgets.QFrame):
       self.lastPositions['normal'][index] = lastNormal
       self.lastPositions['axis1'][index] = lastAxis1
 
-      testActor = None
-      if testActor is not None:
-        self.renderer.RemoveActor(testActor)
-        testActor = None
-
+      if self.contourResults[index] is not None:
+        self.renderer.RemoveActor(self.contourResults[index])
+        self.contourResults[index] = None
+      self.render_window.Render()
     elif key == 's':
       print('Registration')
       # ============ run ICP ==============
@@ -112,12 +113,12 @@ class QLiverViewer(QtWidgets.QFrame):
 
       # Transform contours
       tfpdf0 = vtk.vtkTransformPolyDataFilter()
-      tfpdf0.SetInputData(oldContours)
-      tfpdf0.SetTransform(self.userAttempt[index].GetUserTransform())
+      tfpdf0.SetInputData(self.fullcontours[index])
+      tfpdf0.SetTransform(self.userAttempts[index].GetUserTransform())
       tfpdf0.Update()
       wrongContours = tfpdf0.GetOutput()
       icp.SetSource(wrongContours)
-      icp.SetTarget(vesselPolyData)
+      icp.SetTarget(self.vesselPolyData)
       icp.GetLandmarkTransform().SetModeToRigidBody()
       icp.DebugOn()
       icp.SetMaximumNumberOfIterations(10)
@@ -125,7 +126,6 @@ class QLiverViewer(QtWidgets.QFrame):
       #icp.SetMeanDistanceModeToRMS()
       icp.SetMeanDistanceModeToAbsoluteValue()
 
-      #icp.StartByMatchingCentroidsOn()
       icp.Modified()
       icp.Update()
       icpTransformFilter = vtk.vtkTransformPolyDataFilter()
@@ -146,29 +146,42 @@ class QLiverViewer(QtWidgets.QFrame):
       edgeMapper.ScalarVisibilityOff()
       edgeMapper.SetInputConnection(tubes.GetOutputPort())
 
-      if testActor is not None:
-        ren.RemoveActor(testActor)
+      if self.contourResults[index] is not None:
+        ren.RemoveActor(self.contourResults[index])
       testActor = vtk.vtkActor()
       testActor.SetMapper(edgeMapper)
       prop = testActor.GetProperty()
-      prop.SetColor(colors.GetColor3d("Yellow"))
-      ren.AddActor(testActor)
+      prop.SetColor(yellow)
+      prop.SetLineWidth(3)
+      self.renderer.AddActor(testActor)
+      self.contourResults[index] = testActor
 
       # Reset afterwards
-      self.userAttempt[index].SetUserTransform(None)
-      self.userAttempt[index].Modified()
+      self.userAttempts[index].SetUserTransform(None)
+      self.userAttempts[index].Modified()
 
       # Reset planeWidget
-      planeWidgets[index].SetOrigin(storeOrigin)
-      planeWidgets[index].SetPoint1(storePoint1)
-      planeWidgets[index].SetPoint2(storePoint2)
+      storeOrigin = self.lastPositions['reset'][index][0]
+      storePoint1 = self.lastPositions['reset'][index][1]
+      storePoint2 = self.lastPositions['reset'][index][2]
 
-      lastNormal = planeWidgets[index].GetNormal()
+      self.planeWidgets[index].SetOrigin(storeOrigin)
+      self.planeWidgets[index].SetPoint1(storePoint1)
+      self.planeWidgets[index].SetPoint2(storePoint2)
+      self.planeWidgets[index].Modified()
+
+      lastNormal = self.planeWidgets[index].GetNormal()
       lastAxis1 = vtk.vtkVector3d()
-      vtk.vtkMath.Subtract(planeWidgets[index].GetPoint1(),
-                           planeWidgets[index].GetOrigin(),
+      vtk.vtkMath.Subtract(self.planeWidgets[index].GetPoint1(),
+                           self.planeWidgets[index].GetOrigin(),
                            lastAxis1)
-      lastOrigin = planeWidgets[index].GetCenter()
+      lastOrigin = self.planeWidgets[index].GetCenter()
+
+      self.lastPositions['origin'][index] = lastOrigin
+      self.lastPositions['normal'][index] = lastNormal
+      self.lastPositions['axis1'][index] = lastAxis1
+      self.render_window.Render()
+
 
   def scale(self, polyData):
     if self.worldScale == 1.0:
@@ -274,7 +287,7 @@ class QLiverViewer(QtWidgets.QFrame):
     actor.SetMapper(mapper0)
     prop = actor.GetProperty()
     prop.SetColor(blue)
-    prop.SetOpacity(0.5)
+    prop.SetOpacity(self.opacity)
     self.refplanes.append(actor)
     self.renderer.AddActor(actor)
 
@@ -299,7 +312,7 @@ class QLiverViewer(QtWidgets.QFrame):
     tubes.CappingOn()
     tubes.SidesShareVerticesOff()
     tubes.SetNumberOfSides(12)
-    tubes.SetRadius(self.worldScale*2.0)
+    tubes.SetRadius(self.worldScale*1.0)
 
     edgeMapper = vtk.vtkPolyDataMapper()
     edgeMapper.ScalarVisibilityOff()
@@ -355,15 +368,16 @@ class QLiverViewer(QtWidgets.QFrame):
     prop = planeWidget.GetPlaneProperty()
     prop.SetColor(QLiverViewer.colors.GetColor3d("Red"))
 
-    self.lastPositions['reset'][index] = (planeWidget.GetOrigin(),
+    self.lastPositions['reset'][index] = [planeWidget.GetOrigin(),
                                           planeWidget.GetPoint1(),
-                                          planeWidget.GetPoint2())
+                                          planeWidget.GetPoint2()]
     planeWidget.SetEnabled(1)
-    planeWidget.AddObserver(vtk.vtkCommand.EndInteractionEvent, self.widgetMoved, 1.0)
+    planeWidget.AddObserver(vtk.vtkCommand.EndInteractionEvent, self.onWidgetMoved, 1.0)
     self.planeWidgets.append(planeWidget)
 
     attempt = vtk.vtkActor()
     oldContours = cutStrips.GetOutput()
+    self.fullcontours.append(oldContours)
     mapper = vtk.vtkPolyDataMapper()
     mapper.SetInputData(oldContours)
     attempt.SetMapper(mapper)
@@ -383,7 +397,7 @@ class QLiverViewer(QtWidgets.QFrame):
 
 
 
-  def widgetMoved(self, obj, ev):
+  def onWidgetMoved(self, obj, ev):
     if (obj in self.planeWidgets):
       index = self.planeWidgets.index(obj)
       self.lastIndex = index
@@ -398,7 +412,6 @@ class QLiverViewer(QtWidgets.QFrame):
 
       trans = AxesToTransform(normal0, first0, origin0,
                               normal1, first1, origin1)
-
       if self.userAttempts[index].GetUserTransform() is not None:
         self.userAttempts[index].GetUserTransform().Concatenate(trans)
       else:
@@ -406,6 +419,8 @@ class QLiverViewer(QtWidgets.QFrame):
         transform.SetMatrix(trans)
         transform.PostMultiply()
         self.userAttempts[index].SetUserTransform(transform)
+
+      (deg, x, y, z) = self.userAttempts[index].GetUserTransform().GetOrientationWXYZ()
 
       self.lastPositions['origin'][index] = obj.GetCenter()
 
@@ -416,8 +431,17 @@ class QLiverViewer(QtWidgets.QFrame):
       self.lastPositions['normal'][index] = lastNormal
 
       self.userAttempts[index].Modified()
+      self.render_window.Render()
 
+      # Signal Qt
+      self.widgetMoved.emit((deg, x,y,z))
     #print(ev)
+
+  @Slot(object)
+  def onWidgetMoved2(self, data):
+    qDebug('onWidgetMoved')
+    # Update GUI
+    print(data)
 
   def initVessels(self):
     qDebug('initVessels()')
