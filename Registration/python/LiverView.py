@@ -1,3 +1,4 @@
+# TODO: Make scaling work
 import os
 import vtk
 import numpy as np
@@ -37,8 +38,6 @@ class QLiverViewer(QtWidgets.QFrame):
 
     self.imgWidth:float = 50.0 # mm
     self.worldScale:float = 1.0
-    #self.worldScale:float = 0.5
-    #self.worldScale:float = 0.025
     self.brighter25:bool = True
     self.opacity:float = 0.35
 
