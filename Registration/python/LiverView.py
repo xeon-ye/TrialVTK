@@ -16,6 +16,10 @@ def hexCol(s):
       rgbh = np.array(rgb255) / 255.0
       return tuple(rgbh)
 
+def onKeyPressed(obj, ev):
+  key = obj.GetKeySym()
+  print(key, 'was pressed')
+
 class QLiverViewer(QtWidgets.QFrame):
   colors = vtk.vtkNamedColors()
 
@@ -29,23 +33,22 @@ class QLiverViewer(QtWidgets.QFrame):
     self.layout.setContentsMargins(0,0,0,0)
     self.setLayout(self.layout)
 
-    self.worldScale = 1.0
-    self.worldScale = 0.025
-    self.brighter25 = True
-    self.opacity = 0.35
+    self.imgWidth:float = 50.0 # mm
+    self.worldScale:float = 1.0
+    self.worldScale:float = 0.025
+    self.brighter25:bool = True
+    self.opacity:float = 0.35
 
     self.refplanes = []
-
-    self.platformWidth:float = 200.0
-    self.platformDepth:float = 200.0
-    self.platformThickness:float = 2.0
-    self.gridBottomHeight:float = 0.15
-    self.gridSize:np.uint16 = 10
+    self.planeWidgets = []
+    self.vessels = None
+    self.liver = None
 
     self.initScene()
     self.initLiver()
-    self.initPlaneWidgets()
-    #self.initPlatform()
+    self.initVessels()
+    self.initPlaneWidgets(0)
+    self.initPlaneWidgets(1)
     #self.initAxes()
 
     self.resetCamera()
@@ -53,6 +56,12 @@ class QLiverViewer(QtWidgets.QFrame):
     self.style = vtk.vtkInteractorStyleTrackballCamera()
     self.style.SetDefaultRenderer(self.renderer)
     self.interactor.SetInteractorStyle(self.style)
+
+    self.interactor.AddObserver('KeyPressEvent', self.bum, 1.0)
+
+  def bum(self, obj, ev):
+    key = obj.GetKeySym()
+    print(key, 'was pressed')
 
   def scale(self, polyData):
     if self.worldScale == 1.0:
@@ -108,11 +117,11 @@ class QLiverViewer(QtWidgets.QFrame):
     self.renderer.SetBackground2(bg_b)
     self.renderer.GradientBackgroundOn()
 
-  def initPlaneWidgets(self):
+  def initPlaneWidgets(self, index):
     qDebug('initPlaneWidgets()')
-    center, htrans = self.getReferencePosition(0)
+    center, htrans = self.getReferencePosition(index)
 
-    hw = 50 # mm
+    hw = self.imgWidth
     shw = self.worldScale * hw
     source = vtk.vtkPlaneSource()
     source.SetOrigin(0,  0, 0)
@@ -145,6 +154,7 @@ class QLiverViewer(QtWidgets.QFrame):
     source.SetCenter(self.worldScale * center)
     source.Update()
 
+    # mapper
     mapper = vtk.vtkPolyDataMapper()
     mapper.SetInputConnection(source.GetOutputPort())
 
@@ -157,16 +167,54 @@ class QLiverViewer(QtWidgets.QFrame):
     self.refplanes.append(actor)
     self.renderer.AddActor(actor)
 
-    self.planeWidget = vtk.vtkPlaneWidget()
-    self.planeWidget.SetInteractor(self.interactor)
-    self.planeWidget.SetOrigin(source.GetOrigin())
-    self.planeWidget.SetPoint1(source.GetPoint1())
-    self.planeWidget.SetPoint2(source.GetPoint2())
-    bum = self.planeWidget.GetHandleProperty()
+    planeWidget = vtk.vtkPlaneWidget()
+    planeWidget.SetInteractor(self.interactor)
+    planeWidget.SetOrigin(source.GetOrigin())
+    planeWidget.SetPoint1(source.GetPoint1())
+    planeWidget.SetPoint2(source.GetPoint2())
+    bum = planeWidget.GetHandleProperty()
     bum.SetColor(QLiverViewer.colors.GetColor3d("Red"))
-    bum = self.planeWidget.GetPlaneProperty()
+    bum = planeWidget.GetPlaneProperty()
     bum.SetColor(QLiverViewer.colors.GetColor3d("Red"))
-    self.planeWidget.SetEnabled(1)
+    planeWidget.SetEnabled(1)
+    planeWidget.AddObserver(vtk.vtkCommand.EndInteractionEvent, self.widgetMoved, 1.0)
+    self.planeWidgets.append(planeWidget)
+
+  def widgetMoved(self, obj, ev):
+    print(obj)
+    print(ev)
+  def initVessels(self):
+    qDebug('initVessels()')
+    if os.name == 'nt':
+      filename = 'e:/analogic/TrialVTK/data/Abdomen/A.vtp'
+    else:
+      filename = '/home/jmh/bkmedical/data/CT/Connected.vtp'
+    # read data
+    reader = vtk.vtkXMLPolyDataReader()
+    reader.SetFileName(filename)
+    reader.Update()
+
+    self.vesselPolyData = self.scale(reader.GetOutput())
+
+    # compute normals
+    vesselNormals = vtk.vtkPolyDataNormals()
+    vesselNormals.SetInputData(self.vesselPolyData)
+
+    # mapper
+    mapper = vtk.vtkPolyDataMapper()
+    mapper.SetInputConnection(vesselNormals.GetOutputPort())
+
+    # actor for vessels
+    self.vessels = vtk.vtkActor()
+    self.vessels.SetMapper(mapper)
+    prop = self.vessels.GetProperty()
+
+    if self.brighter25:
+      prop.SetColor(vtk.vtkColor3d(hexCol("#517487"))) # 25% lighter
+    else:
+      prop.SetColor(vtk.vtkColor3d(hexCol("#415d6c")))
+    # assign actor to the renderer
+    self.renderer.AddActor(self.vessels)
 
   def initLiver(self):
     qDebug('initLiver()')
@@ -196,92 +244,10 @@ class QLiverViewer(QtWidgets.QFrame):
     prop.SetOpacity(self.opacity)
     self.renderer.AddActor(self.liver)
 
-  def initPlatform(self):
-    qDebug('initPlatform()')
 
-    #* Platform Model
-    platformModelMapper = vtk.vtkPolyDataMapper()
-
-    self.platformModel = vtk.vtkCubeSource()
-    platformModelMapper.SetInputConnection(self.platformModel.GetOutputPort())
-
-    self.platformModelActor = vtk.vtkActor()
-    self.platformModelActor.SetMapper(platformModelMapper)
-    self.platformModelActor.GetProperty().SetColor(1, 1, 1)
-    self.platformModelActor.GetProperty().LightingOn()
-    self.platformModelActor.GetProperty().SetOpacity(1)
-    self.platformModelActor.GetProperty().SetAmbient(0.45)
-    self.platformModelActor.GetProperty().SetDiffuse(0.4)
-
-    self.platformModelActor.PickableOff()
-    self.renderer.AddActor(self.platformModelActor)
-
-    #* Platform Grid
-    self.platformGrid = vtk.vtkPolyData()
-
-    platformGridMapper = vtk.vtkPolyDataMapper()
-    platformGridMapper.SetInputData(self.platformGrid)
-
-    self.platformGridActor = vtk.vtkActor()
-    self.platformGridActor.SetMapper(platformGridMapper)
-    self.platformGridActor.GetProperty().LightingOff()
-    self.platformGridActor.GetProperty().SetColor(0.45, 0.45, 0.45)
-    self.platformGridActor.GetProperty().SetOpacity(1)
-    self.platformGridActor.PickableOff()
-    self.renderer.AddActor(self.platformGridActor)
-    self.updatePlatform()
-
-  def updatePlatform(self):
-    qDebug('updatePlatform()')
-
-    #* Platform Model
-    if self.platformModel:
-      self.platformModel.SetXLength(self.platformWidth)
-      self.platformModel.SetYLength(self.platformDepth)
-      self.platformModel.SetZLength(self.platformThickness)
-      self.platformModel.SetCenter(0.0, 0.0, -self.platformThickness / 2)
-
-    #* Platform Grid
-    gridPoints = vtk.vtkPoints()
-    gridCells = vtk.vtkCellArray()
-
-    i = -self.platformWidth / 2
-    while i <= self.platformWidth / 2:
-      self.createLine(i, -self.platformDepth / 2, self.gridBottomHeight, i, self.platformDepth / 2, self.gridBottomHeight, gridPoints, gridCells)
-      i += self.gridSize
-
-    i = -self.platformDepth / 2
-    while i <= self.platformDepth / 2:
-      self.createLine(-self.platformWidth / 2, i, self.gridBottomHeight, self.platformWidth / 2, i, self.gridBottomHeight, gridPoints, gridCells)
-      i += self.gridSize
-
-    self.platformGrid.SetPoints(gridPoints)
-    self.platformGrid.SetLines(gridCells)
-
-  def createLine(self, x1:float, y1:float, z1:float, x2:float, y2:float, z2:float, points:vtk.vtkPoints, cells:vtk.vtkCellArray):
-    line = vtk.vtkPolyLine()
-    line.GetPointIds().SetNumberOfIds(2)
-
-    id_1 = points.InsertNextPoint(x1, y1, z1) # vtkIdType
-    id_2 = points.InsertNextPoint(x2, y2, z2) # vtkIdType
-
-    line.GetPointIds().SetId(0, id_1)
-    line.GetPointIds().SetId(1, id_2)
-    cells.InsertNextCell(line)
 
   def start(self):
     self.interactor.Initialize()
     # If a big Qt application, call app.exec instead of having two GUI threads
     self.interactor.Start()
 
-  def removeActor(self, actor):
-    self.interactor.Disable()
-    self.renderer.RemoveActor(actor)
-    self.interactor.Enable()
-    self.render_window.Render()
-
-  def addActor(self, actor):
-    self.interactor.Disable()
-    self.renderer.AddActor(actor)
-    self.interactor.Enable()
-    self.render_window.Render()
