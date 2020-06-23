@@ -164,12 +164,12 @@ class QLiverViewer(QtWidgets.QFrame):
       # Concatenate and get transform (w,x,y,z)
       #self.userAttempts[index].GetUserTransform().Concatenate(trans)
 
-      self.userAttempts[index].GetUserTransform().Concatenate(icp.GetMatrix())
+      userAttempt.GetUserTransform().Concatenate(icp.GetMatrix())
 
-      self.userAttempts[index].GetUserTransform().Update()
+      userAttempt.GetUserTransform().Update()
 
-      (deg, x, y, z) = extraActor.GetUserTransform().GetOrientationWXYZ()
-      positionError = np.array(extraActor.GetUserTransform().GetPosition())
+      (deg, x, y, z) = userAttempt.GetUserTransform().GetOrientationWXYZ()
+      positionError = np.array(userAttempt.GetUserTransform().GetPosition())
 
       # Reset afterwards
       userAttempt.SetUserTransform(None)
@@ -198,7 +198,7 @@ class QLiverViewer(QtWidgets.QFrame):
       self.render_window.Render()
 
       # TODO: Transform widget
-      self.widgetRegistered.emit((deg, np.r_[x,y,z], 0, positionError)
+      self.widgetRegistered.emit((deg, np.r_[x,y,z]), 0, positionError)
   def scale(self, polyData):
     if self.worldScale == 1.0:
       return polyData
