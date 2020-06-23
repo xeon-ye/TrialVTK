@@ -80,6 +80,7 @@ placer.AddBoundingPlane( plane2 );
 #include <vtkCellPicker.h>
 #include <vtkDICOMImageReader.h>
 #include <vtkGenericOpenGLRenderWindow.h>
+// #include <vtkGenericDataObjectReader.h>
 #include <vtkImageActor.h>
 #include <vtkImageData.h>
 #include <vtkImageReader2.h>
@@ -1019,14 +1020,15 @@ void App::onLoadVesselsClicked() {
     QString files = fnames[0];
     QDir directory = QDir(files);
 
-    vtkSmartPointer<vtkXMLPolyDataReader> reader =
-        vtkSmartPointer<vtkXMLPolyDataReader>::New();
 
     if (directory.exists()) {
       return;
     } else {
       QFileInfo info(files);
       if (info.completeSuffix() == QLatin1String("vtp")) {
+        vtkSmartPointer<vtkXMLPolyDataReader> reader =
+            vtkSmartPointer<vtkXMLPolyDataReader>::New();
+
         reader->SetFileName(files.toUtf8().constData());
         reader->Update();
 
@@ -1051,7 +1053,36 @@ void App::onLoadVesselsClicked() {
 
         m_planeWidget[0]->GetDefaultRenderer()->AddActor(m_vessels);
         this->ui->mrView3D->GetRenderWindow()->Render();
-      } else {
+      } else if (info.completeSuffix() == QLatin1String("vtk")) {
+#if 0
+          vtkSmartPointer<vtkGenericDataObjectReader> reader =
+              vtkSmartPointer<vtkGenericDataObjectReader>::New();
+          reader->SetFileName(files.toUtf8().constData());
+          reader->Update();
+
+          vtkSmartPointer<vtkPolyDataMapper> mapper =
+              vtkSmartPointer<vtkPolyDataMapper>::New();
+          mapper->SetInputConnection(reader->GetOutputPort());
+
+          if (m_vessels) {
+              m_planeWidget[0]->GetDefaultRenderer()->RemoveActor(m_vessels);
+              m_vessels = nullptr;
+          }
+
+          m_vessels =
+              vtkSmartPointer<vtkActor>::New();
+
+          m_vessels->SetMapper(mapper);
+          auto prop = m_vessels->GetProperty();
+          vtkSmartPointer<vtkNamedColors> namedColors =
+              vtkSmartPointer<vtkNamedColors>::New();
+
+          prop->SetColor(namedColors->GetColor3d("Red").GetData());
+
+          m_planeWidget[0]->GetDefaultRenderer()->AddActor(m_vessels);
+          this->ui->mrView3D->GetRenderWindow()->Render();
+#endif
+      } else
         return;
       }
     }
@@ -1740,3 +1771,4 @@ void QtVTKRenderWindows::AddDistanceMeasurementToView(int i) {
 /* tab-width: 2 */
 /* c-basic-offset: 2 */
 /* End: */
+
