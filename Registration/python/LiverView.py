@@ -11,6 +11,8 @@ from qtpy import (QtWidgets)
 
 from vtkUtils import AxesToTransform
 
+IOUSFAN = False
+
 def hexCol(s):
   if isinstance(s,str):
     if "#" in s:  # hex to rgb
@@ -21,12 +23,13 @@ def hexCol(s):
 
 class QLiverViewer(QtWidgets.QFrame):
   colors = vtk.vtkNamedColors()
-  widgetMoved = Signal(object)#float)
+  widgetMoved = Signal(object, object, object)#float)
+
+  widgetRegistered = Signal(object, object, object)
 
   def __init__(self, parent):
     super(QLiverViewer,self).__init__(parent)
 
-    self.widgetMoved.connect(self.onWidgetMoved2)
     # Make the actual QtWidget a child so that it can be re_parented
     self.interactor = QVTKRenderWindowInteractor(self)
     self.layout = QtWidgets.QHBoxLayout()
@@ -61,8 +64,8 @@ class QLiverViewer(QtWidgets.QFrame):
 
     self.lastIndex = None
     self.initPlaneWidgets(0)
-    self.initPlaneWidgets(1)
-    #self.initAxes()
+    if not IOUSFAN:
+      self.initPlaneWidgets(1)
 
     self.resetCamera()
 
@@ -75,22 +78,24 @@ class QLiverViewer(QtWidgets.QFrame):
   def KeyPress(self, obj, ev):
     key = obj.GetKeySym()
     index = self.lastIndex
+    if self.lastIndex is None:
+      return
+    userAttempt = self.userAttempts[index]
+    planeWidget = self.planeWidgets[index]
+    resetPositions = self.lastPositions['reset'][index]
+
     if key == 'c':
       print('Reset')
-      planeWidget = self.planeWidgets[index]
-
-      self.userAttempts[index].SetUserTransform(None)
-      self.userAttempts[index].Modified()
-
-      storeOrigin = self.lastPositions['reset'][index][0]
-      storePoint1 = self.lastPositions['reset'][index][1]
-      storePoint2 = self.lastPositions['reset'][index][2]
+      userAttempt.SetUserTransform(None)
+      userAttempt.Modified()
 
       # Reset planeWidget
-      planeWidget.SetOrigin(storeOrigin)
-      planeWidget.SetPoint1(storePoint1)
-      planeWidget.SetPoint2(storePoint2)
+      planeWidget.SetEnabled(0)
+      planeWidget.SetOrigin(resetPositions[0])
+      planeWidget.SetPoint1(resetPositions[1])
+      planeWidget.SetPoint2(resetPositions[2])
       planeWidget.Modified()
+      planeWidget.SetEnabled(1)
 
       lastNormal = planeWidget.GetNormal()
       lastAxis1 = vtk.vtkVector3d()
@@ -114,7 +119,7 @@ class QLiverViewer(QtWidgets.QFrame):
       # Transform contours
       tfpdf0 = vtk.vtkTransformPolyDataFilter()
       tfpdf0.SetInputData(self.fullcontours[index])
-      tfpdf0.SetTransform(self.userAttempts[index].GetUserTransform())
+      tfpdf0.SetTransform(userAttempt.GetUserTransform())
       tfpdf0.Update()
       wrongContours = tfpdf0.GetOutput()
       icp.SetSource(wrongContours)
@@ -147,7 +152,7 @@ class QLiverViewer(QtWidgets.QFrame):
       edgeMapper.SetInputConnection(tubes.GetOutputPort())
 
       if self.contourResults[index] is not None:
-        ren.RemoveActor(self.contourResults[index])
+        self.renderer.RemoveActor(self.contourResults[index])
       testActor = vtk.vtkActor()
       testActor.SetMapper(edgeMapper)
       prop = testActor.GetProperty()
@@ -156,33 +161,44 @@ class QLiverViewer(QtWidgets.QFrame):
       self.renderer.AddActor(testActor)
       self.contourResults[index] = testActor
 
+      # Concatenate and get transform (w,x,y,z)
+      #self.userAttempts[index].GetUserTransform().Concatenate(trans)
+
+      self.userAttempts[index].GetUserTransform().Concatenate(icp.GetMatrix())
+
+      self.userAttempts[index].GetUserTransform().Update()
+
+      (deg, x, y, z) = extraActor.GetUserTransform().GetOrientationWXYZ()
+      positionError = np.array(extraActor.GetUserTransform().GetPosition())
+
       # Reset afterwards
-      self.userAttempts[index].SetUserTransform(None)
-      self.userAttempts[index].Modified()
+      userAttempt.SetUserTransform(None)
+      userAttempt.Modified()
 
-      # Reset planeWidget
-      storeOrigin = self.lastPositions['reset'][index][0]
-      storePoint1 = self.lastPositions['reset'][index][1]
-      storePoint2 = self.lastPositions['reset'][index][2]
+      resetPositions = self.lastPositions['reset'][index]
 
-      self.planeWidgets[index].SetOrigin(storeOrigin)
-      self.planeWidgets[index].SetPoint1(storePoint1)
-      self.planeWidgets[index].SetPoint2(storePoint2)
-      self.planeWidgets[index].Modified()
+      # Reset planeWidget.
+      planeWidget.SetEnabled(0)
+      planeWidget.SetOrigin(resetPositions[0])
+      planeWidget.SetPoint1(resetPositions[1])
+      planeWidget.SetPoint2(resetPositions[2])
+      planeWidget.Modified()
+      planeWidget.SetEnabled(1)
 
-      lastNormal = self.planeWidgets[index].GetNormal()
+      lastNormal = planeWidget.GetNormal()
       lastAxis1 = vtk.vtkVector3d()
-      vtk.vtkMath.Subtract(self.planeWidgets[index].GetPoint1(),
-                           self.planeWidgets[index].GetOrigin(),
+      vtk.vtkMath.Subtract(planeWidget.GetPoint1(),
+                           planeWidget.GetOrigin(),
                            lastAxis1)
-      lastOrigin = self.planeWidgets[index].GetCenter()
+      lastOrigin = planeWidget.GetCenter()
 
       self.lastPositions['origin'][index] = lastOrigin
       self.lastPositions['normal'][index] = lastNormal
       self.lastPositions['axis1'][index] = lastAxis1
       self.render_window.Render()
 
-
+      # TODO: Transform widget
+      self.widgetRegistered.emit((deg, np.r_[x,y,z], 0, positionError)
   def scale(self, polyData):
     if self.worldScale == 1.0:
       return polyData
@@ -199,19 +215,27 @@ class QLiverViewer(QtWidgets.QFrame):
 
   def getReferencePosition(self, index):
     refplanes = []
-    refplanes.append(np.array([[0.99722,   -0.00658366270883304, 0.0741938205770847, -321.64],
-                               [0.07419,   0.17584, -0.98162, -227.46],
-                               [-0.0065837, 0.98440,  0.17584, -563.67],
-                               [0,  0,      0,      1]]))
     centers = []
-    centers.append(np.r_[-75.696,        -149.42,    -231.76])
 
-    refplanes.append(np.array([[0.9824507428729312,   -0.028608856565971154, 0.1843151408713164, -221.425151769367],
+    if IOUSFAN:
+      refplanes.append(np.array([[1,0,0,-191.357],
+                                 [0,0,-1,17.9393],
+                                 [0,1,0,192.499],
+                                 [0,0,0,1]]))
+      centers.append(np.r_[117.54695990115218, 103.95861040356766, 127.81653778974703])
+    else:
+      refplanes.append(np.array([[0.99722,   -0.00658366270883304, 0.0741938205770847, -321.64],
+                                 [0.07419,   0.17584, -0.98162, -227.46],
+                                 [-0.0065837, 0.98440,  0.17584, -563.67],
+                                 [0,  0,      0,      1]]))
+      centers.append(np.r_[-75.696,        -149.42,    -231.76])
+
+      refplanes.append(np.array([[0.9824507428729312,   -0.028608856565971154, 0.1843151408713164, -221.425151769367],
                                [0.18431514087131629,   0.3004711475787132,  -0.935812491003576,  -325.6553959586223],
                                [-0.028608856565971223, 0.9533617481306448,   0.3004711475787133, -547.1574253306663],
                                [0,  0,      0,      1]]))
 
-    centers.append(np.r_[-31.317285034663634,       -174.62449255285645,    -193.39018826551072])
+      centers.append(np.r_[-31.317285034663634,       -174.62449255285645,    -193.39018826551072])
     return centers[index], refplanes[index]
   def resetCamera(self):
     qDebug('resetCamera')
@@ -370,10 +394,10 @@ class QLiverViewer(QtWidgets.QFrame):
 
     self.lastPositions['reset'][index] = [planeWidget.GetOrigin(),
                                           planeWidget.GetPoint1(),
-                                          planeWidget.GetPoint2()]
+                                          planeWidget.GetPoint2(),
+                                          planeWidget.GetCenter()] # Redundant
     planeWidget.SetEnabled(1)
     planeWidget.AddObserver(vtk.vtkCommand.EndInteractionEvent, self.onWidgetMoved, 1.0)
-    self.planeWidgets.append(planeWidget)
 
     attempt = vtk.vtkActor()
     oldContours = cutStrips.GetOutput()
@@ -394,8 +418,8 @@ class QLiverViewer(QtWidgets.QFrame):
     self.lastPositions['origin'][index] = lastOrigin
     self.lastPositions['normal'][index] = lastNormal
     self.lastPositions['axis1'][index] = lastAxis1
-
-
+    self.planeWidgets.append(planeWidget)
+    self.render_window.Render()
 
   def onWidgetMoved(self, obj, ev):
     if (obj in self.planeWidgets):
@@ -433,28 +457,35 @@ class QLiverViewer(QtWidgets.QFrame):
       self.userAttempts[index].Modified()
       self.render_window.Render()
 
-      # Signal Qt
-      self.widgetMoved.emit((deg, x,y,z))
+      print("center")
+      print(obj.GetCenter())
+      # Signal Qt (normal1 should be original normal)
+      self.widgetMoved.emit((deg, np.r_[x,y,z]), normal1, np.array(obj.GetCenter())-np.array(self.lastPositions['reset'][index][3]))
     #print(ev)
-
-  @Slot(object)
-  def onWidgetMoved2(self, data):
-    qDebug('onWidgetMoved')
-    # Update GUI
-    print(data)
 
   def initVessels(self):
     qDebug('initVessels()')
     if os.name == 'nt':
       filename = 'e:/analogic/TrialVTK/data/Abdomen/A.vtp'
+      if IOUSFAN:
+        filename = 'e:/analogic/TrialVTK/data/VesselMeshData.vtk'
     else:
       filename = '/home/jmh/bkmedical/data/CT/Connected.vtp'
+
     # read data
-    reader = vtk.vtkXMLPolyDataReader()
+    if IOUSFAN:
+      reader = vtk.vtkGenericDataObjectReader()
+    else:
+      reader = vtk.vtkXMLPolyDataReader()
     reader.SetFileName(filename)
     reader.Update()
 
-    self.vesselPolyData = self.scale(reader.GetOutput())
+    connectFilter = vtk.vtkPolyDataConnectivityFilter()
+    connectFilter.SetInputConnection(reader.GetOutputPort())
+    connectFilter.SetExtractionModeToLargestRegion()
+    connectFilter.Update();
+
+    self.vesselPolyData = self.scale(connectFilter.GetOutput())
 
     # compute normals
     self.vesselNormals = vtk.vtkPolyDataNormals()
@@ -480,15 +511,25 @@ class QLiverViewer(QtWidgets.QFrame):
     qDebug('initLiver()')
     if os.name == 'nt':
       filename = 'e:/analogic/TrialVTK/data/Abdomen/Liver_3D-interpolation.vtp'
+      if IOUSFAN:
+        filename = 'e:/analogic/TrialVTK/data/segmented_liver_ITK_snap.vtk'
     else:
       filename = '/home/jmh/bkmedical/data/CT/Liver_3D-interpolation.vtp'
-    reader = vtk.vtkXMLPolyDataReader()
+    if IOUSFAN:
+      reader = vtk.vtkGenericDataObjectReader()
+    else:
+      reader = vtk.vtkXMLPolyDataReader()
+
     reader.SetFileName(filename)
     reader.Update()
 
+    connectFilter = vtk.vtkPolyDataConnectivityFilter()
+    connectFilter.SetInputConnection(reader.GetOutputPort())
+    connectFilter.SetExtractionModeToLargestRegion()
+    connectFilter.Update();
+
     surfNormals = vtk.vtkPolyDataNormals()
-    #surfNormals.SetInputConnection(reader.GetOutputPort())
-    surfNormals.SetInputData(self.scale(reader.GetOutput()))
+    surfNormals.SetInputData(self.scale(connectFilter.GetOutput()))
 
     #Create a mapper and actor
     mapper = vtk.vtkPolyDataMapper()

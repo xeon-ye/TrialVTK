@@ -492,6 +492,16 @@ def onKeyPressed(obj, ev):
     ren.AddActor(testActor)
 
     # Reset afterwards
+    print("TestMe")
+    print(extraActor.GetUserTransform().GetMatrix())
+    extraActor.GetUserTransform().Concatenate(icp.GetMatrix())
+    print(extraActor.GetUserTransform().GetMatrix())
+
+    extraActor.GetUserTransform().Update()
+    (deg, x, y, z) = extraActor.GetUserTransform().GetOrientationWXYZ()
+    print(deg, x, y, z)
+    print(extraActor.GetUserTransform().GetPosition())
+
     extraActor.SetUserTransform(None)
     extraActor.Modified()
 
