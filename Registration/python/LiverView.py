@@ -13,6 +13,8 @@ from vtkUtils import AxesToTransform
 
 IOUSFAN = False
 
+filedir = os.path.dirname(os.path.realpath(__file__))
+
 def hexCol(s):
   if isinstance(s,str):
     if "#" in s:  # hex to rgb
@@ -466,7 +468,7 @@ class QLiverViewer(QtWidgets.QFrame):
   def initVessels(self):
     qDebug('initVessels()')
     if os.name == 'nt':
-      filename = 'e:/analogic/TrialVTK/data/Abdomen/A.vtp'
+      filename = os.path.join(filedir, '../../data/Abdomen/Connected.vtp')
       if IOUSFAN:
         filename = 'e:/analogic/TrialVTK/data/VesselMeshData.vtk'
     else:
@@ -510,7 +512,7 @@ class QLiverViewer(QtWidgets.QFrame):
   def initLiver(self):
     qDebug('initLiver()')
     if os.name == 'nt':
-      filename = 'e:/analogic/TrialVTK/data/Abdomen/Liver_3D-interpolation.vtp'
+      filename = os.path.join(filedir, '../../data/Abdomen/Liver_3D-interpolation.vtp')
       if IOUSFAN:
         filename = 'e:/analogic/TrialVTK/data/segmented_liver_ITK_snap.vtk'
     else:
