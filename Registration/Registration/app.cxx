@@ -1082,12 +1082,11 @@ void App::onLoadVesselsClicked() {
           m_planeWidget[0]->GetDefaultRenderer()->AddActor(m_vessels);
           this->ui->mrView3D->GetRenderWindow()->Render();
 #endif
-      } else
+      } else {
         return;
       }
     }
   }
-
 }
 
 void App::onLoadUSClicked() {
