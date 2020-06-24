@@ -41,11 +41,14 @@ class ViewersApp(QMainWindow, ui):
     qDebug('onWidgetMoved')
     # Update GUI
     U = rot[1]
+    sgn = np.sign(np.dot(U,normal))
     udotn = float("{:.5f}".format(np.abs(np.dot(U,normal))))
     self.leUdotN.setText(str(udotn))
     trans = float("{:.5f}".format(np.sqrt(np.sum(p**2))))
     self.leTransDist.setText(str(trans))
-    arg = float("{:.5f}".format(rot[0]))
+    arg = rot[0]
+    arg = np.fmod(arg + 180.0, 360.0) - 180.0
+    arg = float("{:.5f}".format(arg*sgn))
     self.leAngle.setText(str(arg))
 
   def initialize(self):

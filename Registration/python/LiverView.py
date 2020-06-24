@@ -164,8 +164,6 @@ class QLiverViewer(QtWidgets.QFrame):
       self.contourResults[index] = testActor
 
       # Concatenate and get transform (w,x,y,z)
-      #self.userAttempts[index].GetUserTransform().Concatenate(trans)
-
       userAttempt.GetUserTransform().Concatenate(icp.GetMatrix())
 
       userAttempt.GetUserTransform().Update()
