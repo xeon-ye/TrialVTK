@@ -169,13 +169,18 @@ class QLiverViewer(QtWidgets.QFrame):
       userAttempt.GetUserTransform().Update()
 
       (deg, x, y, z) = userAttempt.GetUserTransform().GetOrientationWXYZ()
+
+      resetPositions = self.lastPositions['reset'][index]
+
+      # Not correct!!!
       positionError = np.array(userAttempt.GetUserTransform().GetPosition())
+
+      positionError = np.array(userAttempt.GetUserTransform().TransformPoint(resetPositions[3])) - np.array(resetPositions[3])
 
       # Reset afterwards
       userAttempt.SetUserTransform(None)
       userAttempt.Modified()
 
-      resetPositions = self.lastPositions['reset'][index]
 
       # Reset planeWidget.
       planeWidget.SetEnabled(0)
@@ -197,8 +202,11 @@ class QLiverViewer(QtWidgets.QFrame):
       self.lastPositions['axis1'][index] = lastAxis1
       self.render_window.Render()
 
+      originalNormal = resetPositions[4]
+      originalNormal = originalNormal / np.sqrt(np.sum(originalNormal**2))
+
       # TODO: Transform widget
-      self.widgetRegistered.emit((deg, np.r_[x,y,z]), 0, positionError)
+      self.widgetRegistered.emit((deg, np.r_[x,y,z]), originalNormal, positionError)
   def scale(self, polyData):
     if self.worldScale == 1.0:
       return polyData
@@ -395,7 +403,10 @@ class QLiverViewer(QtWidgets.QFrame):
     self.lastPositions['reset'][index] = [planeWidget.GetOrigin(),
                                           planeWidget.GetPoint1(),
                                           planeWidget.GetPoint2(),
-                                          planeWidget.GetCenter()] # Redundant
+                                          planeWidget.GetCenter(),
+                                          np.array(planeWidget.GetNormal())] # Redundant
+    print('normal')
+    print(planeWidget.GetNormal())
     planeWidget.SetEnabled(1)
     planeWidget.AddObserver(vtk.vtkCommand.EndInteractionEvent, self.onWidgetMoved, 1.0)
 
@@ -458,9 +469,13 @@ class QLiverViewer(QtWidgets.QFrame):
       self.render_window.Render()
 
       print("center")
-      print(obj.GetCenter())
-      # Signal Qt (normal1 should be original normal)
-      self.widgetMoved.emit((deg, np.r_[x,y,z]), normal1, np.array(obj.GetCenter())-np.array(self.lastPositions['reset'][index][3]))
+
+      print('wtf')
+
+      originalNormal = self.lastPositions['reset'][index][4]
+      originalNormal = originalNormal / np.sqrt(np.sum(originalNormal**2))
+
+      self.widgetMoved.emit((deg, np.r_[x,y,z]), originalNormal, np.array(obj.GetCenter())-np.array(self.lastPositions['reset'][index][3]))
     #print(ev)
 
   def initVessels(self):

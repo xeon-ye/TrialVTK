@@ -32,9 +32,24 @@ class ViewersApp(QMainWindow, ui):
     self.vtk_layout.setContentsMargins(0,0,0,0)
     self.vtk_panel.setLayout(self.vtk_layout)
 
+    self.tableWidget.setColumnWidth(0,50)
+    self.tableWidget.setColumnWidth(1,50)
+    self.tableWidget.setColumnWidth(2,50)
+    self.tableWidget.setColumnWidth(3,50)
+
   @Slot(object, object, object)
   def onWidgetRegistered(self, rot, normal, p):
-    print("TODO: Update GUI")
+    qDebug('onWidgetRegisterede')
+    U = rot[1]
+    sgn = np.sign(np.dot(U,normal))
+    udotn = float("{:.5f}".format(np.abs(np.dot(U,normal))))
+    self.leUdotNErr.setText(str(udotn))
+    trans = float("{:.5f}".format(np.sqrt(np.sum(p**2))))
+    self.leTransDistErr.setText(str(trans))
+    arg = rot[0]
+    arg = np.fmod(arg + 180.0, 360.0) - 180.0
+    arg = float("{:.5f}".format(arg*sgn))
+    self.leAngleErr.setText(str(arg))
 
   @Slot(object, object, object)
   def onWidgetMoved(self, rot, normal, p):
