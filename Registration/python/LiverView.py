@@ -1,4 +1,5 @@
 # TODO: Make scaling work
+import sys
 import os
 import vtk
 import numpy as np
@@ -40,16 +41,18 @@ class QLiverViewer(QtWidgets.QFrame):
     self.setLayout(self.layout)
 
     self.imgWidth:float = 50.0 # mm
+    self.worldScale:float = 0.05
     self.worldScale:float = 1.0
     self.brighter25:bool = True
     self.opacity:float = 0.35
 
     self.nReferences = 2
 
-    self.refplanes = [] # Displayed reference planes
+    self.refplanes = []    # Displayed reference planes
     self.planeWidgets = [] # Widgets for manipulation
-    self.contours = [] # Contours clipped to reference plane
+    self.contours = []     # Contours clipped to reference plane
     self.fullcontours = [] # Full contour data
+    self.planeSources = []
     self.userAttempts = []
     self.contourResults = self.nReferences * [None]
     self.vessels = None
@@ -84,8 +87,10 @@ class QLiverViewer(QtWidgets.QFrame):
       return
     userAttempt = self.userAttempts[index]
     planeWidget = self.planeWidgets[index]
+    refActor    = self.refplanes[index]
     resetPositions = self.lastPositions['reset'][index]
-
+    planeSource = self.planeSources[index]
+    contourActor = self.contours[index]
     if key == 'c':
       print('Reset')
       userAttempt.SetUserTransform(None)
@@ -181,7 +186,6 @@ class QLiverViewer(QtWidgets.QFrame):
       userAttempt.SetUserTransform(None)
       userAttempt.Modified()
 
-
       # Reset planeWidget.
       planeWidget.SetEnabled(0)
       planeWidget.SetOrigin(resetPositions[0])
@@ -204,9 +208,86 @@ class QLiverViewer(QtWidgets.QFrame):
 
       originalNormal = resetPositions[4]
       originalNormal = originalNormal / np.sqrt(np.sum(originalNormal**2))
-
-      # TODO: Transform widget
       self.widgetRegistered.emit((deg, np.r_[x,y,z]), originalNormal, positionError)
+    elif key == 'm':
+      # Move a reference
+      print('Moving reference')
+      # Remove old reference plane
+      self.removeActor(refActor)
+      refActor = None
+
+      # Move reference plane
+      planeSource.SetOrigin(planeWidget.GetOrigin())
+      planeSource.SetPoint1(planeWidget.GetPoint1())
+      planeSource.SetPoint2(planeWidget.GetPoint2())
+
+      # mapper
+      mapper = vtk.vtkPolyDataMapper()
+      mapper.SetInputConnection(planeSource.GetOutputPort())
+
+      # actor
+      actor = vtk.vtkActor()
+      actor.SetMapper(mapper)
+      prop = actor.GetProperty()
+      prop.SetColor(blue)
+      prop.SetOpacity(self.opacity)
+
+      self.refplanes[index] = actor
+      self.renderer.AddActor(actor)
+
+      self.removeActor(contourActor)
+
+      tubes, oldContours = self.computeContoursAndTubes(planeSource)
+
+      edgeMapper = vtk.vtkPolyDataMapper()
+      edgeMapper.ScalarVisibilityOff()
+      edgeMapper.SetInputConnection(tubes.GetOutputPort())
+
+      planes = self.computeClippingPlanes(planeSource)
+
+      edgeMapper.SetClippingPlanes(planes)
+
+      actor = vtk.vtkActor()
+      actor.SetMapper(edgeMapper)
+      prop = actor.GetProperty()
+      prop.SetColor(green)
+      prop.SetLineWidth(3)
+      self.contours[index] = actor
+      self.renderer.AddActor(actor)
+
+      # User attempt
+      self.removeActor(userAttempt)
+
+      attempt = vtk.vtkActor()
+
+      self.fullcontours[index] = oldContours
+      mapper = vtk.vtkPolyDataMapper()
+      mapper.SetInputData(oldContours)
+      attempt.SetMapper(mapper)
+      attempt.GetProperty().SetColor(red)
+      self.userAttempts[index] = attempt
+      self.renderer.AddActor(attempt)
+
+      # Update reset positions of plane widget
+      self.lastPositions['reset'][index] = [planeWidget.GetOrigin(),
+                                            planeWidget.GetPoint1(),
+                                            planeWidget.GetPoint2(),
+                                            planeWidget.GetCenter(),
+                                            np.array(planeWidget.GetNormal())] # Redundant
+      sys.stdout.write("Origin: ")
+      print(planeWidget.GetOrigin())
+      sys.stdout.write("Point1: ")
+      print(planeWidget.GetPoint1())
+      sys.stdout.write("Point2: ")
+      print(planeWidget.GetPoint2())
+
+      self.render_window.Render()
+
+  def removeActor(self, actor):
+    self.interactor.Disable()
+    self.renderer.RemoveActor(actor)
+    self.interactor.Enable()
+    # self.render_window.Render()
   def scale(self, polyData):
     if self.worldScale == 1.0:
       return polyData
@@ -222,6 +303,9 @@ class QLiverViewer(QtWidgets.QFrame):
       return transformFilter.GetOutput()
 
   def getReferencePosition(self, index):
+    """
+    Dumped from slicer program
+    """
     refplanes = []
     centers = []
 
@@ -233,9 +317,9 @@ class QLiverViewer(QtWidgets.QFrame):
       centers.append(np.r_[117.54695990115218, 103.95861040356766, 127.81653778974703])
     else:
       refplanes.append(np.array([[0.99722,   -0.00658366270883304, 0.0741938205770847, -321.64],
-                                 [0.07419,   0.17584, -0.98162, -227.46],
+                                 [0.07419,    0.17584, -0.98162, -227.46],
                                  [-0.0065837, 0.98440,  0.17584, -563.67],
-                                 [0,  0,      0,      1]]))
+                                 [0,          0,        0,          1.0]]))
       centers.append(np.r_[-75.696,        -149.42,    -231.76])
 
       refplanes.append(np.array([[0.9824507428729312,   -0.028608856565971154, 0.1843151408713164, -221.425151769367],
@@ -268,6 +352,64 @@ class QLiverViewer(QtWidgets.QFrame):
     self.renderer.SetBackground(bg_t)
     self.renderer.SetBackground2(bg_b)
     self.renderer.GradientBackgroundOn()
+
+  def computeClippingPlanes(self, source):
+    # Clipping planes
+    planes = vtk.vtkPlaneCollection()
+
+    axis1 = np.array(source.GetPoint1()) - np.array(source.GetOrigin())
+    axis2 = np.array(source.GetPoint2()) - np.array(source.GetOrigin())
+
+    # Okay
+    plane1 = vtk.vtkPlane()
+    plane1.SetOrigin(source.GetOrigin())
+    plane1.SetNormal(axis2)
+
+    plane2 = vtk.vtkPlane()
+    plane2.SetOrigin(source.GetOrigin())
+    plane2.SetNormal(axis1)
+
+    tmp = axis2 + np.array(source.GetPoint1())
+
+    plane3 = vtk.vtkPlane()
+    plane3.SetOrigin(tmp)
+    plane3.SetNormal(-axis2)
+
+    plane4 = vtk.vtkPlane()
+    plane4.SetOrigin(tmp)
+    plane4.SetNormal(-axis1)
+
+    planes.AddItem(plane1)
+    planes.AddItem(plane2)
+    planes.AddItem(plane3)
+    planes.AddItem(plane4)
+    return planes
+
+  def computeContoursAndTubes(self, source):
+    # Plane for intersection
+    plane = vtk.vtkPlane()
+    plane.SetOrigin(source.GetOrigin())
+    plane.SetNormal(source.GetNormal())
+
+    cutEdges = vtk.vtkCutter()
+    cutEdges.SetInputConnection(self.vesselNormals.GetOutputPort())
+    cutEdges.SetCutFunction(plane)
+    cutEdges.GenerateCutScalarsOff() # Was on
+    cutEdges.SetValue(0, 0.5)
+    cutEdges.Update()
+
+    cutStrips = vtk.vtkStripper()
+    cutStrips.SetInputConnection(cutEdges.GetOutputPort())
+    cutStrips.Update()
+    oldContours = cutStrips.GetOutput()
+
+    tubes = vtk.vtkTubeFilter()
+    tubes.SetInputConnection(cutStrips.GetOutputPort())
+    tubes.CappingOn()
+    tubes.SidesShareVerticesOff()
+    tubes.SetNumberOfSides(12)
+    tubes.SetRadius(self.worldScale*1.0)
+    return tubes, oldContours
 
   def initPlaneWidgets(self, index):
     qDebug('initPlaneWidgets()')
@@ -310,6 +452,19 @@ class QLiverViewer(QtWidgets.QFrame):
     source.SetCenter(self.worldScale * center)
     source.Update()
 
+    # Test position good for slice 17 (HACK)
+    if (IOUSFAN):
+      source.SetOrigin(-36.00039424299387, 58.447421532729656, 116.93018531955384)
+      source.SetPoint1(13.731795848152041, 54.203001711976306, 119.87877296847647)
+      source.SetPoint2(-40.18599847580337, 8.635225461941415, 115.82300881527104)
+      source.Update()
+
+    self.planeSources.append(source)
+
+    #####################################
+    # Blue reference plane
+    #####################################
+
     # mapper
     mapper0 = vtk.vtkPolyDataMapper()
     mapper0.SetInputConnection(source.GetOutputPort())
@@ -323,73 +478,32 @@ class QLiverViewer(QtWidgets.QFrame):
     self.refplanes.append(actor)
     self.renderer.AddActor(actor)
 
-    # Plane for intersection
-    plane = vtk.vtkPlane()
-    plane.SetOrigin(source.GetOrigin())
-    plane.SetNormal(source.GetNormal())
+    #####################################
+    # Compute contours, tubes and clipping
+    #####################################
 
-    cutEdges = vtk.vtkCutter()
-    cutEdges.SetInputConnection(self.vesselNormals.GetOutputPort())
-    cutEdges.SetCutFunction(plane)
-    cutEdges.GenerateCutScalarsOff() # Was on
-    cutEdges.SetValue(0, 0.5)
-    cutEdges.Update()
-
-    cutStrips = vtk.vtkStripper()
-    cutStrips.SetInputConnection(cutEdges.GetOutputPort())
-    cutStrips.Update()
-
-    tubes = vtk.vtkTubeFilter()
-    tubes.SetInputConnection(cutStrips.GetOutputPort()) # works
-    tubes.CappingOn()
-    tubes.SidesShareVerticesOff()
-    tubes.SetNumberOfSides(12)
-    tubes.SetRadius(self.worldScale*1.0)
+    tubes, oldContours = self.computeContoursAndTubes(source)
 
     edgeMapper = vtk.vtkPolyDataMapper()
     edgeMapper.ScalarVisibilityOff()
     edgeMapper.SetInputConnection(tubes.GetOutputPort())
 
-    # Clipping planes
-    planes = vtk.vtkPlaneCollection()
-
-    axis1 = np.array(source.GetPoint1()) - np.array(source.GetOrigin())
-    axis2 = np.array(source.GetPoint2()) - np.array(source.GetOrigin())
-
-    # Okay
-    plane1 = vtk.vtkPlane()
-    plane1.SetOrigin(source.GetOrigin())
-    plane1.SetNormal(axis2)
-
-    plane2 = vtk.vtkPlane()
-    plane2.SetOrigin(source.GetOrigin())
-    plane2.SetNormal(axis1)
-
-    tmp = axis2 + np.array(source.GetPoint1())
-
-    plane3 = vtk.vtkPlane()
-    plane3.SetOrigin(tmp)
-    plane3.SetNormal(-axis2)
-
-    plane4 = vtk.vtkPlane()
-    plane4.SetOrigin(tmp)
-    plane4.SetNormal(-axis1)
-
-    planes.AddItem(plane1)
-    planes.AddItem(plane2)
-    planes.AddItem(plane3)
-    planes.AddItem(plane4)
+    planes = self.computeClippingPlanes(source)
 
     edgeMapper.SetClippingPlanes(planes)
+
     actor = vtk.vtkActor()
     actor.SetMapper(edgeMapper)
     prop = actor.GetProperty()
     prop.SetColor(green)
     prop.SetLineWidth(3)
+
     self.contours.append(actor)
     self.renderer.AddActor(actor)
 
-    # Plane widget
+    ###################################################
+    # Plane widget for interaction
+    ###################################################
     planeWidget = vtk.vtkPlaneWidget()
     planeWidget.SetInteractor(self.interactor)
     planeWidget.SetOrigin(source.GetOrigin())
@@ -400,6 +514,7 @@ class QLiverViewer(QtWidgets.QFrame):
     prop = planeWidget.GetPlaneProperty()
     prop.SetColor(QLiverViewer.colors.GetColor3d("Red"))
 
+    # Original position and orientation of reference plane
     self.lastPositions['reset'][index] = [planeWidget.GetOrigin(),
                                           planeWidget.GetPoint1(),
                                           planeWidget.GetPoint2(),
@@ -411,7 +526,7 @@ class QLiverViewer(QtWidgets.QFrame):
     planeWidget.AddObserver(vtk.vtkCommand.EndInteractionEvent, self.onWidgetMoved, 1.0)
 
     attempt = vtk.vtkActor()
-    oldContours = cutStrips.GetOutput()
+
     self.fullcontours.append(oldContours)
     mapper = vtk.vtkPolyDataMapper()
     mapper.SetInputData(oldContours)
@@ -419,6 +534,7 @@ class QLiverViewer(QtWidgets.QFrame):
     attempt.GetProperty().SetColor(red)
     self.userAttempts.append(attempt)
     self.renderer.AddActor(attempt)
+
 
     lastNormal = planeWidget.GetNormal()
     lastAxis1 = vtk.vtkVector3d()
@@ -483,7 +599,8 @@ class QLiverViewer(QtWidgets.QFrame):
     if os.name == 'nt':
       filename = os.path.join(filedir, '../../data/Abdomen/Connected.vtp')
       if IOUSFAN:
-        filename = 'e:/analogic/TrialVTK/data/VesselMeshData.vtk'
+        #filename = 'e:/analogic/TrialVTK/data/VesselMeshData.vtk'
+        filename = 'e:/analogic/TrialVTK/data/LiverVesselMeshData.vtk'
     else:
       filename = '/home/jmh/bkmedical/data/CT/Connected.vtp'
 
@@ -565,5 +682,4 @@ class QLiverViewer(QtWidgets.QFrame):
   def start(self):
     self.interactor.Initialize()
     # If a big Qt application, call app.exec instead of having two GUI threads
-    self.interactor.Start()
-
+    #self.interactor.Start()

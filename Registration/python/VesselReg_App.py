@@ -2,6 +2,7 @@ import sys
 import numpy as np
 
 import vtk
+from vtk.numpy_interface import dataset_adapter as dsa
 
 from qtpy import (QtWidgets, QtGui, uic)
 from qtpy.QtCore import (qDebug, QObject, Qt, Slot)
