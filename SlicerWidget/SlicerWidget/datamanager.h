@@ -43,7 +43,7 @@ class DataManager : public QWidget {
   void ResetViews();
   Ui::DataManager *ui;
 
-  vtkSmartPointer<vtkImageData> m_dummy;
+  //  vtkSmartPointer<vtkImageData> m_dummy;
   vtkSmartPointer<vtkResliceImageViewer> m_riw[3];
   // vtkSmartPointer<vtkImageViewer2> m_riw[3];
   vtkSmartPointer< vtkImagePlaneWidget > m_planeWidget[3];

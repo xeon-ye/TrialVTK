@@ -48,9 +48,9 @@ void SegmentationConnectedThreshold(vtkImageData* pData,
   using WriterType = itk::ImageFileWriter<OutputImageType>;
 
   using ConnectedThresholdImageFilterType = itk::ConnectedThresholdImageFilter<InternalImageType, InternalImageType>;
-  
+
   using ConnectedFilterType =
-      itk::ConnectedThresholdImageFilter<InternalImageType, InternalImageType>;
+    itk::ConnectedThresholdImageFilter<InternalImageType, InternalImageType>;
 
   typename CastingFilterType::Pointer caster = CastingFilterType::New();
 
@@ -69,7 +69,8 @@ void SegmentationConnectedThreshold(vtkImageData* pData,
 
   typename InternalImageType::IndexType seed = { inputSeed[0],
                                                  inputSeed[1],
-                                                 inputSeed[2] };
+                                                 inputSeed[2]
+                                               };
 
   typename ConnectedFilterType::Pointer connectedThreshold = ConnectedFilterType::New();
 
@@ -82,7 +83,7 @@ void SegmentationConnectedThreshold(vtkImageData* pData,
   connectedThreshold->SetSeed(seed);
 
 #ifndef INTEGRATED_SURFACING
-  
+
   typename WriterType::Pointer writer = WriterType::New();
 
   std::stringstream ss;
@@ -93,11 +94,11 @@ void SegmentationConnectedThreshold(vtkImageData* pData,
   wai_getModulePath(path, length, &dirnameLength);
 
   path[length] = '\0';
-  
+
   if (dirnameLength + 2 < length) {
-      path[dirnameLength + 1] = '\0';
+    path[dirnameLength + 1] = '\0';
   }
-  
+
   ss << path;
   ss << fOutput;
 
@@ -127,8 +128,8 @@ void SegmentationConnectedThreshold(vtkImageData* pData,
 
   // Display dimensions
   std::cout << "Segmentation dimensions: " << imageDims[0] << " "
-      << imageDims[1] << " "
-      << imageDims[2] << std::endl;
+            << imageDims[1] << " "
+            << imageDims[2] << std::endl;
 #endif
 
 #endif
@@ -145,101 +146,101 @@ SegRunner::SegRunner(QWidget* receiver,
 }
 
 void SegRunner::externalRun() {
-    const char* fInput = nullptr;
+  const char* fInput = nullptr;
 
-    QString fileInput = data.value("finput").toString();
+  QString fileInput = data.value("finput").toString();
 
-    const char* fOutput = "seg.mhd";
+  const char* fOutput = "seg.mhd";
 
-    int low = data["low"].toInt();
-    int high = data["high"].toInt();
+  int low = data["low"].toInt();
+  int high = data["high"].toInt();
 
-    int seedX = data["seedX"].toInt();
-    int seedY = data["seedY"].toInt();
-    int seedZ = data["seedZ"].toInt();
+  int seedX = data["seedX"].toInt();
+  int seedY = data["seedY"].toInt();
+  int seedZ = data["seedZ"].toInt();
 
-    std::cout << "low: " << low << std::endl;
-    std::cout << "high: " << high << std::endl;
+  std::cout << "low: " << low << std::endl;
+  std::cout << "high: " << high << std::endl;
 
-    std::cout << "seed: (" << seedX << ", " << seedY << "," << seedZ << ")" << std::endl;
+  std::cout << "seed: (" << seedX << ", " << seedY << "," << seedZ << ")" << std::endl;
 
-    std::stringstream ss;
-    int dirnameLength = 0;
-    int length = wai_getExecutablePath(NULL, 0, &dirnameLength);
-    char* path = (char*)malloc(length + 1);
+  std::stringstream ss;
+  int dirnameLength = 0;
+  int length = wai_getExecutablePath(NULL, 0, &dirnameLength);
+  char* path = (char*)malloc(length + 1);
 
-    wai_getModulePath(path, length, &dirnameLength);
+  wai_getModulePath(path, length, &dirnameLength);
 
-    path[length] = '\0';
+  path[length] = '\0';
 
-    if (dirnameLength + 2 < length) {
-        path[dirnameLength + 1] = '\0';
-    }
-    ss << path;
+  if (dirnameLength + 2 < length) {
+    path[dirnameLength + 1] = '\0';
+  }
+  ss << path;
 #ifdef WIN32
-    ss << "SegmGrow.exe ";
+  ss << "SegmGrow.exe ";
 #else
-    ss << "SegmGrow ";
+  ss << "SegmGrow ";
 #endif
-    ss << fileInput.toStdString();
-    ss << " ";
-    ss << path;
-    ss << fOutput;
-    ss << " ";
-    ss << seedX << " " << seedY << " " << seedZ;
-    ss << " ";
-    ss << low << " " << high;
-    std::cout << ss.str() << std::endl;
-    system(ss.str().data());
-    free(path);
-    qDebug() << "Segmentation done";
+  ss << fileInput.toStdString();
+  ss << " ";
+  ss << path;
+  ss << fOutput;
+  ss << " ";
+  ss << seedX << " " << seedY << " " << seedZ;
+  ss << " ";
+  ss << low << " " << high;
+  std::cout << ss.str() << std::endl;
+  system(ss.str().data());
+  free(path);
+  qDebug() << "Segmentation done";
 
-    // *stopped = true; // Replace with atomic and set this to true when cancel is pressed
+  // *stopped = true; // Replace with atomic and set this to true when cancel is pressed
 
-    QMetaObject::invokeMethod(receiver, "updateSegProgressBar",
-        Qt::QueuedConnection,
-        Q_ARG(int, 100));
+  QMetaObject::invokeMethod(receiver, "updateSegProgressBar",
+                            Qt::QueuedConnection,
+                            Q_ARG(int, 100));
 }
 
 void SegRunner::internalRun() {
-    // Only works on signed/unsigned short
-    assert(pData->GetScalarType() == 4 || pData->GetScalarType() == 5);
+  // Only works on signed/unsigned short
+  assert(pData->GetScalarType() == 4 || pData->GetScalarType() == 5);
 
-    int inputSeed[3];
-    int thresholds[2];
+  int inputSeed[3];
+  int thresholds[2];
 
-    const char* fOutput = "seg.mhd";
+  const char* fOutput = "seg.mhd";
 
-    thresholds[0] = data["low"].toInt();
-    thresholds[1] = data["high"].toInt();
+  thresholds[0] = data["low"].toInt();
+  thresholds[1] = data["high"].toInt();
 
-    inputSeed[0] = data["seedX"].toInt();
-    inputSeed[1] = data["seedY"].toInt();
-    inputSeed[2] = data["seedZ"].toInt();
+  inputSeed[0] = data["seedX"].toInt();
+  inputSeed[1] = data["seedY"].toInt();
+  inputSeed[2] = data["seedZ"].toInt();
 
 
-    if (pData->GetScalarType() == 4) {
-        // Signed short
-        SegmentationConnectedThreshold<signed short>(pData,
-            pOutData,
-            inputSeed,
-            thresholds,
-            fOutput);
-    }  else if (pData->GetScalarType() == 5) {
-        // Unsigned short
-        SegmentationConnectedThreshold<unsigned short>(pData,
-            pOutData,
-            inputSeed,
-            thresholds,
-            fOutput);
-    }
-    qDebug() << "Segmentation done";
+  if (pData->GetScalarType() == 4) {
+    // Signed short
+    SegmentationConnectedThreshold<signed short>(pData,
+        pOutData,
+        inputSeed,
+        thresholds,
+        fOutput);
+  }  else if (pData->GetScalarType() == 5) {
+    // Unsigned short
+    SegmentationConnectedThreshold<unsigned short>(pData,
+        pOutData,
+        inputSeed,
+        thresholds,
+        fOutput);
+  }
+  qDebug() << "Segmentation done";
 
-    // *stopped = true; // Replace with atomic and set this to true when cancel is pressed
+  // *stopped = true; // Replace with atomic and set this to true when cancel is pressed
 
-    QMetaObject::invokeMethod(receiver, "updateSegProgressBar",
-        Qt::QueuedConnection,
-        Q_ARG(int, 100));
+  QMetaObject::invokeMethod(receiver, "updateSegProgressBar",
+                            Qt::QueuedConnection,
+                            Q_ARG(int, 100));
 
 
 
@@ -248,9 +249,9 @@ void SegRunner::internalRun() {
 
 void SegRunner::run() {
 #ifdef INTEGRATED_SEGMENTATION
-    return this->internalRun();
+  return this->internalRun();
 #else
-    return this->externalRun();
+  return this->externalRun();
 #endif
 }
 
@@ -259,4 +260,3 @@ void SegRunner::run() {
 /* tab-width: 2 */
 /* c-basic-offset: 2 */
 /* End: */
-

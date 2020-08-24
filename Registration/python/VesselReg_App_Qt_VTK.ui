@@ -71,7 +71,7 @@
                   <widget class="QLineEdit" name="leAngle">
                    <property name="maximumSize">
                     <size>
-                     <width>100</width>
+                     <width>150</width>
                      <height>16777215</height>
                     </size>
                    </property>
@@ -99,7 +99,7 @@
                   <widget class="QLineEdit" name="leTransDist">
                    <property name="maximumSize">
                     <size>
-                     <width>100</width>
+                     <width>150</width>
                      <height>16777215</height>
                     </size>
                    </property>
@@ -127,7 +127,7 @@
                   <widget class="QLineEdit" name="leUdotN">
                    <property name="maximumSize">
                     <size>
-                     <width>100</width>
+                     <width>150</width>
                      <height>16777215</height>
                     </size>
                    </property>
@@ -181,7 +181,7 @@
                   <widget class="QLineEdit" name="leAngleErr">
                    <property name="maximumSize">
                     <size>
-                     <width>100</width>
+                     <width>150</width>
                      <height>16777215</height>
                     </size>
                    </property>
@@ -209,7 +209,7 @@
                   <widget class="QLineEdit" name="leTransDistErr">
                    <property name="maximumSize">
                     <size>
-                     <width>100</width>
+                     <width>150</width>
                      <height>16777215</height>
                     </size>
                    </property>
@@ -237,7 +237,7 @@
                   <widget class="QLineEdit" name="leUdotNErr">
                    <property name="maximumSize">
                     <size>
-                     <width>100</width>
+                     <width>150</width>
                      <height>16777215</height>
                     </size>
                    </property>
@@ -290,7 +290,7 @@
                 <widget class="QLineEdit" name="lineEdit">
                  <property name="maximumSize">
                   <size>
-                   <width>100</width>
+                   <width>150</width>
                    <height>16777215</height>
                   </size>
                  </property>
@@ -311,7 +311,7 @@
                 <widget class="QLineEdit" name="lineEdit_2">
                  <property name="maximumSize">
                   <size>
-                   <width>100</width>
+                   <width>150</width>
                    <height>16777215</height>
                   </size>
                  </property>
@@ -332,7 +332,7 @@
                 <widget class="QLineEdit" name="lineEdit_4">
                  <property name="maximumSize">
                   <size>
-                   <width>100</width>
+                   <width>150</width>
                    <height>16777215</height>
                   </size>
                  </property>
@@ -353,7 +353,7 @@
                 <widget class="QLineEdit" name="lineEdit_5">
                  <property name="maximumSize">
                   <size>
-                   <width>100</width>
+                   <width>150</width>
                    <height>16777215</height>
                   </size>
                  </property>
@@ -374,7 +374,7 @@
                 <widget class="QLineEdit" name="lineEdit_3">
                  <property name="maximumSize">
                   <size>
-                   <width>100</width>
+                   <width>150</width>
                    <height>16777215</height>
                   </size>
                  </property>
@@ -395,7 +395,7 @@
                 <widget class="QLineEdit" name="lineEdit_6">
                  <property name="maximumSize">
                   <size>
-                   <width>100</width>
+                   <width>150</width>
                    <height>16777215</height>
                   </size>
                  </property>

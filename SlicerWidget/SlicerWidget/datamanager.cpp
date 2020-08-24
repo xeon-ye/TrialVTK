@@ -40,6 +40,7 @@
 #include <vtkResliceCursorWidget.h>
 
 #include <vtkResliceImageViewer.h>
+#include <vtkImageActor.h>
 
 DataManager::DataManager(QWidget *parent) : QWidget(parent),
   ui(new Ui::DataManager) {
@@ -78,7 +79,7 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent),
   ppVTKOGLWidgets[3]->GetInteractor()->Disable();
 
   // Initialize dummy data for reslice image widgets
-  this->m_dummy = vtkSmartPointer<vtkImageData>::New();
+  //this->m_dummy = vtkSmartPointer<vtkImageData>::New();
 
 
   // Setup cursors and orientation of reslice image widgets
@@ -96,7 +97,8 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent),
     m_riw[i]->SetSliceOrientation(i);
     m_riw[i]->SetResliceModeToAxisAligned();
     // Set empty data - otherwise we cannot enable widgets
-    m_riw[i]->SetInputData(this->m_dummy);
+    // TEST without dummy
+    //m_riw[i]->SetInputData(this->m_dummy);
     //m_riw[i]->SetInputConnection(this->m_dummy.GetOutputPort());
   }
 
@@ -179,6 +181,10 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent),
   this->ui->view1->show();
   this->ui->view2->show();
 
+  // TODO: Do this instead of dummy data
+  for (size_t i = 0 ; i < 3 ; i++) {
+    this->m_riw[i]->GetImageActor()->SetVisibility(false);
+  }
   this->Render();
 }
 
