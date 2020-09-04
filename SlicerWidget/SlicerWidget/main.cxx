@@ -25,6 +25,9 @@ int main( int argc, char** argv ) {
 
   App myApp(argc, argv);
 
+  app.setApplicationName("SlicerWidget");
+  app.setOrganizationName("Sexy Soft");
+  app.setOrganizationDomain("www.sexysoft.com");
 
   myApp.show();
 
