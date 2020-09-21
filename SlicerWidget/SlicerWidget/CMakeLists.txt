@@ -47,6 +47,12 @@ add_executable(SlicerWidget ${Srcs} ${Hdrs} ${UI_Srcs} ${MOC_Hdrs})
 target_link_libraries(SlicerWidget Qt5::Core Qt5::Gui Qt5::Widgets)
 target_link_libraries(SlicerWidget ${VTK_LIBRARIES})
 
+if (WIN32)
+  #get_target_property(_outdir SlicerWidget RUNTIME_OUTPUT_DIRECTORY)
+  #message(${_outdir})
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/SlicerWidget.bat.in" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/SlicerWidget.bat" @ONLY)
+endif()
+
 include(deploy_vtk_windows)
 # windeployqt(SlicerWidget ${CMAKE_CURRENT_BINARY_DIR})
 windeployvtk(SlicerWidget ${CMAKE_CURRENT_BINARY_DIR})
