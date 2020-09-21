@@ -62,10 +62,14 @@ class vtkResliceCursorCallback : public vtkCommand {
       // in case they had side-effects
       rep->GetResliceCursorActor()->GetCursorAlgorithm()->GetResliceCursor();
 
+      //
+
+      vtkResliceCursorLineRepresentation* rep0 = dynamic_cast<
+          vtkResliceCursorLineRepresentation*>(RCW[iSlice]->GetRepresentation());
+
       vtkSmartPointer<vtkMatrix4x4> resliceAxes =
         vtkSmartPointer<vtkMatrix4x4>::New();
-
-      resliceAxes->DeepCopy(rep->GetResliceAxes()->GetData());
+      resliceAxes->DeepCopy(rep0->GetResliceAxes()->GetData());
 
       double trans[4][4];
       memcpy(&trans[0][0], resliceAxes->GetData(), 16*sizeof(double));
@@ -107,4 +111,5 @@ class vtkResliceCursorCallback : public vtkCommand {
   vtkResliceCursorCallback() {}
   vtkImagePlaneWidget* IPW[3];
   vtkResliceCursorWidget *RCW[3];
+  int iSlice = 0;
 };

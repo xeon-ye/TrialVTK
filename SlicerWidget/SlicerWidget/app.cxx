@@ -19,6 +19,19 @@ void App::SetupUI() {
   horizontalLayout = new QHBoxLayout(this->ui->centralwidget);
   horizontalLayout->setObjectName(QStringLiteral("horizontalLayout"));
   horizontalLayout->addWidget(this->datamanager);
+
+  // Dirty layout with a slice selector
+  QWidget* rightLane = new QWidget(this);
+  rightLane->setFixedWidth(100);
+  horizontalLayout->addWidget(rightLane);
+  QVBoxLayout* verticalLayout = new QVBoxLayout(rightLane);
+  cb = new QComboBox(this);
+  cb->setObjectName(QStringLiteral("comboBox"));
+  cb->addItem("0");
+  cb->addItem("1");
+  cb->addItem("2");
+  cb->setCurrentIndex(0);
+  verticalLayout->addWidget(cb);
 }
 
 void App::PopulateMenus() {
@@ -26,8 +39,13 @@ void App::PopulateMenus() {
           this, SLOT(slotExit()));
   connect(this->ui->actionOpen, SIGNAL(triggered()),
           this, SLOT(onLoadClicked()));
+  connect(this->cb, SIGNAL(activated(int)),
+      this, SLOT(referenceViewChanged(int)));
 }
 
+void App::referenceViewChanged(int index) {
+  this->datamanager->SetReferenceSlice(index);
+}
 void App::onLoadClicked() {
   const QString DEFAULT_DIR_KEY("SlicerWidgetDefaultDir");
   QSettings MySettings;

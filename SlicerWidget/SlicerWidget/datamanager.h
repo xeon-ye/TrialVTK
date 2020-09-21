@@ -18,11 +18,12 @@ class DataManager;
 
 #include <vtkSmartPointer.h>
 #include <vtkResliceImageViewer.h>
-// #include <vtkImageViewer2.h>
 #include <vtkImagePlaneWidget.h>
 #include <vtkImageData.h>
 #include <vtkImageViewer2.h>
 #include <vtkImageReader2.h>
+
+#include <SlicerWidget/reslicecallback.h>
 
 class DataManager : public QWidget {
   Q_OBJECT
@@ -34,6 +35,7 @@ class DataManager : public QWidget {
  public Q_SLOTS:
   void Render();
   void FileLoad(const QString& files);
+  void SetReferenceSlice(int iSlice);
 
  private Q_SLOTS:
 
@@ -47,4 +49,5 @@ class DataManager : public QWidget {
   vtkSmartPointer<vtkResliceImageViewer> m_riw[3];
   // vtkSmartPointer<vtkImageViewer2> m_riw[3];
   vtkSmartPointer< vtkImagePlaneWidget > m_planeWidget[3];
+  vtkSmartPointer< vtkResliceCursorCallback > m_cbk;
 };

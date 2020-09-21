@@ -50,7 +50,7 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent),
   m_planeWidget[0] = nullptr;
   m_planeWidget[1] = nullptr;
   m_planeWidget[2] = nullptr;
-
+  m_cbk = nullptr;
   ui->setupUi(this);
 
   // Create reslice image widgets
@@ -148,22 +148,22 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent),
   }
 
   // Establish callbacks
-  vtkSmartPointer<vtkResliceCursorCallback> cbk =
+  m_cbk =
     vtkSmartPointer<vtkResliceCursorCallback>::New();
 
   for (int i = 0; i < 3; i++) {
-    cbk->IPW[i] = m_planeWidget[i];
-    cbk->RCW[i] = m_riw[i]->GetResliceCursorWidget();
+    m_cbk->IPW[i] = m_planeWidget[i];
+    m_cbk->RCW[i] = m_riw[i]->GetResliceCursorWidget();
     m_riw[i]->GetResliceCursorWidget()->AddObserver(
-      vtkResliceCursorWidget::ResliceAxesChangedEvent, cbk);
+      vtkResliceCursorWidget::ResliceAxesChangedEvent, m_cbk);
     m_riw[i]->GetResliceCursorWidget()->AddObserver(
-      vtkResliceCursorWidget::WindowLevelEvent, cbk);
+      vtkResliceCursorWidget::WindowLevelEvent, m_cbk);
     m_riw[i]->GetResliceCursorWidget()->AddObserver(
-      vtkResliceCursorWidget::ResliceThicknessChangedEvent, cbk);
+      vtkResliceCursorWidget::ResliceThicknessChangedEvent, m_cbk);
     m_riw[i]->GetResliceCursorWidget()->AddObserver(
-      vtkResliceCursorWidget::ResetCursorEvent, cbk);
+      vtkResliceCursorWidget::ResetCursorEvent, m_cbk);
     m_riw[i]->GetInteractorStyle()->AddObserver(
-      vtkCommand::WindowLevelEvent, cbk);
+      vtkCommand::WindowLevelEvent, m_cbk);
 
     // Make them all share the same color map.
     m_riw[i]->SetLookupTable(m_riw[0]->GetLookupTable());
@@ -248,6 +248,11 @@ void DataManager::FileLoad(const QString &files) {
     }
   }
   return FileLoad1(reader);
+}
+
+void DataManager::SetReferenceSlice(int iSlice)
+{
+  m_cbk->iSlice = iSlice;
 }
 
 // Works

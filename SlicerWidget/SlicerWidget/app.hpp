@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QMainWindow>
+#include <QComboBox>
 #include <QtWidgets/QHBoxLayout>
 #include <SlicerWidget/datamanager.h>
 
@@ -17,6 +18,7 @@ class App : public QMainWindow {
 
  private Q_SLOTS:
   void onLoadClicked();
+  void referenceViewChanged(int index);
 
  private:
   void SetupUI();
@@ -28,4 +30,6 @@ class App : public QMainWindow {
 
   QHBoxLayout* horizontalLayout;
   DataManager* datamanager;
+  QComboBox* cb;
+  int iSlice = 0;
 };
