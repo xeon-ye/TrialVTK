@@ -5,7 +5,7 @@ pushd %~dp0
 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
 
 REM Variable used in this script - name is arbitrary
-set QTDIR=C:/Qt/Qt5.12.3/5.12.3/msvc2017_64
+set QTDIR=C:/Qt/Qt5.12.9/5.12.9/msvc2017_64
 
 mkdir build
 
