@@ -259,9 +259,7 @@ void App::AddContourWidgetToView(int index) {
   pd->SetLines(lines);
 
   this->ContourWidget[index]->Initialize(pd, 1);
-  //this->ContourWidget[index]->Render();
-  //this->ContourWidget[index]->ProcessEventsOn();
-
+  this->ContourWidget[index]->Render();
 }
 void App::AddContourWidgetToView() {
   int index = this->ui->cbViewContour->currentIndex();
