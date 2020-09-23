@@ -245,9 +245,19 @@ void App::AddContourWidgetToView(int index) {
   for (int i = 0 ; i < 11 ; i++) {
     int ii = i % 10;
     double angle = 2.0 * M_PI * i / 10.0;
-    points->InsertNextPoint(origin[0] + radius*cos(angle),                    
-        origin[1],
-                            origin[2] + radius * sin(angle));
+    if (index == 2) {
+      points->InsertNextPoint(origin[0] + radius * cos(angle),
+                              origin[1] + radius * sin(angle),
+                              origin[2]);
+    } else if (index == 1) {
+        points->InsertNextPoint(origin[0] + radius * cos(angle),
+            origin[1] ,
+            origin[2] + radius * sin(angle));
+    } else {
+        points->InsertNextPoint(origin[0] ,
+            origin[1] + radius * cos(angle),
+            origin[2] + radius * sin(angle));
+    }
     auto line = vtkLine::New();
     line->GetPointIds()->SetId(0,ii);
     line->GetPointIds()->SetId(1,ii+1);
