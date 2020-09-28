@@ -70,17 +70,17 @@
                 <widget class="QComboBox" name="cbViewMeasurement">
                  <item>
                   <property name="text">
-                   <string>0</string>
+                   <string>Red</string>
                   </property>
                  </item>
                  <item>
                   <property name="text">
-                   <string>1</string>
+                   <string>Green</string>
                   </property>
                  </item>
                  <item>
                   <property name="text">
-                   <string>2</string>
+                   <string>Blue</string>
                   </property>
                  </item>
                 </widget>
@@ -160,17 +160,17 @@
                 <widget class="QComboBox" name="cbViewContour">
                  <item>
                   <property name="text">
-                   <string>0</string>
+                   <string>Red</string>
                   </property>
                  </item>
                  <item>
                   <property name="text">
-                   <string>1</string>
+                   <string>Green</string>
                   </property>
                  </item>
                  <item>
                   <property name="text">
-                   <string>2</string>
+                   <string>Blue</string>
                   </property>
                  </item>
                 </widget>
@@ -250,17 +250,17 @@
                 <widget class="QComboBox" name="comboBox_3">
                  <item>
                   <property name="text">
-                   <string>0</string>
+                   <string>Red</string>
                   </property>
                  </item>
                  <item>
                   <property name="text">
-                   <string>1</string>
+                   <string>Green</string>
                   </property>
                  </item>
                  <item>
                   <property name="text">
-                   <string>2</string>
+                   <string>Blue</string>
                   </property>
                  </item>
                 </widget>

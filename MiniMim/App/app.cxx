@@ -24,6 +24,7 @@
 #include "vtkLine.h"
 #include "vtkProperty.h"
 #include "vtkResliceCursorLineRepresentation.h"
+#include "vtkProperty2D.h"
 
 #include "QVTKOpenGLWidget.h"
 
@@ -68,9 +69,12 @@ void App::PopulateMenus() {
 void App::resliceMode(int i) {
   this->datamanager->resliceMode(i);
 }
+
 void App::referenceViewChanged(int index) {
+  std::cout << "reference view is now: " << index << std::endl;
   this->datamanager->SetReferenceSlice(index);
 }
+
 void App::onLoadClicked() {
   const QString DEFAULT_DIR_KEY("SlicerWidgetDefaultDir");
   QSettings MySettings;
@@ -123,6 +127,7 @@ void App::ClearDistanceView(int i) {
     this->DistanceWidget[i]->SetEnabled(0);
     this->DistanceWidget[i] = nullptr;
   }
+  this->datamanager->Render();
 }
 void App::ClearDistanceView() {
   int index = this->ui->cbViewMeasurement->currentIndex();
@@ -135,6 +140,7 @@ void App::ClearContour(int i) {
     this->ContourWidget[i]->SetEnabled(0);
     this->ContourWidget[i] = nullptr;
   }
+  datamanager->Render();
 }
 
 void App::ClearContour() {
@@ -170,6 +176,7 @@ void App::AddDistanceMeasurementToView(int i)
     vtkSmartPointer< vtkPointHandleRepresentation2D >::New();
   vtkSmartPointer< vtkDistanceRepresentation2D > distanceRep =
     vtkSmartPointer< vtkDistanceRepresentation2D >::New();
+  // distanceRep->GetAxisProperty()
   distanceRep->SetHandleRepresentation(handleRep);
   this->DistanceWidget[i]->SetRepresentation(distanceRep);
   distanceRep->InstantiateHandleRepresentation();
@@ -182,6 +189,7 @@ void App::AddDistanceMeasurementToView(int i)
 
   this->DistanceWidget[i]->CreateDefaultRepresentation();
   this->DistanceWidget[i]->EnabledOn();
+  this->datamanager->Render();
 }
 
 void App::AddContourWidgetToView(int index) {
@@ -201,7 +209,7 @@ void App::AddContourWidgetToView(int index) {
   vtkSmartPointer<vtkOrientedGlyphContourRepresentation> rep =
     vtkOrientedGlyphContourRepresentation::New();
   rep->GetLinesProperty()->SetColor(1, 0, 0);
-
+  rep->GetLinesProperty()->SetLineWidth(2.0);
 
   this->ContourWidget[index]->SetRepresentation(rep);
 
@@ -270,6 +278,7 @@ void App::AddContourWidgetToView(int index) {
 
   this->ContourWidget[index]->Initialize(pd, 1);
   this->ContourWidget[index]->Render();
+  this->datamanager->Render();
 }
 void App::AddContourWidgetToView() {
   int index = this->ui->cbViewContour->currentIndex();

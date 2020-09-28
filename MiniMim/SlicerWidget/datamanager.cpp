@@ -64,6 +64,7 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent),
   for (size_t i = 0; i < 3; i++) {
     m_riw[i] = vtkSmartPointer<vtkResliceImageViewer>::New();
     vtkNew<vtkGenericOpenGLRenderWindow> renderWindow;
+    renderWindow->SetMultiSamples(4);
     m_riw[i]->SetRenderWindow(renderWindow);
   }
   for (size_t i = 0; i < 3; i++) {
@@ -96,10 +97,6 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent),
 
     m_riw[i]->SetSliceOrientation(i);
     m_riw[i]->SetResliceModeToAxisAligned();
-    // Set empty data - otherwise we cannot enable widgets
-    // TEST without dummy
-    //m_riw[i]->SetInputData(this->m_dummy);
-    //m_riw[i]->SetInputConnection(this->m_dummy.GetOutputPort());
   }
 
   // Create 3D viewer
@@ -114,8 +111,13 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent),
   vtkSmartPointer<vtkRenderer> ren =
     vtkSmartPointer<vtkRenderer>::New();
 
+  // TEST
+  ren->UseFXAAOn();
+  
   vtkNew<vtkGenericOpenGLRenderWindow> renderWindow;
-
+  // TEST
+  renderWindow->SetMultiSamples(4);
+  // vtkSSAAPass
   this->ui->view3->SetRenderWindow(renderWindow);
 
   // Why both a GL and conventional -> edges are CPU rendered
