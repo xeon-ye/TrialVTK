@@ -116,8 +116,7 @@ void App::ResetViews() {
   this->datamanager->ResetViews();
 }
 
-void App::AddDistanceMeasurementToView()
-{
+void App::AddDistanceMeasurementToView() {
   int index = this->ui->cbViewMeasurement->currentIndex();
   this->AddDistanceMeasurementToView(index);
 }
@@ -151,8 +150,7 @@ void App::ClearContour() {
 void App::AddDistanceMeasurementToView(int i)
 {
   // remove existing widgets.
-  if (this->DistanceWidget[i])
-  {
+  if (this->DistanceWidget[i]) {
     this->DistanceWidget[i]->SetEnabled(0);
     this->DistanceWidget[i] = nullptr;
   }

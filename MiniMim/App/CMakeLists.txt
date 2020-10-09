@@ -23,6 +23,6 @@ if (WIN32)
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/MiniMim.bat.in" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}/MiniMim.bat" @ONLY)
 endif()
 
-target_link_libraries(MiniMim SlicerWidget)
+target_link_libraries(MiniMim SlicerWidget2)
 target_link_libraries(MiniMim Qt5::Core Qt5::Gui Qt5::Widgets)
 target_link_libraries(MiniMim ${VTK_LIBRARIES})

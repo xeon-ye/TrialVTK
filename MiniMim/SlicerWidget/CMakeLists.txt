@@ -39,8 +39,7 @@ set(CMAKE_AUTOMOC ON)
 qt5_wrap_ui(UI_Srcs ${UIs})
 
 # CMAKE_AUTOMOC in ON so the MocHdrs will be automatically wrapped.
-add_library(SlicerWidget ${Srcs} ${Hdrs} ${UI_Srcs} ${MOC_Hdrs})
+add_library(SlicerWidget2 ${Srcs} ${Hdrs} ${UI_Srcs} ${MOC_Hdrs})
 
-target_link_libraries(SlicerWidget Qt5::Core Qt5::Gui Qt5::Widgets)
-target_link_libraries(SlicerWidget ${VTK_LIBRARIES})
-
+target_link_libraries(SlicerWidget2 Qt5::Core Qt5::Gui Qt5::Widgets)
+target_link_libraries(SlicerWidget2 ${VTK_LIBRARIES})
