@@ -26,6 +26,13 @@
 #include "vtkResliceCursorLineRepresentation.h"
 #include "vtkProperty2D.h"
 
+// Add Vessel view
+#include "vtkXMLPolyDataReader.h"
+#include "vtkPolyDataMapper.h"
+#include "vtkActor.h"
+#include "vtkNamedColors.h"
+#include "vtkRenderer.h"
+
 #include "QVTKOpenGLWidget.h"
 
 // Ugly
@@ -44,6 +51,7 @@ void App::SetupUI() {
   horizontalLayout->addWidget(this->datamanager);
 
   DistanceWidget[0] = DistanceWidget[1] = DistanceWidget[2] = nullptr;
+  Vessels = nullptr;
 }
 
 void App::PopulateMenus() {
@@ -51,6 +59,8 @@ void App::PopulateMenus() {
           this, SLOT(slotExit()));
   connect(this->ui->actionOpen, SIGNAL(triggered()),
           this, SLOT(onLoadClicked()));
+  connect(this->ui->actionOpenSurface, SIGNAL(triggered()),
+          this, SLOT(onLoadSurfaceClicked()));
   connect(this->ui->cbViewMeasurement, SIGNAL(activated(int)),
       this, SLOT(referenceViewChanged(int)));
   connect(this->ui->resetButton, SIGNAL(pressed()), this, SLOT(ResetViews()));
@@ -64,6 +74,9 @@ void App::PopulateMenus() {
           SLOT(ClearDistanceView()));
   connect(this->ui->btnClearContour, SIGNAL(pressed()), this,
           SLOT(ClearContour()));
+  connect(ui->btnPreset, &QPushButton::clicked,
+          this, &App::onApplyPresetClick);
+  
 }
 
 void App::resliceMode(int i) {
@@ -73,6 +86,93 @@ void App::resliceMode(int i) {
 void App::referenceViewChanged(int index) {
   std::cout << "reference view is now: " << index << std::endl;
   this->datamanager->SetReferenceSlice(index);
+}
+
+void App::onApplyPresetClick() {
+  qDebug() << "preset";
+  // CT Liver preset
+  double window = 200;
+  double level = 100; // [0,200]
+  //window = -200;
+
+  int index = this->ui->cboxPreset->currentIndex();
+
+  if (index == 0) {
+    double range[2];
+    if (datamanager->m_riw[0]) {
+      datamanager->m_riw[0]->GetInput()->GetScalarRange(range);
+      window = range[1]-range[0];
+      level = (range[0]+range[1])/2.0;
+    }
+  }
+  for (size_t i = 0; i < 3 ; i++) {
+    if (datamanager->m_riw[i]) {
+      datamanager->m_riw[i]->SetColorWindow(window);
+      datamanager->m_riw[i]->SetColorLevel(level);
+      datamanager->m_riw[i]->Render();
+    }
+  }
+}
+
+void App::onLoadSurfaceClicked() {
+  const QString DEFAULT_DIR_KEY("SlicerWidgetDefaultDir");
+  QSettings MySettings;
+
+  QString selectedDirectory;
+
+  FileDialog w;
+  w.setDirectory(MySettings.value(DEFAULT_DIR_KEY).toString());
+
+  int nMode = w.exec();
+  QStringList fnames = w.selectedFiles();
+
+  if (nMode != 0 && fnames.size() != 0) {
+    QString files = fnames[0];
+    QDir directory = QDir(files);
+    if (directory.exists()) {
+      // Must be a file
+      return;
+    } else {
+      QFileInfo info(files);
+      if (info.completeSuffix() == QLatin1String("vtp")) {
+        vtkSmartPointer<vtkXMLPolyDataReader> reader =
+            vtkSmartPointer<vtkXMLPolyDataReader>::New();
+
+        reader->SetFileName(files.toUtf8().constData());
+        reader->Update();
+
+        vtkSmartPointer<vtkPolyDataMapper> mapper =
+            vtkSmartPointer<vtkPolyDataMapper>::New();
+        mapper->SetInputConnection(reader->GetOutputPort());
+
+        if (Vessels) {
+          datamanager->m_planeWidget[0]->GetDefaultRenderer()->RemoveActor(Vessels);
+          Vessels = nullptr;
+        }
+
+        Vessels =
+            vtkSmartPointer<vtkActor>::New();
+
+        Vessels->SetMapper(mapper);
+        auto prop = Vessels->GetProperty();
+        vtkSmartPointer<vtkNamedColors> namedColors =
+            vtkSmartPointer<vtkNamedColors>::New();
+
+        prop->SetColor(namedColors->GetColor3d("#517487").GetData());
+        //prop->SetColor(vtkNamedColors::GetColor3d("#517487"));
+        prop->SetOpacity(0.35);
+
+        // Liver surface
+        // prop.SetColor(vtk.vtkColor3d(hexCol("#873927")))
+        
+        datamanager->m_planeWidget[0]->GetDefaultRenderer()->AddActor(Vessels);
+        // Before, it was accessing QVTKWidget of GUI
+        this->datamanager->ui->view3->GetRenderWindow()->Render();
+      } else {
+        return;
+      }
+    }
+  }
 }
 
 void App::onLoadClicked() {
@@ -248,9 +348,9 @@ void App::AddContourWidgetToView(int index) {
 
   memcpy(origin, pTmp, 3*sizeof(double));
 
-  for (int i = 0 ; i < 11 ; i++) {
-    int ii = i % 10;
-    double angle = 2.0 * M_PI * i / 10.0;
+  for (int i = 0 ; i < 6 ; i++) {
+    int ii = i % 5;
+    double angle = 2.0 * M_PI * i / 5.0;
     if (index == 2) {
       points->InsertNextPoint(origin[0] + radius * cos(angle),
                               origin[1] + radius * sin(angle),

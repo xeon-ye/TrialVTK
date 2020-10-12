@@ -21,6 +21,9 @@ class App : public QMainWindow {
 
  private Q_SLOTS:
   void onLoadClicked();
+  void onLoadSurfaceClicked();
+  void onApplyPresetClick();
+  
   void referenceViewChanged(int index);
   void ResetViews();
   virtual void AddDistanceMeasurementToView();
@@ -49,4 +52,5 @@ class App : public QMainWindow {
 protected:
   vtkSmartPointer< vtkDistanceWidget > DistanceWidget[3];
   vtkSmartPointer< vtkContourWidget > ContourWidget[3];
+  vtkSmartPointer< vtkActor > Vessels;
 };
