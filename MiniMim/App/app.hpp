@@ -38,6 +38,7 @@ class App : public QMainWindow {
   void ClearContour();
 
   void resliceMode(int);
+  void togglePlane(int);
  private:
   void SetupUI();
   void PopulateMenus();

@@ -5,6 +5,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <map>
 
 #ifdef _WIN32
 # define _USE_MATH_DEFINES 1
@@ -76,11 +77,36 @@ void App::PopulateMenus() {
           SLOT(ClearContour()));
   connect(ui->btnPreset, &QPushButton::clicked,
           this, &App::onApplyPresetClick);
-  
+  connect(ui->cboxSagittal, SIGNAL(stateChanged(int)), this,
+          SLOT(togglePlane(int)));
+  connect(ui->cboxCoronal, SIGNAL(stateChanged(int)), this,
+          SLOT(togglePlane(int)));
+  connect(ui->cboxAxial, SIGNAL(stateChanged(int)), this,
+          SLOT(togglePlane(int)));
 }
 
 void App::resliceMode(int i) {
   this->datamanager->resliceMode(i);
+}
+
+void App::togglePlane(int i) {
+  QObject* obj = QObject::sender();
+  int index = -1;
+  if (obj == ui->cboxSagittal) {
+    index = 0;
+  } else if (obj == ui->cboxCoronal) {
+    index = 1;
+  } else if (obj == ui->cboxAxial) {
+    index = 2;
+  }
+
+  if (index > -1) {
+    if (i == 0) {
+      this->datamanager->m_planeWidget[index]->Off();
+    } else {
+      this->datamanager->m_planeWidget[index]->On();
+    }
+  }
 }
 
 void App::referenceViewChanged(int index) {
