@@ -2,6 +2,7 @@
 
 #include <QMainWindow>
 #include <QHBoxLayout>
+#include <QSignalMapper>
 #include <SlicerWidget/datamanager.h>
 
 #include "vtkSmartPointer.h"
@@ -21,7 +22,7 @@ class App : public QMainWindow {
 
  private Q_SLOTS:
   void onLoadClicked();
-  void onLoadSurfaceClicked();
+  void onLoadSurfaceClicked(int inout);
   void onApplyPresetClick();
   
   void referenceViewChanged(int index);
@@ -49,9 +50,10 @@ class App : public QMainWindow {
 
   QHBoxLayout* horizontalLayout;
   DataManager* datamanager;
+  QSignalMapper* signalMapper;
   int iSlice = 0;
 protected:
   vtkSmartPointer< vtkDistanceWidget > DistanceWidget[3];
   vtkSmartPointer< vtkContourWidget > ContourWidget[3];
-  vtkSmartPointer< vtkActor > Vessels;
+  vtkSmartPointer< vtkActor > Surfaces[2];
 };

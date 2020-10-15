@@ -459,7 +459,8 @@
      <string>&amp;File</string>
     </property>
     <addaction name="actionOpen"/>
-    <addaction name="actionOpenSurface"/>
+    <addaction name="actionOpenOuterSurface"/>
+    <addaction name="actionOpenInnerSurface"/>
     <addaction name="actionExit"/>
    </widget>
    <addaction name="menuFile"/>
@@ -470,9 +471,14 @@
      <string>Open</string>
     </property>
    </action>
-   <action name="actionOpenSurface">
+   <action name="actionOpenOuterSurface">
     <property name="text">
-     <string>Open Surface</string>
+     <string>Open Outer Surface</string>
+    </property>
+   </action>
+   <action name="actionOpenInnerSurface">
+    <property name="text">
+     <string>Open Inner Surface</string>
     </property>
    </action>
    <action name="actionExit">

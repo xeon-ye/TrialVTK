@@ -52,16 +52,28 @@ void App::SetupUI() {
   horizontalLayout->addWidget(this->datamanager);
 
   DistanceWidget[0] = DistanceWidget[1] = DistanceWidget[2] = nullptr;
-  Vessels = nullptr;
+  Surfaces[0] = Surfaces[1] = nullptr;
 }
 
 void App::PopulateMenus() {
+  signalMapper = new QSignalMapper(this);
+
+  connect(this->ui->actionOpenOuterSurface, SIGNAL(triggered()),
+          signalMapper, SLOT(map()));
+  connect(this->ui->actionOpenInnerSurface, SIGNAL(triggered()),
+          signalMapper, SLOT(map()));
+  
+  signalMapper->setMapping(this->ui->actionOpenOuterSurface, 0);
+  signalMapper->setMapping(this->ui->actionOpenInnerSurface, 1);
+
+  connect(signalMapper, SIGNAL(mapped(int)), this,
+          SLOT(onLoadSurfaceClicked(int)));
+  
   connect(this->ui->actionExit, SIGNAL(triggered()),
           this, SLOT(slotExit()));
   connect(this->ui->actionOpen, SIGNAL(triggered()),
           this, SLOT(onLoadClicked()));
-  connect(this->ui->actionOpenSurface, SIGNAL(triggered()),
-          this, SLOT(onLoadSurfaceClicked()));
+
   connect(this->ui->cbViewMeasurement, SIGNAL(activated(int)),
       this, SLOT(referenceViewChanged(int)));
   connect(this->ui->resetButton, SIGNAL(pressed()), this, SLOT(ResetViews()));
@@ -140,7 +152,7 @@ void App::onApplyPresetClick() {
   }
 }
 
-void App::onLoadSurfaceClicked() {
+void App::onLoadSurfaceClicked(int inout) {
   const QString DEFAULT_DIR_KEY("SlicerWidgetDefaultDir");
   QSettings MySettings;
 
@@ -152,6 +164,8 @@ void App::onLoadSurfaceClicked() {
   int nMode = w.exec();
   QStringList fnames = w.selectedFiles();
 
+  vtkSmartPointer<vtkActor>& actor = Surfaces[inout];
+  
   if (nMode != 0 && fnames.size() != 0) {
     QString files = fnames[0];
     QDir directory = QDir(files);
@@ -171,28 +185,29 @@ void App::onLoadSurfaceClicked() {
             vtkSmartPointer<vtkPolyDataMapper>::New();
         mapper->SetInputConnection(reader->GetOutputPort());
 
-        if (Vessels) {
-          datamanager->m_planeWidget[0]->GetDefaultRenderer()->RemoveActor(Vessels);
-          Vessels = nullptr;
+        if (actor) {
+          datamanager->m_planeWidget[0]->GetDefaultRenderer()->RemoveActor(actor);
+          actor = nullptr;
         }
 
-        Vessels =
+        actor =
             vtkSmartPointer<vtkActor>::New();
 
-        Vessels->SetMapper(mapper);
-        auto prop = Vessels->GetProperty();
+        actor->SetMapper(mapper);
+        auto prop = actor->GetProperty();
         vtkSmartPointer<vtkNamedColors> namedColors =
             vtkSmartPointer<vtkNamedColors>::New();
 
-        prop->SetColor(namedColors->GetColor3d("#517487").GetData());
-        //prop->SetColor(vtkNamedColors::GetColor3d("#517487"));
+        if (inout == 1) {
+          // hexCol("#517487")
+          prop->SetColor(vtkColor3d(0.3176470588235294, 0.4549019607843137, 0.5294117647058824).GetData());
+        } else {
+          // hexCol("#873927")
+          prop->SetColor(vtkColor3d(0.5294117647058824, 0.2235294117647059, 0.15294117647058825).GetData());
+        }
         prop->SetOpacity(0.35);
 
-        // Liver surface
-        // prop.SetColor(vtk.vtkColor3d(hexCol("#873927")))
-        
-        datamanager->m_planeWidget[0]->GetDefaultRenderer()->AddActor(Vessels);
-        // Before, it was accessing QVTKWidget of GUI
+        datamanager->m_planeWidget[0]->GetDefaultRenderer()->AddActor(actor);
         this->datamanager->ui->view3->GetRenderWindow()->Render();
       } else {
         return;

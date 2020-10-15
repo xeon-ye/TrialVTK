@@ -123,8 +123,8 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent),
   // Why both a GL and conventional -> edges are CPU rendered
   this->ui->view3->GetRenderWindow()->AddRenderer(ren);
 
-  ren->SetBackGround(245.0/255.0,245.0/255.0,245.0/255.0);
-  ren->SetBackGround2(170.0/255.0,170.0/255.0,170.0/255.0);
+  ren->SetBackground(245.0/255.0,245.0/255.0,245.0/255.0);
+  ren->SetBackground2(170.0/255.0,170.0/255.0,170.0/255.0);
   ren->GradientBackgroundOn();
 
   vtkRenderWindowInteractor *iren = this->ui->view3->GetInteractor();
