@@ -255,12 +255,6 @@ void App::AddDistanceMeasurementToView(int i)
     this->DistanceWidget[i] = nullptr;
   }
 
-    // remove existing widgets.
-  if (this->ContourWidget[i]) {
-    this->ContourWidget[i]->SetEnabled(0);
-    this->ContourWidget[i] = nullptr;
-  }
-
   // add new widget
   this->DistanceWidget[i] = vtkSmartPointer< vtkDistanceWidget >::New();
   this->DistanceWidget[i]->SetInteractor(
