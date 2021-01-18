@@ -45,6 +45,7 @@ class DataManager : public QWidget {
 
  public:
   void resliceMode(int mode);
+  void showPlanes(int mode);
  public:
   // HACK
   Ui::DataManager *ui;

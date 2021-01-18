@@ -51,7 +51,7 @@ void App::SetupUI() {
   horizontalLayout->addWidget(this->datamanager);
 
   DistanceWidget[0] = DistanceWidget[1] = DistanceWidget[2] = nullptr;
-  Vessels = nullptr;
+  Surfaces[0] = Surfaces[1] = nullptr;
 }
 
 void App::PopulateMenus() {
@@ -69,6 +69,7 @@ void App::PopulateMenus() {
   connect(this->ui->btnAddContour, SIGNAL(pressed()), this,
           SLOT(AddContourWidgetToView()));
   connect(this->ui->resliceModeCheckBox, SIGNAL(stateChanged(int)), this, SLOT(resliceMode(int)));
+  connect(this->ui->cboxShowPlanes, SIGNAL(stateChanged(int)), this, SLOT(showPlanes(int)));
 
   connect(this->ui->btnClearDistance, SIGNAL(pressed()), this,
           SLOT(ClearDistanceView()));
@@ -81,6 +82,10 @@ void App::PopulateMenus() {
 
 void App::resliceMode(int i) {
   this->datamanager->resliceMode(i);
+}
+
+void App::showPlanes(int i) {
+  this->datamanager->showPlanes(i);
 }
 
 void App::referenceViewChanged(int index) {
@@ -115,6 +120,8 @@ void App::onApplyPresetClick() {
 }
 
 void App::onLoadSurfaceClicked() {
+  static int index = 0;
+  
   const QString DEFAULT_DIR_KEY("SlicerWidgetDefaultDir");
   QSettings MySettings;
 
@@ -126,6 +133,8 @@ void App::onLoadSurfaceClicked() {
   int nMode = w.exec();
   QStringList fnames = w.selectedFiles();
 
+  vtkSmartPointer<vtkActor>& pSurface = Surfaces[index];
+  
   if (nMode != 0 && fnames.size() != 0) {
     QString files = fnames[0];
     QDir directory = QDir(files);
@@ -145,29 +154,31 @@ void App::onLoadSurfaceClicked() {
             vtkSmartPointer<vtkPolyDataMapper>::New();
         mapper->SetInputConnection(reader->GetOutputPort());
 
-        if (Vessels) {
-          datamanager->m_planeWidget[0]->GetDefaultRenderer()->RemoveActor(Vessels);
-          Vessels = nullptr;
+        if (pSurface) {
+          datamanager->m_planeWidget[0]->GetDefaultRenderer()->RemoveActor(pSurface);
+          pSurface = nullptr;
         }
 
-        Vessels =
+        pSurface =
             vtkSmartPointer<vtkActor>::New();
 
-        Vessels->SetMapper(mapper);
-        auto prop = Vessels->GetProperty();
+        pSurface->SetMapper(mapper);
+        auto prop = pSurface->GetProperty();
         vtkSmartPointer<vtkNamedColors> namedColors =
             vtkSmartPointer<vtkNamedColors>::New();
 
-        prop->SetColor(namedColors->GetColor3d("#517487").GetData());
-        //prop->SetColor(vtkNamedColors::GetColor3d("#517487"));
+        if (index == 0) {
+          prop->SetColor(namedColors->GetColor3d("#873927").GetData());
+        } else {
+          prop->SetColor(namedColors->GetColor3d("#517487").GetData());
+        }
         prop->SetOpacity(0.35);
 
-        // Liver surface
-        // prop.SetColor(vtk.vtkColor3d(hexCol("#873927")))
         
-        datamanager->m_planeWidget[0]->GetDefaultRenderer()->AddActor(Vessels);
-        // Before, it was accessing QVTKWidget of GUI
+        datamanager->m_planeWidget[0]->GetDefaultRenderer()->AddActor(pSurface);
         this->datamanager->ui->view3->GetRenderWindow()->Render();
+        index++;
+        index = index % 2;
       } else {
         return;
       }
@@ -254,13 +265,13 @@ void App::AddDistanceMeasurementToView(int i)
     this->DistanceWidget[i]->SetEnabled(0);
     this->DistanceWidget[i] = nullptr;
   }
-
-    // remove existing widgets.
+#if 0
+  // remove existing widgets.
   if (this->ContourWidget[i]) {
     this->ContourWidget[i]->SetEnabled(0);
     this->ContourWidget[i] = nullptr;
   }
-
+#endif
   // add new widget
   this->DistanceWidget[i] = vtkSmartPointer< vtkDistanceWidget >::New();
   this->DistanceWidget[i]->SetInteractor(
@@ -348,9 +359,9 @@ void App::AddContourWidgetToView(int index) {
 
   memcpy(origin, pTmp, 3*sizeof(double));
 
-  for (int i = 0 ; i < 6 ; i++) {
-    int ii = i % 5;
-    double angle = 2.0 * M_PI * i / 5.0;
+  for (int i = 0 ; i < 8 ; i++) {
+    int ii = i % 7;
+    double angle = 2.0 * M_PI * i / 7.0;
     if (index == 2) {
       points->InsertNextPoint(origin[0] + radius * cos(angle),
                               origin[1] + radius * sin(angle),

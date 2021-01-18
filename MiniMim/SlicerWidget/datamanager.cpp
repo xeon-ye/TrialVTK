@@ -120,9 +120,19 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent),
   // vtkSSAAPass
   this->ui->view3->SetRenderWindow(renderWindow);
 
-  // Why both a GL and conventional -> edges are CPU rendered
+  // Why both a GL and conventional? Edges are CPU rendered
   this->ui->view3->GetRenderWindow()->AddRenderer(ren);
 
+  // Test gradient background
+  ren->SetBackground(245.0/255.0,
+		     245.0/255.0,
+		     245.0/255.0);
+
+  ren->SetBackground2(170.0/255.0,
+		      170.0/255.0,
+		      170.0/255.0);
+  ren->GradientBackgroundOn();
+  
   vtkRenderWindowInteractor *iren = this->ui->view3->GetInteractor();
 
   for (int i = 0; i < 3; i++) {
@@ -346,6 +356,15 @@ DataManager::~DataManager() {
   delete ui;
 }
 
+void DataManager::showPlanes(int show) {
+  for (int i = 0 ; i < 3 ; i++) {
+    if (show == 0) {
+      m_planeWidget[i]->Off();
+    } else {
+      m_planeWidget[i]->On();
+    }
+  }
+}
 void DataManager::resliceMode(int mode) {
   for (int i = 0; i < 3; i++) {
     m_riw[i]->SetResliceMode(mode ? 1 : 0);

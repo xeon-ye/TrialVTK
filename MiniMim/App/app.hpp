@@ -38,6 +38,7 @@ class App : public QMainWindow {
   void ClearContour();
 
   void resliceMode(int);
+  void showPlanes(int);
  private:
   void SetupUI();
   void PopulateMenus();
@@ -52,5 +53,5 @@ class App : public QMainWindow {
 protected:
   vtkSmartPointer< vtkDistanceWidget > DistanceWidget[3];
   vtkSmartPointer< vtkContourWidget > ContourWidget[3];
-  vtkSmartPointer< vtkActor > Vessels;
+  vtkSmartPointer< vtkActor > Surfaces[2];
 };

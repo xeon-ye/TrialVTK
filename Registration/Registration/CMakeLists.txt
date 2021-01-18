@@ -10,12 +10,16 @@ if (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 #  add_definitions(-DQT_NO_DEBUG_OUTPUT)
 endif()
 
+#find_package(VTK 8.2 REQUIRED NO_MODULE)
+#include(${VTK_USE_FILE})
+
 find_package(VTK COMPONENTS
   vtkCommonCore
   vtkFiltersSources
   vtkGUISupportQt
   vtkIOImage
   vtkInteractionImage
+  vtkRendering${VTK_RENDERING_BACKEND}
 )
 
 include(${VTK_USE_FILE})
