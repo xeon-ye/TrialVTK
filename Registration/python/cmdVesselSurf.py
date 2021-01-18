@@ -15,7 +15,7 @@ import os
 filedir = os.path.dirname(os.path.realpath(__file__))
 
 def main():
-  fileName = 'seg.mhd'
+  fileName = 'Vein.mhd'
   fileName = os.path.join(filedir, fileName)
   print(fileName)
   reader = vtk.vtkMetaImageReader()

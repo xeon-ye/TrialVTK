@@ -5,6 +5,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <map>
 
 #ifdef _WIN32
 # define _USE_MATH_DEFINES 1
@@ -55,12 +56,24 @@ void App::SetupUI() {
 }
 
 void App::PopulateMenus() {
+  signalMapper = new QSignalMapper(this);
+
+  connect(this->ui->actionOpenOuterSurface, SIGNAL(triggered()),
+          signalMapper, SLOT(map()));
+  connect(this->ui->actionOpenInnerSurface, SIGNAL(triggered()),
+          signalMapper, SLOT(map()));
+  
+  signalMapper->setMapping(this->ui->actionOpenOuterSurface, 0);
+  signalMapper->setMapping(this->ui->actionOpenInnerSurface, 1);
+
+  connect(signalMapper, SIGNAL(mapped(int)), this,
+          SLOT(onLoadSurfaceClicked(int)));
+  
   connect(this->ui->actionExit, SIGNAL(triggered()),
           this, SLOT(slotExit()));
   connect(this->ui->actionOpen, SIGNAL(triggered()),
           this, SLOT(onLoadClicked()));
-  connect(this->ui->actionOpenSurface, SIGNAL(triggered()),
-          this, SLOT(onLoadSurfaceClicked()));
+
   connect(this->ui->cbViewMeasurement, SIGNAL(activated(int)),
       this, SLOT(referenceViewChanged(int)));
   connect(this->ui->resetButton, SIGNAL(pressed()), this, SLOT(ResetViews()));
@@ -77,15 +90,36 @@ void App::PopulateMenus() {
           SLOT(ClearContour()));
   connect(ui->btnPreset, &QPushButton::clicked,
           this, &App::onApplyPresetClick);
-  
+  connect(ui->cboxSagittal, SIGNAL(stateChanged(int)), this,
+          SLOT(togglePlane(int)));
+  connect(ui->cboxCoronal, SIGNAL(stateChanged(int)), this,
+          SLOT(togglePlane(int)));
+  connect(ui->cboxAxial, SIGNAL(stateChanged(int)), this,
+          SLOT(togglePlane(int)));
 }
 
 void App::resliceMode(int i) {
   this->datamanager->resliceMode(i);
 }
 
-void App::showPlanes(int i) {
-  this->datamanager->showPlanes(i);
+void App::togglePlane(int i) {
+  QObject* obj = QObject::sender();
+  int index = -1;
+  if (obj == ui->cboxSagittal) {
+    index = 0;
+  } else if (obj == ui->cboxCoronal) {
+    index = 1;
+  } else if (obj == ui->cboxAxial) {
+    index = 2;
+  }
+
+  if (index > -1) {
+    if (i == 0) {
+      this->datamanager->m_planeWidget[index]->Off();
+    } else {
+      this->datamanager->m_planeWidget[index]->On();
+    }
+  }
 }
 
 void App::referenceViewChanged(int index) {
@@ -119,9 +153,7 @@ void App::onApplyPresetClick() {
   }
 }
 
-void App::onLoadSurfaceClicked() {
-  static int index = 0;
-  
+void App::onLoadSurfaceClicked(int inout) {
   const QString DEFAULT_DIR_KEY("SlicerWidgetDefaultDir");
   QSettings MySettings;
 
@@ -133,7 +165,7 @@ void App::onLoadSurfaceClicked() {
   int nMode = w.exec();
   QStringList fnames = w.selectedFiles();
 
-  vtkSmartPointer<vtkActor>& pSurface = Surfaces[index];
+  vtkSmartPointer<vtkActor>& actor = Surfaces[inout];
   
   if (nMode != 0 && fnames.size() != 0) {
     QString files = fnames[0];
@@ -154,28 +186,29 @@ void App::onLoadSurfaceClicked() {
             vtkSmartPointer<vtkPolyDataMapper>::New();
         mapper->SetInputConnection(reader->GetOutputPort());
 
-        if (pSurface) {
-          datamanager->m_planeWidget[0]->GetDefaultRenderer()->RemoveActor(pSurface);
-          pSurface = nullptr;
+        if (actor) {
+          datamanager->m_planeWidget[0]->GetDefaultRenderer()->RemoveActor(actor);
+          actor = nullptr;
         }
 
-        pSurface =
+        actor =
             vtkSmartPointer<vtkActor>::New();
 
-        pSurface->SetMapper(mapper);
-        auto prop = pSurface->GetProperty();
+        actor->SetMapper(mapper);
+        auto prop = actor->GetProperty();
         vtkSmartPointer<vtkNamedColors> namedColors =
             vtkSmartPointer<vtkNamedColors>::New();
 
-        if (index == 0) {
-          prop->SetColor(namedColors->GetColor3d("#873927").GetData());
+        if (inout == 1) {
+          // hexCol("#517487")
+          prop->SetColor(vtkColor3d(0.3176470588235294, 0.4549019607843137, 0.5294117647058824).GetData());
         } else {
-          prop->SetColor(namedColors->GetColor3d("#517487").GetData());
+          // hexCol("#873927")
+          prop->SetColor(vtkColor3d(0.5294117647058824, 0.2235294117647059, 0.15294117647058825).GetData());
         }
         prop->SetOpacity(0.35);
 
-        
-        datamanager->m_planeWidget[0]->GetDefaultRenderer()->AddActor(pSurface);
+        datamanager->m_planeWidget[0]->GetDefaultRenderer()->AddActor(actor);
         this->datamanager->ui->view3->GetRenderWindow()->Render();
         index++;
         index = index % 2;
@@ -265,13 +298,6 @@ void App::AddDistanceMeasurementToView(int i)
     this->DistanceWidget[i]->SetEnabled(0);
     this->DistanceWidget[i] = nullptr;
   }
-#if 0
-  // remove existing widgets.
-  if (this->ContourWidget[i]) {
-    this->ContourWidget[i]->SetEnabled(0);
-    this->ContourWidget[i] = nullptr;
-  }
-#endif
   // add new widget
   this->DistanceWidget[i] = vtkSmartPointer< vtkDistanceWidget >::New();
   this->DistanceWidget[i]->SetInteractor(

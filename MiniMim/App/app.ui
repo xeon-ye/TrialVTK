@@ -387,20 +387,40 @@
              </item>
             </layout>
            </item>
-	   <item>
-	    <layout class="QHBoxLayout" name="horizontalLayout_10">
-	     <item>
-              <widget class="QCheckBox" name="cboxShowPlanes">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_10">
+             <item>
+              <widget class="QCheckBox" name="cboxSagittal">
                <property name="text">
-                <string>Show planes</string>
+                <string>Sagittal (Red)</string>
                </property>
                <property name="checked">
                 <bool>true</bool>
                </property>
               </widget>
-	     </item>
-	     <item>
-              <spacer name="horizontalSpacer_1">
+             </item>
+             <item>
+              <widget class="QCheckBox" name="cboxCoronal">
+               <property name="text">
+                <string>Coronal (Green)</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="cboxAxial">
+               <property name="text">
+                <string>Axial (Blue)</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_6">
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
                </property>
@@ -411,9 +431,9 @@
                 </size>
                </property>
               </spacer>
-	     </item>
-	    </layout>
-	   </item>
+             </item>
+            </layout>
+           </item>
           </layout>
          </widget>
         </item>
@@ -437,7 +457,8 @@
      <string>&amp;File</string>
     </property>
     <addaction name="actionOpen"/>
-    <addaction name="actionOpenSurface"/>
+    <addaction name="actionOpenOuterSurface"/>
+    <addaction name="actionOpenInnerSurface"/>
     <addaction name="actionExit"/>
    </widget>
    <addaction name="menuFile"/>
@@ -448,9 +469,14 @@
      <string>Open</string>
     </property>
    </action>
-   <action name="actionOpenSurface">
+   <action name="actionOpenOuterSurface">
     <property name="text">
-     <string>Open Surface</string>
+     <string>Open Outer Surface</string>
+    </property>
+   </action>
+   <action name="actionOpenInnerSurface">
+    <property name="text">
+     <string>Open Inner Surface</string>
     </property>
    </action>
    <action name="actionExit">

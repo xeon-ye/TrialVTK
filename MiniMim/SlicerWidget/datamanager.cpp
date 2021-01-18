@@ -123,16 +123,10 @@ DataManager::DataManager(QWidget *parent) : QWidget(parent),
   // Why both a GL and conventional? Edges are CPU rendered
   this->ui->view3->GetRenderWindow()->AddRenderer(ren);
 
-  // Test gradient background
-  ren->SetBackground(245.0/255.0,
-		     245.0/255.0,
-		     245.0/255.0);
-
-  ren->SetBackground2(170.0/255.0,
-		      170.0/255.0,
-		      170.0/255.0);
+  ren->SetBackground(245.0/255.0,245.0/255.0,245.0/255.0);
+  ren->SetBackground2(170.0/255.0,170.0/255.0,170.0/255.0);
   ren->GradientBackgroundOn();
-  
+
   vtkRenderWindowInteractor *iren = this->ui->view3->GetInteractor();
 
   for (int i = 0; i < 3; i++) {

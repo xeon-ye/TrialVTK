@@ -1,4 +1,4 @@
-# TODO: Make scaling work
+# TODO: Make scaling work. Get distance
 import sys
 import os
 import vtk
@@ -135,17 +135,31 @@ class QLiverViewer(QtWidgets.QFrame):
       icp.DebugOn()
       icp.SetMaximumNumberOfIterations(10)
       icp.StartByMatchingCentroidsOff()
-      #icp.SetMeanDistanceModeToRMS()
-      icp.SetMeanDistanceModeToAbsoluteValue()
+      icp.SetCheckMeanDistance(1) # Experiment
+      #icp.SetMeanDistanceModeToAbsoluteValue() # Original
+      icp.SetMeanDistanceModeToRMS() # Default
+      #print(icp.GetLandmarkTransform())
+      #sys.stdout.write("Before: ")
+      #print(icp.GetMeanDistance())
+      from vtkUtils import CloudMeanDist
+      dist0 = CloudMeanDist(wrongContours, self.vesselPolyData)
+      print(dist0)
 
       icp.Modified()
       icp.Update()
+      #print(icp) # Shows mean distance
+      #print(icp.GetLandmarkTransform())
+
       icpTransformFilter = vtk.vtkTransformPolyDataFilter()
       icpTransformFilter.SetInputData(wrongContours)
       icpTransformFilter.SetTransform(icp)
       icpTransformFilter.Update()
 
       correctedContours = icpTransformFilter.GetOutput()
+      dist1 = CloudMeanDist(correctedContours, self.vesselPolyData)
+      print(dist1)
+      #sys.stdout.write("After: ")
+      #print(icp.GetMeanDistance())
 
       tubes = vtk.vtkTubeFilter()
       tubes.SetInputData(correctedContours)

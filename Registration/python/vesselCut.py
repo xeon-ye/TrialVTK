@@ -67,7 +67,6 @@ cubeAxesActor = vtk.vtkCubeAxesActor()
 cubeAxesActor.SetUseTextActor3D(1)
 cubeAxesActor.SetBounds(reader.GetOutput().GetBounds())
 
-
 # Setup a renderer, render window, and interactor
 renderer = vtk.vtkRenderer()
 renderWindow = vtk.vtkRenderWindow()
@@ -88,7 +87,9 @@ cubeAxesActor.SetCamera(renderer.GetActiveCamera())
 cubeAxesActor.XAxisMinorTickVisibilityOff()
 cubeAxesActor.YAxisMinorTickVisibilityOff()
 #cubeAxesActor.ZAxisMinorTickVisibilityOff()
-cubeAxesActor.SetFlyModeToStaticEdges()
+#cubeAxesActor.SetFlyModeToOuterEdges()
+#cubeAxesActor.SetFlyModeToStaticEdges()
+cubeAxesActor.SetFlyMode(cubeAxesActor.VTK_FLY_FURTHEST_TRIAD)
 for i in range(3):
   cubeAxesActor.GetLabelTextProperty(i).SetColor(black)
   cubeAxesActor.GetTitleTextProperty(i).SetColor(black)
@@ -97,8 +98,16 @@ cubeAxesActor.GetYAxesLinesProperty().SetColor(black)
 cubeAxesActor.GetZAxesLinesProperty().SetColor(black)
 
 cubeAxesActor.GetProperty().SetColor(black)
+cubeAxesActor.DrawXGridlinesOn()
+cubeAxesActor.DrawYGridlinesOn()
+cubeAxesActor.DrawZGridlinesOn()
+cubeAxesActor.GetXAxesGridlinesProperty().SetColor(black)
+cubeAxesActor.GetYAxesGridlinesProperty().SetColor(black)
+cubeAxesActor.GetZAxesGridlinesProperty().SetColor(black)
+cubeAxesActor.SetGridLineLocation(cubeAxesActor.VTK_GRID_LINES_FURTHEST)
+cubeAxesActor.Modified()
 
-renderer.AddActor(cubeAxesActor)
+renderer.AddViewProp(cubeAxesActor)
 
 #Render and interact
 renderWindow.Render()
