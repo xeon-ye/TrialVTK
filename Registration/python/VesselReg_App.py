@@ -11,6 +11,9 @@ from LiverView import QLiverViewer
 
 ui, QMainWindow = uic.loadUiType('VesselReg_App_Qt_VTK.ui')
 
+global myDebug
+myDebug = []
+
 colors = vtk.vtkNamedColors()
 
 class ViewersApp(QMainWindow, ui):
@@ -40,6 +43,7 @@ class ViewersApp(QMainWindow, ui):
 
   @Slot(object, object, object)
   def onWidgetRegistered(self, rot, normal, p):
+    global myDebug
     qDebug('onWidgetRegisterede')
     U = rot[1]
     sgn = np.sign(np.dot(U,normal))
@@ -54,6 +58,7 @@ class ViewersApp(QMainWindow, ui):
 
   @Slot(object, object, object)
   def onWidgetMoved(self, rot, normal, p):
+    global myDebug
     qDebug('onWidgetMoved')
     # Update GUI
     U = rot[1]
