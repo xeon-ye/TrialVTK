@@ -46,6 +46,8 @@ class QLiverViewer(QtWidgets.QFrame):
     self.brighter25:bool = True
     self.opacity:float = 0.35
 
+    self.showReferencePlane = False
+    
     self.nReferences = 2
 
     self.refplanes = []    # Displayed reference planes
@@ -226,9 +228,13 @@ class QLiverViewer(QtWidgets.QFrame):
     elif key == 'm':
       # Move a reference
       print('Moving reference')
+
+      showReferencePlane = False
       # Remove old reference plane
-      self.removeActor(refActor)
-      refActor = None
+      if refActor is not None:
+        self.removeActor(refActor)
+        refActor = None
+        showReferencePlane = True
 
       # Move reference plane
       planeSource.SetOrigin(planeWidget.GetOrigin())
@@ -239,15 +245,15 @@ class QLiverViewer(QtWidgets.QFrame):
       mapper = vtk.vtkPolyDataMapper()
       mapper.SetInputConnection(planeSource.GetOutputPort())
 
-      # actor
-      actor = vtk.vtkActor()
-      actor.SetMapper(mapper)
-      prop = actor.GetProperty()
-      prop.SetColor(blue)
-      prop.SetOpacity(self.opacity)
-
-      self.refplanes[index] = actor
-      self.renderer.AddActor(actor)
+      # New reference actor
+      if showReferencePlane:
+        refActor = vtk.vtkActor()
+        refActor.SetMapper(mapper)
+        prop = refActor.GetProperty()
+        prop.SetColor(blue)
+        prop.SetOpacity(self.opacity)
+        self.refplanes[index] = refActor
+        self.renderer.AddActor(refActor)
 
       self.removeActor(contourActor)
 
@@ -273,10 +279,18 @@ class QLiverViewer(QtWidgets.QFrame):
       self.removeActor(userAttempt)
 
       attempt = vtk.vtkActor()
+      transform = vtk.vtkTransform()
+      trans = vtk.vtkMatrix4x4()
+      trans.Identity()
+      transform.SetMatrix(trans)
+      transform.PostMultiply()
+      attempt.SetUserTransform(transform)
 
       self.fullcontours[index] = oldContours
       mapper = vtk.vtkPolyDataMapper()
+      mapper.ScalarVisibilityOff()
       mapper.SetInputData(oldContours)
+
       attempt.SetMapper(mapper)
       attempt.GetProperty().SetColor(red)
       self.userAttempts[index] = attempt
@@ -288,13 +302,13 @@ class QLiverViewer(QtWidgets.QFrame):
                                             planeWidget.GetPoint2(),
                                             planeWidget.GetCenter(),
                                             np.array(planeWidget.GetNormal())] # Redundant
-      sys.stdout.write("Origin: ")
+      sys.stdout.write('Plane origin: ')
       print(planeWidget.GetOrigin())
-      sys.stdout.write("Point1: ")
+      sys.stdout.write('Plane point1: ')
       print(planeWidget.GetPoint1())
-      sys.stdout.write("Point2: ")
+      sys.stdout.write('Plane point2: ')
       print(planeWidget.GetPoint2())
-
+      print("To make the app start at this location, insert these points near the tag\n 'FIXED PLANE POSITION AND ORIENTATION' in LiverView.py")
       self.render_window.Render()
 
   def removeActor(self, actor):
@@ -480,17 +494,20 @@ class QLiverViewer(QtWidgets.QFrame):
     #####################################
 
     # mapper
-    mapper0 = vtk.vtkPolyDataMapper()
-    mapper0.SetInputConnection(source.GetOutputPort())
+    if self.showReferencePlane:
+      mapper0 = vtk.vtkPolyDataMapper()
+      mapper0.SetInputConnection(source.GetOutputPort())
 
-    # actor
-    actor = vtk.vtkActor()
-    actor.SetMapper(mapper0)
-    prop = actor.GetProperty()
-    prop.SetColor(blue)
-    prop.SetOpacity(self.opacity)
-    self.refplanes.append(actor)
-    self.renderer.AddActor(actor)
+      # actor
+      refActor = vtk.vtkActor()
+      refActor.SetMapper(mapper0)
+      prop = refActor.GetProperty()
+      prop.SetColor(blue)
+      prop.SetOpacity(self.opacity)
+      self.refplanes.append(refActor)
+      self.renderer.AddActor(refActor)
+    else:
+      self.refplanes.append(None)
 
     #####################################
     # Compute contours, tubes and clipping
