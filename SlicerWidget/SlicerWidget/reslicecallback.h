@@ -73,12 +73,29 @@ class vtkResliceCursorCallback : public vtkCommand {
 
       double trans[4][4];
       memcpy(&trans[0][0], resliceAxes->GetData(), 16*sizeof(double));
-      for (size_t i = 0 ; i < 4 ; i++) {
-        for (size_t j = 0 ; j < 4 ; j++) {
-          std::cout << trans[i][j] << " ";
+      std::cout << "[";
+      for (size_t i = 0 ; i < 3 ; i++) {
+        std::cout << "[ ";
+        for (size_t j = 0 ; j < 3 ; j++) {
+          std::cout << trans[i][j] << ", ";
         }
-        std::cout << std::endl;
+        std::cout << trans[i][3] << "]," << std::endl;
       }
+      std::cout << "[ ";
+      for (size_t j = 0 ; j < 3 ; j++) {
+        std::cout << trans[3][j] << ", ";
+      }
+      std::cout << trans[3][3] << "]]" << std::endl;
+
+      double* pCenter = this->RCW[iSlice]->GetResliceCursorRepresentation()->
+          GetPlaneSource()->GetOrigin();
+
+      std::cout << "[ ";
+      for (size_t i=0 ; i < 2 ; i++) {
+        std::cout << pCenter[i] << ", ";
+      }
+      std::cout << pCenter[2] << "]" << std::endl;
+
 
       // Update 3D widget
       for (int i = 0; i < 3; i++) {
