@@ -8,8 +8,10 @@ REM Variable used in this script - name is arbitrary
 set QTDIR=c:/Qt/5.12.9/msvc2017_64
 mkdir build
 
-IF "%VTK_DIR%"=="" set VTK_DIR=E:/code/bin/VTK
 
+IF EXIST "E:/code/bin/VTK" (
+  IF "%VTK_DIR%"=="" set VTK_DIR=E:/code/bin/VTK
+)
 
 set CMAKE_DIR="c:\Program Files\CMake\bin"
 
@@ -19,7 +21,7 @@ IF EXIST "C:/Users/jem/bkmedical/Navigation/VTK/build_Release" (
 
 REM set VTK_DIR=c:/ArtifactoryCache/vtk.msvc-v141.x64/dist
 
-%CMAKE_DIR%\cmake -H%~dp0 -B%~dp0\build -G "Visual Studio 16 2019" -A "x64" -T v141 -DCMAKE_PREFIX_PATH=%VTK_DIR%;%QTDIR%
+%CMAKE_DIR%\cmake -H%~dp0 -B%~dp0\build -G "Visual Studio 16 2019" -A "x64" -DCMAKE_PREFIX_PATH=%VTK_DIR%;%QTDIR%;%ITK_DIR%
 
 REM Create solution
 cd %~dp0\build
