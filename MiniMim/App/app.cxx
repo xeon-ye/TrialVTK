@@ -82,7 +82,9 @@ void App::PopulateMenus() {
   connect(this->ui->btnAddContour, SIGNAL(pressed()), this,
           SLOT(AddContourWidgetToView()));
   connect(this->ui->resliceModeCheckBox, SIGNAL(stateChanged(int)), this, SLOT(resliceMode(int)));
-  connect(this->ui->cboxShowPlanes, SIGNAL(stateChanged(int)), this, SLOT(showPlanes(int)));
+  connect(this->ui->cboxSagittal, SIGNAL(stateChanged(int)), this, SLOT(showPlanes(int)));
+  connect(this->ui->cboxAxial, SIGNAL(stateChanged(int)), this, SLOT(showPlanes(int)));
+  connect(this->ui->cboxCoronal, SIGNAL(stateChanged(int)), this, SLOT(showPlanes(int)));
 
   connect(this->ui->btnClearDistance, SIGNAL(pressed()), this,
           SLOT(ClearDistanceView()));
@@ -210,8 +212,6 @@ void App::onLoadSurfaceClicked(int inout) {
 
         datamanager->m_planeWidget[0]->GetDefaultRenderer()->AddActor(actor);
         this->datamanager->ui->view3->GetRenderWindow()->Render();
-        index++;
-        index = index % 2;
       } else {
         return;
       }
