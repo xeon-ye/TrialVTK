@@ -28,6 +28,10 @@ endif()
 #add_subdirectory(QuickExample)
 #add_subdirectory(QuickDockExample)
 add_subdirectory(Registration)
+<<<<<<< HEAD
+=======
+#add_subdirectory(Registration)
+>>>>>>> e5285139633377c8c4835e38c5243aaef92e37f0
 add_subdirectory(SlicerWidget)
 add_subdirectory(MiniMim)
 #add_subdirectory(Registration)

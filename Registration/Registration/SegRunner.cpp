@@ -131,10 +131,9 @@ void SegmentationConnectedThreshold(vtkImageData* pData,
             << imageDims[1] << " "
             << imageDims[2] << std::endl;
 #endif
-
+}
 #endif
 
-}
 
 SegRunner::SegRunner(QWidget* receiver,
                      QMap<QString, QVariant> data,
@@ -218,7 +217,7 @@ void SegRunner::internalRun() {
   inputSeed[1] = data["seedY"].toInt();
   inputSeed[2] = data["seedZ"].toInt();
 
-
+#ifdef INTEGRATED_SEGMENTATION
   if (pData->GetScalarType() == 4) {
     // Signed short
     SegmentationConnectedThreshold<signed short>(pData,
@@ -234,6 +233,7 @@ void SegRunner::internalRun() {
         thresholds,
         fOutput);
   }
+#endif
   qDebug() << "Segmentation done";
 
   // *stopped = true; // Replace with atomic and set this to true when cancel is pressed
