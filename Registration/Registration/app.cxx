@@ -304,6 +304,18 @@ void App::segmSliderChanged(int value) {
   qDebug() << value;
 }
 
+// Works!!!
+void App::onThreeClicked() {
+  auto CTcursor = this->m_riw[0]->GetResliceCursor();
+  auto UScursor = this->m_riw_us[0]->GetResliceCursor();
+  for (int i = 0 ; i < 3 ; i++) {
+    auto normal = CTcursor->GetPlane(i)->GetNormal();
+    UScursor->GetPlane(i)->SetNormal(normal);
+    auto origin = CTcursor->GetPlane(i)->GetOrigin();
+    UScursor->GetPlane(i)->SetOrigin(origin);
+
+  }
+}
 void App::onApplyPresetClick() {
   qDebug() << "preset";
   // CT Liver preset
@@ -933,7 +945,8 @@ void App::PopulateMenus() {
 
   connect(ui->btnPreset, &QPushButton::clicked,
           this, &App::onApplyPresetClick);
-
+  connect(ui->btnThree, &QPushButton::clicked,
+          this, &App::onThreeClicked);
   connect(ui->horizontalSlider, &QSlider::valueChanged, this, &App::segmSliderChanged);
 
   connect(ui->btnAddSeeds, SIGNAL(pressed()), this, SLOT(AddSeedsToView1()));

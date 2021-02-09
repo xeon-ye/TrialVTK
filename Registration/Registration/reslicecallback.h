@@ -17,6 +17,8 @@
 
 #include <vtkResliceCursorWidget.h>
 
+#include <vtkPlane.h>
+
 #include <QDebug>
 
 //vtkSeedRepresentation* SeedRepresentation = nullptr;
@@ -95,6 +97,15 @@ class vtkResliceCursorCallback : public vtkCommand {
       // in case they had side-effects
       auto cursor = rep->GetResliceCursorActor()->GetCursorAlgorithm()->GetResliceCursor();
 
+      auto src = this->RCW[0]->GetResliceCursorRepresentation()->GetResliceCursor();
+      auto dest  = this->USRCW[0]->GetResliceCursorRepresentation()->GetResliceCursor();
+      for (int i = 0; i < 3 ; i++) {
+        auto normal = src->GetPlane(i)->GetNormal();
+        dest->GetPlane(i)->SetNormal(normal);
+        auto origin = src->GetPlane(i)->GetOrigin();
+        dest->GetPlane(i)->SetOrigin(origin);
+      }
+
       // Update 3D widget
       for (int i = 0; i < 3; i++) {
         if (this->IPW[i]) {
@@ -121,13 +132,16 @@ class vtkResliceCursorCallback : public vtkCommand {
             if (rep == this->RCW[i]->GetResliceCursorRepresentation()) {
               // MR is resliced, update US
 
-              // Works
+              // Works - update cursor of ultrasound using CT
               vtkResliceCursor* target =
                 this->USRCW[i]->GetResliceCursorRepresentation()->
                 GetResliceCursor();
 
               // TODO: Consider using SetHoleWithInPixels(pixxels) so it is easier to see pixel at cursor
               target->SetCenter(cursor->GetCenter());
+
+
+
 
               // rep->InitializeReslicePlane();
 

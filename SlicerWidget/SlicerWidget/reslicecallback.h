@@ -88,7 +88,7 @@ class vtkResliceCursorCallback : public vtkCommand {
       std::cout << trans[3][3] << "]]" << std::endl;
 
       double* pCenter = this->RCW[iSlice]->GetResliceCursorRepresentation()->
-          GetPlaneSource()->GetOrigin();
+                        GetPlaneSource()->GetOrigin();
 
       std::cout << "[ ";
       for (size_t i=0 ; i < 2 ; i++) {

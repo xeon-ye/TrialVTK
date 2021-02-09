@@ -99,6 +99,7 @@ class App : public QMainWindow {
   void onApplyPresetClick();
   void onRegStartClick();
   void onCancelClick();
+  void onThreeClicked();
 
   void updateProgressBar(int progressPercent);
   void updateSegProgressBar(int progressPercent);
